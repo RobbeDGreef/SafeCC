@@ -1,0 +1,16 @@
+if [ ! -f ../Compiler ]; then
+echo "[ERROR] Compiler not built"
+exit 1
+fi
+
+for f in test*.c
+do
+    if ! ../Compiler -o "$f-bin" "$f" > /tmp/outp; then
+        cat /tmp/outp
+        echo "Compile of $f [FAILED]"
+        exit 1
+    else
+        chmod +x "$f-bin"
+        echo "Compile of $f [OK]"
+    fi
+done

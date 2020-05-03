@@ -1,0 +1,118 @@
+#include <arch/x64/generator.h>
+
+/// @warning    This file is unfinished because i will be focussing on x84 first
+
+GeneratorX64::GeneratorX64(string outfile): Generator(outfile)
+{
+    freeall_reg();
+}
+
+void GeneratorX64::freeall_reg()
+{
+    for (int i = 0; i < SIZE(m_freeregisters); i++)
+        m_freeregisters[i] = true;
+}
+
+void GeneratorX64::free_reg(int reg)
+{
+    if (m_freeregisters[reg] != false)
+    {
+        WARNING("Trying to free a register that is already free: " << m_registers[reg])
+    }
+    m_freeregisters[reg] = 1;
+}
+
+int GeneratorX64::alloc_reg()
+{
+    for (int i = 0; i < SIZE(m_freeregisters); i++)
+    {
+        if (m_freeregisters[i])
+        {
+            m_freeregisters[i] = false;
+            return i;
+        }
+    }
+    FATAL_ERROR("Ran out of usable registers")
+    exit(1);
+}
+
+int GeneratorX64::genpreamble()
+{
+    fputs(
+    "extern printf\n"
+	"section .data\n"
+    "\tstr: db \"Int: %d\\n\"\n"
+    "section .text\n"
+    "global _start\n"
+    "printint:\n"
+    "\tpush rbp\n"
+    "\tmov rbp, rsp\n"
+    "\tmov esi, edi\n"
+    "\tmov edi, str\n"
+    "\tcall printf\n"
+    "\tpop rbp\n"
+    "\tret\n"
+    "_start:\n"
+    "\tpush rbp\n"
+    "\tmov rbp, rsp\n"
+    , m_outfile);
+    return 0;
+}
+
+int GeneratorX64::genpostamble()
+{
+    write("mov", 0, "eax");
+    write("pop", "rbp");
+    write("ret");
+    return 0;
+}
+
+int GeneratorX64::genload(int value)
+{
+    DEBUG("Coolio")
+    int reg = alloc_reg();
+    DEBUG("Got reg: " << reg)
+    write("mov qword", value, m_registers[reg]);
+    DEBUG("Moved some stuff")
+    return reg;
+}
+
+int GeneratorX64::genadd(int r1, int r2)
+{
+    write("add", m_registers[r1], m_registers[r2]);
+    free_reg(r1);
+    return r2;
+}
+
+int GeneratorX64::gensub(int r1, int r2)
+{
+    write("sub", m_registers[r2], m_registers[r1]);
+    free_reg(r2);
+    return r1;
+}
+
+int GeneratorX64::genmul(int r1, int r2)
+{
+    write("imul", m_registers[r1], m_registers[r2]);
+    free_reg(r1);
+    return r2;
+}
+
+int GeneratorX64::gendiv(int r1, int r2)
+{
+    write("mov", m_registers[r1], "rax");
+    write("cqo");
+    write("idiv", m_registers[r2]);
+    write("mov", "rax", m_registers[r1]);
+    free_reg(r2);
+    return r1;
+}
+
+/* debug */
+int GeneratorX64::genprintint(int r)
+{
+    write("mov", m_registers[r], "rdi");
+    write("call", "printint");
+    free_reg(r);
+    return 0;
+}

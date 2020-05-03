@@ -1,0 +1,5 @@
+for f in test*.c
+do
+    echo "[RUN] File: $f"
+    ./"$f-bin"
+done

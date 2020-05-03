@@ -1,0 +1,16 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
+
+project(Compiler)
+
+set(CMAKE_BUILD_TYPE Debug)
+add_definitions("-rdynamic")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Os")
+
+
+include_directories(include)
+file(GLOB_RECURSE SOURCES "src/*.cpp")
+
+add_executable(Compiler ${SOURCES})
+
