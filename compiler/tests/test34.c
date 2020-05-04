@@ -10,8 +10,7 @@ int main()
     printf("Enum test: %i %i %i %i\n", monday, tuesday, wednessday, thursday);
     
     enum week week = tuesday;
+    enum week test = 5;
     
     printf("week: %i\n", week);
-    
-    printf("cool ");
 }
