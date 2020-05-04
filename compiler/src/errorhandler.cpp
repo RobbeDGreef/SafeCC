@@ -220,7 +220,8 @@ void ErrorHandler::pedanticWarning(string s)
 
 struct ErrorInfo ErrorHandler::createErrorInfo()
 {
-    return createErrorInfo(m_scanner->curLine(), m_scanner->curChar());
+    return createErrorInfo(m_scanner->token().endLine(),
+                            m_scanner->token().endCol());
 }
 
 struct ErrorInfo ErrorHandler::createErrorInfo(int line, int c)
@@ -228,8 +229,8 @@ struct ErrorInfo ErrorHandler::createErrorInfo(int line, int c)
     struct ErrorInfo ret;
     ret.line    = m_scanner->curStrLine();
     ret.tok     = m_scanner->token();
-    ret.lineNum = m_scanner->token().endLine();
-    ret.charNum = m_scanner->token().endCol();
+    ret.lineNum = line;
+    ret.charNum = c;
     ret.func    = m_scanner->curFunction();
     ret.file    = m_scanner->curPPFile();
 
