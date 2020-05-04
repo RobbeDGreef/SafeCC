@@ -117,10 +117,15 @@ int GeneratorX86::genFunctionPreamble(int funcIdx)
     // Clean all the registers
     freeAllReg();
 
-    fprintf(m_outfile, "%s:\n", g_symtable.getSymbol(funcIdx)->name.c_str());
+    struct Symbol *s = g_symtable.getSymbol(funcIdx);
+
+    if (s->storageClass == SymbolTable::StorageClass::EXTERN)
+        fprintf(m_outfile, "global %s\n", s->name.c_str());
+
+    fprintf(m_outfile, "%s:\n", s->name.c_str());
     write("push", "ebp");
     write("mov", "esp", "ebp");
-    write("sub", g_symtable.getSymbol(funcIdx)->localVarAmount, "esp");
+    write("sub", s->localVarAmount, "esp");
     return -1;
 }
 
@@ -313,7 +318,7 @@ int GeneratorX86::genExternSection()
                 if (!s.defined)
                     fprintf(m_outfile, "extern %s\n", s.name.c_str());
 
-                else
+                else if (s.symType == SymbolTable::SymTypes::VARIABLE)
                     fprintf(m_outfile, "global %s\n", s.name.c_str());
             }
         }
