@@ -107,6 +107,8 @@ Started 16/4/2020
   - [ ] actually makes a difference
 - [ ] Unions
   - [ ] Declaration
+    - [ ] with tag
+    - [ ] anonymous
   - [ ] assignment 
   - [ ] initialising
     - [ ] . operator initialising
@@ -116,9 +118,9 @@ Started 16/4/2020
   - [x] currently working but we need to port the whole compiler to bytes and not bits
   - [ ] needs to accept variables too
   - [ ] perfectly working 
-- [ ] enums 
-  - [ ] header implemented but not currently usable
-  - [ ] perfectly working
+- [x] enums 
+  - [x] header implemented but not currently usable
+  - [x] perfectly working
 - [ ] typedef function types
 - [ ] __asm__
   - [x] whitespace
@@ -127,10 +129,13 @@ Started 16/4/2020
   - [x] whitespace
   - [ ] perfectly working
 - [ ] preprocessor
+  - [x] compiler accepts preprocessor input
+  - [ ] own preprocessor
 - [ ] include files
   - [x] stdarg
   - [x] stddef
-- [ ] SECOND GOAL REACHED printf("hello world") with #include <stdio.h>  
+- [ ] Scalair initializers are allowed to be inclosed in braces for some reason
+- [x][3/5/2020 1:52 AM] SECOND GOAL REACHED printf("hello world") with #include <stdio.h>  
 - [ ] major cleanup and refractor
 - [ ] ++ --
 - [ ] ~ ! ^ & | << >>
