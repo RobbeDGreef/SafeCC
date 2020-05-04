@@ -6,13 +6,16 @@
 static const string toknames[]
 {
     "EOF (end of file)", 
-    "+ (plus)", "- (minus)", "* (star)", "/ (slash)",
+    "+ (plus)", "- (minus)", "* (star)", "/ (slash)", "% (percent sign)",
+    "| (bitwise or)", "^ (bitwise xor)", "& (ampersant)", "<< (left shift)", ">> (right shift)",
     
     "== (equal to)", "!= (not equal to)", "< (less than)", "> (greater than)", 
     "<= (less than or equal to)", ">= (greater than or equal to)",
+    "&& (logical and)", "|| (logical or)",
+    "! (logical not)", 
 
-    "! (not)",
-    "& ampersant",
+    "++ (increment)", "-- (decrement)", "~ (bitwise negate)",
+
     "integer literal", "string literal",
     "identifier",
     "= (equalsign)", "; (semicolon)", "{ (left brace)", "} (right brace)", 
@@ -44,16 +47,17 @@ public:
         T_EOF = 0, /* Prefixed to avoid builtin constant EOF */
         
         /* Operators */
-        PLUS, MINUS, STAR, SLASH,
+        PLUS, MINUS, STAR, SLASH, MODULUS,
+        OR, XOR, AMPERSANT, L_SHIFT, R_SHIFT, 
         
         /* Comparisons */
         EQUAL, NOTEQUAL, LESSTHAN, GREATERTHAN, LESSTHANEQUAL, GREATERTHANEQUAL,
         
-        /* Binary operators */
-        NOT,
-
-        /* Pointer / location stuff */
-        AMPERSANT,
+        /* Logical operators */
+        LOGAND, LOGOR, 
+        LOGNOT, 
+        
+        INC, DEC, TIDDLE,
 
         INTLIT, STRINGLIT,
         IDENTIFIER,

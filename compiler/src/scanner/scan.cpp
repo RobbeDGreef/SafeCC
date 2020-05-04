@@ -138,11 +138,25 @@ int Scanner::scan()
         return 0;
 
     case '+':
-        m_token.set(Token::Tokens::PLUS, m_line, m_char);
+        c = next();
+        if (c == '+')
+            m_token.set(Token::Tokens::INC, m_line, m_char);
+        else
+        {
+            m_token.set(Token::Tokens::PLUS, m_line, m_char);
+            putback(c);
+        }
         break;
 
     case '-':
-        m_token.set(Token::Tokens::MINUS, m_line, m_char);
+        c = next();
+        if (c == '-')
+            m_token.set(Token::Tokens::DEC, m_line, m_char);
+        else
+        {
+            m_token.set(Token::Tokens::MINUS, m_line, m_char);
+            putback(c);
+        }
         break;
 
     case '*':
@@ -174,6 +188,8 @@ int Scanner::scan()
         c = next();
         if (c == '=')
             m_token.set(Token::Tokens::LESSTHANEQUAL, m_line, m_char);
+        else if (c == '<')
+            m_token.set(Token::Tokens::L_SHIFT, m_line, m_char);
         else
         {
             putback(c);
@@ -185,6 +201,9 @@ int Scanner::scan()
         c = next();
         if (c == '=')
             m_token.set(Token::Tokens::GREATERTHANEQUAL, m_line, m_char);
+        else if (c == '>')
+            m_token.set(Token::Tokens::R_SHIFT, m_line, m_char);
+        
         else
         {
             putback(c);
@@ -199,7 +218,7 @@ int Scanner::scan()
         else
         {
             putback(c);
-            m_token.set(Token::Tokens::NOT, m_line, m_char);
+            m_token.set(Token::Tokens::LOGNOT, m_line, m_char);
         }
         break;
 
@@ -224,7 +243,15 @@ int Scanner::scan()
         break;
 
     case '&':
-        m_token.set(Token::Tokens::AMPERSANT, m_line, m_char);
+        c = next();
+        if (c == '&')
+            m_token.set(Token::Tokens::LOGAND, m_line, m_char);
+        
+        else
+        {
+            m_token.set(Token::Tokens::AMPERSANT, m_line, m_char);
+            putback(c);
+        }
         break;
 
     case '[':
@@ -244,6 +271,31 @@ int Scanner::scan()
         break;
     case '.':
         m_token.set(Token::Tokens::DOT, m_line, m_char);
+        break;
+    
+    case '|':
+        c = next();
+        
+        if (c == '|')
+            m_token.set(Token::Token::LOGOR, m_line, m_char);
+        else
+        {
+            m_token.set(Token::Tokens::OR, m_line, m_char);
+            putback(c);
+        }
+        
+        break;
+    
+    case '^':
+        m_token.set(Token::Tokens::XOR, m_line, m_char);
+        break;
+    
+    case '~':
+        m_token.set(Token::Tokens::TIDDLE, m_line, m_char);
+        break;
+    
+    case '%':
+        m_token.set(Token::Tokens::MODULUS, m_line, m_char);
         break;
         
     case '0':

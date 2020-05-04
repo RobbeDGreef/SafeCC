@@ -8,11 +8,14 @@
 #include <parser/statementparser.h>
 
 static const int OperatorPrecedence[] = {
-     0,         // EOF
-     3, 3,      // + -
-     4, 4,      // * /
-     1, 1,      // == !=
-     2, 2, 2, 2 // < > <= >= 
+     0,          // EOF
+     9, 9,       // + -
+     10, 10, 10, // * / %
+     3, 4, 5,    // | ^ &
+     8, 8,       // << >>
+     6, 6,       // == !=
+     7, 7, 7, 7, // < > <= >=
+     2, 1        // && ||
 };
 
 class Parser

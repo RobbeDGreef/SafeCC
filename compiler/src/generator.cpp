@@ -116,6 +116,15 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
         // Because arguments are pushed in reverse order
         generateArgumentPush(tree);
         return -1;
+    
+    case AST::Types::INCREMENT:
+        leftreg = generateFromAst(tree->left, -1, tree->operation);
+        return genIncrement(leftreg, tree->right->value, tree->value);
+    
+    case AST::Types::DECREMENT:
+        leftreg = generateFromAst(tree->left, -1, tree->operation);
+        return genDecrement(leftreg, tree->right->value, tree->value);
+    
     }
 
     if (tree->left)
@@ -186,6 +195,9 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
         return genNegate(leftreg);
 
     default:
+        // This is more of a debugging check then a release thing because
+        // we should normally never get here unless something is unimplemented
+        // or seriously wrong (ei memory bug)
         err.fatal("Unknown AST operator " + to_string(tree->operation));
     }
 }

@@ -43,6 +43,11 @@ protected:
     virtual int genDirectMemLoad(int offset, int symbol, int reg, int size) {}
     virtual int genNegate(int reg) {}
     virtual int genAccessStruct(int symbol, int idx) {}
+    virtual int genIncrement(int reg, int amount, bool incrAfter) {}
+    virtual int genDecrement(int reg, int amount, bool decrAfter) {}
+    virtual int genLeftShift(int reg1, int reg2, int size) {}
+    virtual int genRightShift(int reg1, int reg2, int size) {}
+    
 
 /*debugging */
 public:
@@ -55,7 +60,4 @@ public:
     void close();
     int generateFromAst(struct ast_node *tree, int reg, int parentOp);
     
-    /* Debug */
-
-
 };

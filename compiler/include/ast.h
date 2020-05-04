@@ -8,9 +8,12 @@ namespace AST
 {
     enum Types 
     {
-        ADD = 1, SUBTRACT, MULTIPLY, DIVIDE,
+        ADD = 1, SUBTRACT, MULTIPLY, DIVIDE, MODULUS,
+        OR, XOR, AND, L_SHIFT, R_SHIFT,
         EQUAL, NOTEQUAL, LESSTHAN, GREATERTHAN, LESSTHANEQUAL, GREATERTHANEQUAL,
-        NOT,
+        LOGAND, LOGOR, LOGNOT,
+        INCREMENT, DECREMENT, NOT,
+    
         NEGATE,
 
         INTLIT,

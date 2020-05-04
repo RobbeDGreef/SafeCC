@@ -166,6 +166,7 @@ struct ast_node *ExpressionParser::parsePrefixOperator(struct Type *ltype)
     int              id;
     struct Type      type;
     struct ast_node *left = NULL;
+    struct ast_node *tmp = NULL;
     
     switch (m_scanner.token().token())
     {
@@ -220,13 +221,73 @@ struct ast_node *ExpressionParser::parsePrefixOperator(struct Type *ltype)
         node = parseLeft(ltype);
 
         if ((!node->type.isSigned) || node->type.ptrDepth)
-            err.fatal("Cannot negate type " + HL(typeString((&node-> type))));
+            err.fatal("Cannot negate type " + HL(typeString((&node->type))));
 
         node = mkAstUnary(AST::Types::NEGATE, node, 0, node->type, node->line,
                           node->c);
 
         break;
 
+    case Token::Tokens::TIDDLE:
+        m_scanner.scan();
+        
+        node = parseLeft(ltype);
+        
+        if (node->type.ptrDepth || node->type.typeType != TypeTypes::VARIABLE)
+            err.fatal("Cannot preform bitwise not on " + HL(typeString(&node->type)));
+        
+        node = mkAstUnary(AST::Types::NOT, node, 0, node->type, node->line, 
+                          node->c);
+        
+        break;
+        
+    case Token::Tokens::LOGNOT:
+        m_scanner.scan();
+        node = parseLeft(ltype);
+        node = mkAstUnary(AST::Types::LOGNOT, node, 0, node->type, node->line, node->c);
+        
+        break;
+    
+    case Token::Tokens::INC:
+        m_scanner.scan();
+        node = parseLeft(ltype);
+        
+        left = mkAstLeaf(AST::Types::INTLIT, 1, INTTYPE, node->line, node->c);
+        
+        tmp = checkArithmetic(node, left, Token::Tokens::PLUS);
+        if (tmp)
+        {
+            if (node->type.ptrDepth)
+                left = tmp;
+        }
+        
+        // If value is 1 it means increment after value return
+        // if it is 0 it means increment before value return
+        node = mkAstNode(AST::Types::INCREMENT, node, NULL, left, 0, node->type,
+                         node->line, node->c);
+    
+        break;
+    
+    case Token::Tokens::DEC:
+        m_scanner.scan();
+        node = parseLeft(ltype);
+        
+        left = mkAstLeaf(AST::Types::INTLIT, 1, INTTYPE, node->line, node->c);
+        
+        tmp = checkArithmetic(node, left, Token::Tokens::MINUS);
+        if (tmp)
+        {
+            if (node->type.ptrDepth)
+                left = tmp;
+        }
+        
+        // If value is 1 it means increment after value return
+        // if it is 0 it means increment before value return
+        node = mkAstNode(AST::Types::DECREMENT, node, NULL, left, 0, node->type,
+                         node->line, node->c);
+    
+        break;
+    
     default:
         node = parsePrimary(ltype);
     }
@@ -387,6 +448,9 @@ struct ast_node *ExpressionParser::checkArithmetic(struct ast_node *left,
 
 struct ast_node *ExpressionParser::parsePostfixOperator(struct ast_node *tree, bool access)
 {
+    struct ast_node *left = NULL;
+    struct ast_node *tmp = NULL;
+    
     switch (m_scanner.token().token())
     {
     case Token::Tokens::L_BRACKET:
@@ -395,6 +459,44 @@ struct ast_node *ExpressionParser::parsePostfixOperator(struct ast_node *tree, b
     case Token::Tokens::MINUS:
     case Token::Tokens::DOT:
         return parseStructAccess(tree, access);
+    
+    case Token::Tokens::INC:
+        m_scanner.scan();
+        
+        left = mkAstLeaf(AST::Types::INTLIT, 1, INTTYPE, tree->line, tree->c);
+        
+        tmp = checkArithmetic(tree, left, Token::Tokens::PLUS);
+        if (tmp)
+        {
+            if (tree->type.ptrDepth)
+                left = tmp;
+        }
+        
+        // If value is 1 it means increment after value return
+        // if it is 0 it means increment before value return
+        tree = mkAstNode(AST::Types::INCREMENT, tree, NULL, left, 1, tree->type,
+                         tree->line, tree->c);
+    
+        break;
+    
+    case Token::Tokens::DEC:
+        m_scanner.scan();
+        
+        left = mkAstLeaf(AST::Types::INTLIT, 1, INTTYPE, tree->line, tree->c);
+        
+        tmp = checkArithmetic(tree, left, Token::Tokens::MINUS);
+        if (tmp)
+        {
+            if (tree->type.ptrDepth)
+                left = tmp;
+        }
+        
+        // If value is 1 it means increment after value return
+        // if it is 0 it means increment before value return
+        tree = mkAstNode(AST::Types::DECREMENT, tree, NULL, left, 1, tree->type,
+                         tree->line, tree->c);
+    
+        break;
     
     default:
         return tree;
