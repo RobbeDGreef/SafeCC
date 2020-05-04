@@ -105,7 +105,7 @@ struct ast_node *StatementParser::parseArrayInit(struct Type   type,
         init->value   = sym.value;
     }
     else
-        err.fatal("Invalid initialiser");
+        err.fatal("Invalid initializer");
 
     return mkAstUnary(AST::Types::ASSIGN, tree, 0, m_scanner.curLine(),
                       m_scanner.curChar());
@@ -114,6 +114,16 @@ struct ast_node *StatementParser::parseArrayInit(struct Type   type,
 struct ast_node *StatementParser::parseVarInit(struct Type   type,
                                                struct Symbol sym)
 {
+    // Apparently the ISO c standard has no problem with this
+    #if 0
+    if (m_scanner.token().token() == Token::Tokens::STRINGLIT ||
+        m_scanner.token().token() == Token::Tokens::L_BRACE)
+    {
+        err.fatal("Invalid initializer")
+    }
+    
+    #endif
+    
     struct ast_node *left = m_parser.m_exprParser.parseBinaryOperation(0, type);
 
     if (left->operation == AST::Types::INTLIT)
