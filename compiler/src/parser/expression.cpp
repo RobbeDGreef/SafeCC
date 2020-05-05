@@ -31,7 +31,7 @@ struct ast_node *ExpressionParser::parseSizeof()
 struct ast_node *ExpressionParser::parseParentheses(struct Type *ltype)
 {
     m_parser.match(Token::Tokens::L_PAREN);
-
+    
     struct ast_node *ret = parseTypeCast(ltype);
 
     if (!ret)
@@ -65,7 +65,7 @@ struct ast_node *ExpressionParser::parseTypeCast(struct Type *ltype)
             return NULL;
 
         m_parser.match(Token::Tokens::R_PAREN);
-
+        
         ret       = parseBinaryOperation(0, NULLTYPE);
         ret->type = type;
         return ret;
@@ -465,7 +465,7 @@ struct ast_node *ExpressionParser::checkArithmetic(struct ast_node *left,
             struct ast_node *ptr  = left->type.ptrDepth ? left : right;
             struct ast_node *nptr = left->type.ptrDepth ? right : left;
             struct Type      t;
-
+            
             t.isArray           = false;
             t.isSigned          = false;
             t.ptrDepth          = 0;
@@ -659,40 +659,4 @@ int ExpressionParser::getOperatorPrecedence(int token)
         err.unexpectedToken(token);
 
     return prec;
-}
-
-int evaluateConstant(struct ast_node *tree)
-{
-    int leftreg = 0;
-    int rightreg = 0;
-    
-    if (tree->left)
-        leftreg = evaluateConstant(tree->left);
-    
-    if (tree->right)
-        rightreg = evaluateConstant(tree->right);
-        
-    switch (tree->operation)
-    {
-    case AST::Types::ADD:
-        return leftreg + rightreg;
-    case AST::Types::SUBTRACT:
-        return leftreg - rightreg;
-    case AST::Types::MULTIPLY:
-        return leftreg * rightreg;
-    case AST::Types::DIVIDE:
-        return leftreg / rightreg;
-    case AST::Types::INTLIT:
-        return tree->value;
-    }
-    
-    err.fatal("unknown ast");
-    return 0;
-}
-
-int ExpressionParser::parseConstantExpr()
-{
-    struct ast_node *opp = parseBinaryOperation(0, INTTYPE);
-    int val = evaluateConstant(opp);
-    return val;
 }

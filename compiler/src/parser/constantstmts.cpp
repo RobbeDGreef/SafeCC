@@ -60,3 +60,39 @@ noItems:;
     
     return mkAstLeaf(AST::Types::PADDING, 0, 0, 0);
 }
+
+int evaluateConstant(struct ast_node *tree)
+{
+    int leftreg = 0;
+    int rightreg = 0;
+    
+    if (tree->left)
+        leftreg = evaluateConstant(tree->left);
+    
+    if (tree->right)
+        rightreg = evaluateConstant(tree->right);
+        
+    switch (tree->operation)
+    {
+    case AST::Types::ADD:
+        return leftreg + rightreg;
+    case AST::Types::SUBTRACT:
+        return leftreg - rightreg;
+    case AST::Types::MULTIPLY:
+        return leftreg * rightreg;
+    case AST::Types::DIVIDE:
+        return leftreg / rightreg;
+    case AST::Types::INTLIT:
+        return tree->value;
+    }
+    
+    err.fatal("unknown ast");
+    return 0;
+}
+
+int ExpressionParser::parseConstantExpr()
+{
+    struct ast_node *opp = parseBinaryOperation(0, INTTYPE);
+    int val = evaluateConstant(opp);
+    return val;
+}
