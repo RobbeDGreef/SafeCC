@@ -189,7 +189,7 @@ struct ast_node *ExpressionParser::parsePrefixOperator(struct Type *ltype)
 
         type = node->type;
         type.ptrDepth++;
-        type.size = DWORD;
+        type.size = PTR_SIZE;
         
         node = mkAstUnary(AST::Types::LOADLOCATION, left, id, type,
                              m_scanner.curLine(), m_scanner.curChar());
@@ -430,14 +430,15 @@ struct ast_node *ExpressionParser::checkArithmetic(struct ast_node *left,
             struct ast_node *nptr = left->type.ptrDepth ? right : left;
             struct Type      t;
 
+            t.isArray           = false;
             t.isSigned          = false;
             t.ptrDepth          = 0;
             t.primType          = PrimitiveTypes::INT;
-            t.size              = DWORD;
-            nptr->type.size     = DWORD;
+            t.size              = PTR_SIZE;
+            nptr->type.size     = PTR_SIZE;
             nptr->type.primType = PrimitiveTypes::INT;
 
-            ret = mkAstLeaf(AST::Types::INTLIT, ptr->type.size / 8, t,
+            ret = mkAstLeaf(AST::Types::INTLIT, ptr->type.size, t,
                             left->line, left->c);
             return mkAstNode(AST::Types::MULTIPLY, ret, NULL, nptr, 0,
                              left->line, left->c);
@@ -591,7 +592,7 @@ struct ast_node *ExpressionParser::parseBinaryOperation(int         prev_prec,
     {
         if (type.ptrDepth)
         {
-            inttypes.size     = DWORD;
+            inttypes.size     = PTR_SIZE;
             inttypes.primType = INT;
             inttypes.ptrDepth = 0;
         }

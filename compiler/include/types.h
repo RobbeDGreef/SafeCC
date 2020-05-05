@@ -17,7 +17,7 @@ struct Type
 {
     int  primType; // The primitive type
     bool isSigned; // Whether the type is signed
-    int  size;     // Variable size
+    int  size;     // Variable size (bytes)
 
     int ptrDepth; // The dimmention of the pointer (0 if not a pointer)
 
@@ -38,10 +38,12 @@ struct StructItem
     string      name;
 };
 
-#define CHAR_SIZE  BYTE
-#define SHORT_SIZE WORD
-#define INT_SIZE   DWORD
-#define LONG_SIZE  DWORD
+#define CHAR_SIZE  (BYTE / 8)
+#define SHORT_SIZE (WORD / 8)
+#define INT_SIZE   (DWORD / 8)
+#define LONG_SIZE  (DWORD / 8)
+#define PTR_SIZE (DWORD / 8)
+#define LONGLONG_SIZE (QWORD / 8)
 
 #define REGISTERSIZE g_regSize
 #define DEFAULTSIZE  g_defaultSize
@@ -101,3 +103,6 @@ int              truncateOverflow(struct Type type, int value);
 int              typeToSize(int type);
 void             dereference(struct Type *ptr);
 int              findStructItem(string item, struct Type t);
+
+int getArraySize(struct Symbol *s);
+int getTypeSize(struct Symbol sym);

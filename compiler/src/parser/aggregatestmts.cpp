@@ -200,25 +200,25 @@ struct ast_node *StatementParser::declStruct(int storageClass)
         
         switch (sItem.itemType.size)
         {
-        case BYTE:
+        case CHAR_SIZE:
             sItem.offset = offset;
             break;
 
-        case WORD:
+        case SHORT_SIZE:
             if (offset % 2)
                 offset += offset % 2;
 
             sItem.offset = offset;
             break;
 
-        case DWORD:
+        case INT_SIZE:
             if (offset % 4)
                 offset += 4 - (offset % 4);
 
             sItem.offset = offset;
             break;
 
-        case QWORD:
+        case LONGLONG_SIZE:
             if (offset % 4)
                 offset += 4 - (offset % 4);
 
@@ -232,11 +232,11 @@ struct ast_node *StatementParser::declStruct(int storageClass)
             int num = m_parser.m_exprParser.parseConstantExpr();
             
             sItem.itemType.isArray = true;
-            offset += (sItem.itemType.size / 8) * num;
+            offset += sItem.itemType.size * num;
             m_scanner.scan();
         }
 
-        offset += sItem.itemType.size / 8;
+        offset += sItem.itemType.size;
 
         structType.contents.push_back(sItem);
         
@@ -322,14 +322,14 @@ struct ast_node *StatementParser::declUnion(int sc)
             m_scanner.scan();
             int num = m_parser.m_exprParser.parseConstantExpr();
             
-            if (sItem.itemType.size / 8 * num > largestSize)
-                largestSize = sItem.itemType.size / 8 * num;
+            if (sItem.itemType.size * num > largestSize)
+                largestSize = sItem.itemType.size * num;
             sItem.itemType.isArray = true;
             m_scanner.scan();
         }
 
-        if (sItem.itemType.size / 8 > largestSize)
-            largestSize = sItem.itemType.size / 8;
+        if (sItem.itemType.size > largestSize)
+            largestSize = sItem.itemType.size;
 
         unionType.contents.push_back(sItem);
         

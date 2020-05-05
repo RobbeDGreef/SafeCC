@@ -8,13 +8,13 @@ int _sizeToDataSize(int size)
 {
     switch (size)
     {
-    case BYTE:
+    case CHAR_SIZE:
         return 0;
-    case WORD:
+    case SHORT_SIZE:
         return 1;
-    case DWORD:
+    case INT_SIZE:
         return 2;
-    case QWORD:
+    case LONGLONG_SIZE:
         return 3;
     default:
         err.fatalNL("Unsupported data size: " + size);
@@ -25,11 +25,11 @@ int _regFromSize(int size)
 {
     switch (size)
     {
-    case BYTE:
+    case CHAR_SIZE:
         return 4;
-    case WORD:
+    case SHORT_SIZE:
         return 2;
-    case DWORD:
+    case INT_SIZE:
         return 1;
     default:
         err.warning("Could not translate operant size to register size (" +
@@ -43,13 +43,13 @@ int _dataSizeFromRegSize(int regsize)
     switch (regsize)
     {
     case 1:
-        return 32;
+        return INT_SIZE;
     case 2:
-        return 16;
+        return SHORT_SIZE;
     case 3:
-        return 8;
+        return CHAR_SIZE;
     case 4:
-        return 8;
+        return CHAR_SIZE;
     }
 
     return 0;
@@ -244,10 +244,10 @@ string variableAccess(int symbol, int offset = 0)
             if (s->varType.typeType == TypeTypes::STRUCT &&
                 !s->varType.ptrDepth)
                 offset += s->varType.size -
-                          s->varType.contents.back().itemType.size / 8;
+                          s->varType.contents.back().itemType.size;
 
-            else if (s->varType.isArray && !(s->varType.ptrDepth - 1))
-                offset += (s->varType.size / 8) * s->value - 4;
+            else if (s->varType.isArray /*&& !(s->varType.ptrDepth - 1) */)
+                offset += s->varType.size * s->value - 4;
 
             return "ebp-" + to_string(s->stackLoc + 4 + offset);
         }
@@ -427,10 +427,10 @@ int GeneratorX86::genWidenRegister(int reg, int oldsize, int newsize,
 
     switch (newsize)
     {
-    case WORD:
+    case SHORT_SIZE:
         newreg = 1;
         break;
-    case DWORD:
+    case INT_SIZE:
         newreg = 0;
         break;
     default:

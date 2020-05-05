@@ -3,6 +3,7 @@
 #include <errorhandler.h>
 #include <token.h>
 #include <types.h>
+#include <symbols.h>
 
 struct Type g_emptyType = {.primType = 0,
                            .isSigned = false,
@@ -13,14 +14,14 @@ struct Type g_emptyType = {.primType = 0,
                            .isArray  = false};
 struct Type g_intType   = {.primType = PrimitiveTypes::INT,
                          .isSigned = true,
-                         .size     = DWORD,
+                         .size     = INT_SIZE,
                          .ptrDepth = 0,
                          .name     = NULL,
                          .typeType = TypeTypes::VARIABLE,
                          .isArray  = false};
 struct Type g_strType   = {.primType = PrimitiveTypes::CHAR,
                          .isSigned = true,
-                         .size     = DWORD,
+                         .size     = PTR_SIZE,
                          .ptrDepth = 1,
                          .name     = NULL,
                          .typeType = TypeTypes::VARIABLE,
@@ -28,7 +29,7 @@ struct Type g_strType   = {.primType = PrimitiveTypes::CHAR,
 
 struct Type g_defaultType = {.primType = PrimitiveTypes::INT,
                              .isSigned = true,
-                             .size     = DWORD,
+                             .size     = INT_SIZE,
                              .ptrDepth = 0,
                              .name     = NULL,
                              .typeType = TypeTypes::VARIABLE,
@@ -36,15 +37,15 @@ struct Type g_defaultType = {.primType = PrimitiveTypes::INT,
 
 struct Type g_ptrType = {.primType = PrimitiveTypes::INT,
                          .isSigned = true,
-                         .size     = DWORD,
+                         .size     = PTR_SIZE,
                          .ptrDepth = 0,
                          .name     = NULL,
                          .typeType = TypeTypes::VARIABLE,
                          .isArray  = false};
 
-int g_regSize     = DWORD;
-int g_defaultSize = DWORD;
-int g_ptrSize     = DWORD;
+int g_regSize     = PTR_SIZE;
+int g_defaultSize = INT_SIZE;
+int g_ptrSize     = PTR_SIZE;
 
 string typeString(struct Type *t)
 {
@@ -76,7 +77,11 @@ int typeToSize(int type)
         return INT_SIZE;
     case PrimitiveTypes::LONG:
         return LONG_SIZE;
+    case PrimitiveTypes::VOID:
+        return INT_SIZE;
     }
+    DEBUGR("WAAAARNIIINNGG " << type)
+    
     return -1;
 }
 
@@ -131,7 +136,7 @@ struct Type tokenToType(vector<int> &tokens)
     t.typeType = TypeTypes::VARIABLE;
     t.isArray = false;
     if (t.ptrDepth)
-        t.size = DWORD;
+        t.size = PTR_SIZE;
     else
         t.size = typeToSize(t.primType);
     return t;
@@ -153,6 +158,9 @@ static int sameType(struct Type l, struct Type r)
 struct ast_node *typeCompatible(struct ast_node *left, struct ast_node *right,
                                 bool onlyright)
 {
+    if (!left || !right)
+        err.fatal("Compiler problem, passed invalid ast node to typeCompatible()");
+    
     if ((left->type.typeType == TypeTypes::STRUCT &&
         left->type.typeType != right->type.typeType) ||
         left->type.typeType == TypeTypes::UNION &&
@@ -246,8 +254,8 @@ int typeFits(struct Type *type, int value)
 
     if (sign)
     {
-        signed int min = -(getFullbits(type->size - 1));
-        signed int max = getFullbits(type->size - 1);
+        signed int min = -(getFullbits(type->size * 8 - 1));
+        signed int max = getFullbits(type->size * 8 - 1);
 
         if (value >= min && value <= max)
             return 1;
@@ -257,7 +265,7 @@ int typeFits(struct Type *type, int value)
     else
     {
         unsigned int min = 0;
-        unsigned int max = (unsigned int)getFullbits(type->size);
+        unsigned int max = (unsigned int)getFullbits(type->size * 8);
 
         DEBUG("MIN: " << min << " MAX: " << max << "VALUE: " << value);
         if ((unsigned int)value >= min && (unsigned int)value <= max)
@@ -269,7 +277,7 @@ int typeFits(struct Type *type, int value)
 
 int truncateOverflow(struct Type type, int value)
 {
-    return ((unsigned int)value) & getFullbits(type.size);
+    return ((unsigned int)value) & getFullbits(type.size * 8);
 }
 
 struct Type guessType(int val, bool issigned)
@@ -286,22 +294,22 @@ struct Type guessType(int val, bool issigned)
         if (val >= -getFullbits(BYTE - 1) && val <= getFullbits(BYTE - 1))
         {
             ret.primType = PrimitiveTypes::CHAR;
-            ret.size     = BYTE;
+            ret.size     = CHAR_SIZE;
         }
         else if (val >= -getFullbits(WORD - 1) && val <= getFullbits(WORD - 1))
         {
             ret.primType = PrimitiveTypes::CHAR;
-            ret.size     = BYTE;
+            ret.size     = CHAR_SIZE;
         }
         else if (val >= -getFullbits(DWORD - 1) &&
                  val <= getFullbits(DWORD - 1))
         {
             ret.primType = PrimitiveTypes::CHAR;
-            ret.size     = BYTE;
+            ret.size     = CHAR_SIZE;
         }
         else
             err.fatal("Number is too large to fit in any of the supported type "
-                      "siezs");
+                      "sizes");
     }
     else
     {
@@ -309,17 +317,17 @@ struct Type guessType(int val, bool issigned)
         if ((unsigned int)val <= getFullbits(BYTE))
         {
             ret.primType = PrimitiveTypes::CHAR;
-            ret.size     = BYTE;
+            ret.size     = CHAR_SIZE;
         }
         else if ((unsigned int)val <= getFullbits(WORD))
         {
             ret.primType = PrimitiveTypes::SHORT;
-            ret.size     = WORD;
+            ret.size     = SHORT_SIZE;
         }
         else if ((unsigned int)val <= getFullbits(DWORD))
         {
             ret.primType = PrimitiveTypes::INT;
-            ret.size     = DWORD;
+            ret.size     = INT_SIZE;
         }
         else
             err.fatal("Number is too large to fit in any of the supported type "
@@ -400,4 +408,24 @@ int findStructItem(string item, struct Type t)
     }
 
     err.unknownStructItem(item, t);
+}
+
+int getArraySize(struct Symbol *arr)
+{
+    struct Type t = arr->varType;
+    dereference(&t);
+    return t.size;
+}
+
+int getTypeSize(struct Symbol sym)
+{
+    int size = sym.varType.size;
+    
+    if (sym.varType.isArray)
+    {
+        size = getArraySize(&sym);
+        size *= sym.value;
+    }
+
+    return size;
 }

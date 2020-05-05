@@ -81,12 +81,14 @@ int SymbolTable::_addVariable(struct Symbol sym)
         m_scopeList[0]->push_back(sym);
         return ((m_scopeList[0]->size() - 1) << 8) | 0;
     }
+    
+    int varSize = getTypeSize(sym);
 
     if (sym.storageClass == StorageClass::STATIC)
     {
         sym.stackLoc = m_staticVariableOffset;
         m_staticVariables.push_back(sym);
-        m_staticVariableOffset += sym.varType.size / 8;
+        m_staticVariableOffset += varSize;
     }
 
     struct Symbol *func = getSymbol(m_currentFunctionIndex);
@@ -101,27 +103,29 @@ int SymbolTable::_addVariable(struct Symbol sym)
         sym.storageClass != StorageClass::STATIC)
     {
         sym.stackLoc = func->localVarAmount;
+        DEBUGB("sym: " << sym.name << " stackloc: " << sym.stackLoc)
 
         if (sym.varType.isArray)
         {
-            func->localVarAmount += (sym.varType.size / 8) * sym.value;
-
+            func->localVarAmount += varSize;
+            
+            DEBUG("what: " << func->localVarAmount % INT_SIZE << " tf " << varSize << " " << INT_SIZE << " im trippin" << func->localVarAmount)
             // Making sure the bytealignment stays correct
-            if (func->localVarAmount % (DWORD / 8))
-                func->localVarAmount += (DWORD / 8) -
-                                        (func->localVarAmount % (DWORD / 8));
+            if (func->localVarAmount % INT_SIZE)
+                func->localVarAmount += INT_SIZE -
+                                        (func->localVarAmount % INT_SIZE);
         }
         else if (sym.varType.typeType == TypeTypes::STRUCT &&
                  !sym.varType.ptrDepth)
-            func->localVarAmount += sym.varType.size;
+            func->localVarAmount += varSize;
 
         else if (sym.varType.typeType == TypeTypes::STRUCT &&
                  sym.varType.ptrDepth)
-            func->localVarAmount += DWORD / 8;
+            func->localVarAmount += INT_SIZE;
 
         /* Variables get padded up to keep the 4 byte boundry */
         else if (sym.varType.typeType == TypeTypes::VARIABLE)
-            func->localVarAmount += DWORD / 8;
+            func->localVarAmount += INT_SIZE;
     }
 
 

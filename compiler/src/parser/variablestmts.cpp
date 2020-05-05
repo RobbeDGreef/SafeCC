@@ -81,7 +81,7 @@ struct ast_node *StatementParser::parseArrayInit(struct Type   type,
 
         while (tmp != NULL)
         {
-            tmp->value = (sym.value - 1 - tmp->value) * (tmp->type.size / 8);
+            tmp->value = (sym.value - 1 - tmp->value) * (tmp->type.size);
             tmp        = tmp->left;
         }
 
@@ -177,25 +177,15 @@ struct ast_node *StatementParser::variableDecl(struct Type type, int sc)
         /* Initialising array so next token must be integer or ] */
         m_scanner.scan();
         s.varType.ptrDepth++;
-        s.varType.size = DWORD;
+        s.varType.size = PTR_SIZE;
         s.symType = SymbolTable::SymTypes::VARIABLE;
         s.varType.isArray = true;
 
-        if (m_scanner.token().token() == Token::Tokens::INTLIT)
-        {
-            /* Specific size */
-            s.value   = m_scanner.token().intValue();
+        if (m_scanner.token().token() == Token::Tokens::R_BRACKET)
+            s.value = -1;
 
-            m_scanner.scan();
-        }
-        else if (m_scanner.token().token() == Token::Tokens::R_BRACKET)
-        {
-            /* Let the compiler count size */
-            s.value   = -1;
-        }
         else
-            err.fatal("Expected non negative integer constant or nothing at "
-                      "all");
+            s.value = m_parser.m_exprParser.parseConstantExpr();
 
         m_parser.match(Token::Tokens::R_BRACKET);
     }
@@ -210,7 +200,7 @@ struct ast_node *StatementParser::variableDecl(struct Type type, int sc)
         if (s.varType.isArray && s.value == -1 && 
             sc != SymbolTable::StorageClass::EXTERN)
             err.fatal("Cannot declare array without size specifier and "
-                      "initialiser");
+                      "initializer");
 
         g_symtable.pushSymbol(s);
 
@@ -231,7 +221,7 @@ struct ast_node *StatementParser::variableDecl(struct Type type, int sc)
 
         if (s.varType.isArray)
         {
-            // Array initialiser
+            // Array initializer
             return parseArrayInit(type, s);
         }
         else if (s.varType.typeType == TypeTypes::STRUCT && !s.varType.ptrDepth)
@@ -240,7 +230,7 @@ struct ast_node *StatementParser::variableDecl(struct Type type, int sc)
         }
         else
         {
-            // Regular initialiser
+            // Regular initializer
             return parseVarInit(type, s);
         }
     }
