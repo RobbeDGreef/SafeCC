@@ -54,23 +54,10 @@ struct ast_node *StatementParser::parseTypedef()
     return mkAstLeaf(AST::PADDING, 0, 0, 0);
 }
 
-struct ast_node *StatementParser::parseSizeof()
-{
-    m_scanner.scan();
-    m_parser.match(Token::Tokens::L_PAREN);
-
-    struct Type t = m_parser.parseType();
-    int         l = m_scanner.curLine();
-    int         c = m_scanner.curChar();
-
-    m_parser.match(Token::Token::R_PAREN);
-    return mkAstLeaf(AST::Types::INTLIT, t.size / 8, INTTYPE, l, c);
-}
-
 struct ast_node *StatementParser::parseStatement()
 {
-    int ptrOcc       = 0;
-    int storageClass = -1;
+    int              ptrOcc       = 0;
+    int              storageClass = -1;
     struct ErrorInfo errinfo;
 
 loop:;
@@ -116,7 +103,7 @@ loop:;
 
         if (type.typeType == TypeTypes::ENUM)
             type.typeType = TypeTypes::VARIABLE;
-        
+
         return parseDeclaration(type, storageClass);
 
     case Token::Tokens::STAR:
@@ -128,10 +115,10 @@ loop:;
 
     case Token::Tokens::IDENTIFIER:
         m_parser.matchNoScan(Token::Tokens::IDENTIFIER);
-        
+
         errinfo = err.createErrorInfo();
-        ident = m_scanner.identifier();
-        type  = m_typeList.getType(ident);
+        ident   = m_scanner.identifier();
+        type    = m_typeList.getType(ident);
         m_scanner.scan();
 
         if (m_scanner.token().token() == Token::Tokens::EQUALSIGN ||
@@ -153,7 +140,7 @@ loop:;
             type.ptrDepth += ptrOcc;
             return parseDeclaration(type, storageClass);
         }
-        
+
         err.loadErrorInfo(errinfo);
         err.unknownSymbol(ident);
 
@@ -171,9 +158,6 @@ loop:;
 
     case Token::Tokens::RETURN:
         return returnStatement();
-
-    case Token::Tokens::SIZEOF:
-        return parseSizeof();
 
     case Token::Tokens::T_EOF:
         err.fatal("EOF read while block was not terminated with a '}'");
@@ -222,7 +206,6 @@ struct ast_node *StatementParser::_parseBlock()
                 left = mkAstNode(AST::Types::GLUE, left, NULL, tree, 0,
                                  m_scanner.curLine(), m_scanner.curChar());
         }
-        
 
         /* Hit right brace so return left */
         if (m_scanner.token().token() == Token::Tokens::R_BRACE ||

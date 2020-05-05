@@ -45,7 +45,6 @@ class StatementParser
                                 int idx);
 
   public:
-    struct ast_node *parseSizeof();
     struct ast_node *declStruct(int storageClass);
     struct ast_node *declUnion(int storageClass);
     struct ast_node *declEnum();

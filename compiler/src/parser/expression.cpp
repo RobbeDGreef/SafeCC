@@ -10,6 +10,24 @@ ExpressionParser::ExpressionParser(Scanner &scanner, Parser &parser,
 {
 }
 
+struct ast_node *ExpressionParser::parseSizeof()
+{
+    m_scanner.scan();
+
+    struct ast_node *ptr  = parseLeft(&NULLTYPE);
+    int size;
+    
+    if (ptr->operation == AST::Types::IDENTIFIER)
+        size = getTypeSize(*g_symtable.getSymbol(ptr->value));
+    else
+        size = ptr->type.size;
+    
+    int              l    = m_scanner.curLine();
+    int              c    = m_scanner.curChar();
+
+    return mkAstLeaf(AST::Types::INTLIT, size, INTTYPE, l, c);
+}
+
 struct ast_node *ExpressionParser::parseParentheses(struct Type *ltype)
 {
     m_parser.match(Token::Tokens::L_PAREN);
@@ -57,6 +75,16 @@ struct ast_node *ExpressionParser::parseTypeCast(struct Type *ltype)
     }
 }
 
+bool closingStatement(int tok)
+{
+    if (tok == Token::Tokens::SEMICOLON || tok == Token::Tokens::R_PAREN ||
+        tok == Token::Tokens::COMMA || tok == Token::Tokens::R_BRACE ||
+        tok == Token::Tokens::R_BRACKET)
+        return true;
+    
+    return false;
+}
+
 // Parses literal tokens to ast nodes and returns them
 //
 // Takes a type parameter to check the literal against but this can be a
@@ -67,8 +95,9 @@ struct ast_node *ExpressionParser::parsePrimary(struct Type *ltype)
     struct Symbol *  s;
     int              id;
     int              val;
+    int tok = m_scanner.token().token();
 
-    switch (m_scanner.token().token())
+    switch (tok)
     {
     case Token::Tokens::L_PAREN:
         node = parseParentheses(ltype);
@@ -148,10 +177,17 @@ struct ast_node *ExpressionParser::parsePrimary(struct Type *ltype)
         break;
     
     case Token::Tokens::SIZEOF:
-        node = m_parser.m_statementParser.parseSizeof();
+        node = parseSizeof();
         break;
 
     default:
+        if (closingStatement(tok))
+        {
+            node = mkAstLeaf(AST::Types::PADDING, 0, m_scanner.curLine(),
+                              m_scanner.curChar());
+            break;
+        }
+        
         err.unexpectedToken(m_scanner.token().token());
     }
 
@@ -527,11 +563,7 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prev_prec,
 
     int tok = m_scanner.token().token();
 
-    DEBUG("token hit: " << tokToStr(m_scanner.token().token()))
-
-    if (tok == Token::Tokens::SEMICOLON || tok == Token::Tokens::R_PAREN ||
-        tok == Token::Tokens::COMMA || tok == Token::Tokens::R_BRACE ||
-        tok == Token::Tokens::R_BRACKET)
+    if (closingStatement(tok))
         return left;
 
     while (getOperatorPrecedence(tok) > prev_prec)
@@ -570,9 +602,7 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prev_prec,
 
         tok = m_scanner.token().token();
 
-        if (tok == Token::Tokens::SEMICOLON || tok == Token::Tokens::R_PAREN ||
-            tok == Token::Tokens::COMMA || tok == Token::Tokens::R_BRACE ||
-            tok == Token::Tokens::R_BRACKET)
+        if (closingStatement(tok))
             return left;
     }
 

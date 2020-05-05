@@ -183,10 +183,10 @@ struct ast_node *StatementParser::variableDecl(struct Type type, int sc)
 
         if (m_scanner.token().token() == Token::Tokens::R_BRACKET)
             s.value = -1;
-
+        
         else
             s.value = m_parser.m_exprParser.parseConstantExpr();
-
+        
         m_parser.match(Token::Tokens::R_BRACKET);
     }
     else

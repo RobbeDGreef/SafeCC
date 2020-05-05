@@ -30,6 +30,7 @@ class ExpressionParser
     struct ast_node *parseStructAccess(struct ast_node *prim, bool access);
 
   public:
+    struct ast_node *parseSizeof();
     int              parseConstantExpr();
     struct ast_node *parsePostfixOperator(struct ast_node *tree, bool access);
     struct ast_node *parseBinaryOperation(int prev_prec, struct Type type);
