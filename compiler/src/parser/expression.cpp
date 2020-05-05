@@ -356,15 +356,15 @@ struct ast_node *ExpressionParser::parseArrayAccess(struct ast_node *primary,
 
     idx = parseBinaryOperation(0, DEFAULTTYPE);
     
-    idx = mkAstUnary(AST::Types::NEGATE, idx, idx->value, idx->type,
-                     idx->line, idx->c);
+    //idx = mkAstUnary(AST::Types::NEGATE, idx, idx->value, idx->type,
+    //                 idx->line, idx->c);
 
     m_parser.match(Token::Tokens::R_BRACKET);
 
     type = primary->type;
     dereference(&type);
 
-    right = mkAstLeaf(AST::Types::INTLIT, type.size / 8, idx->type,
+    right = mkAstLeaf(AST::Types::INTLIT, type.size, idx->type,
                       m_scanner.curLine(), m_scanner.curChar());
 
     idx = mkAstNode(AST::Types::MULTIPLY, idx, NULL, right, 0, primary->type,

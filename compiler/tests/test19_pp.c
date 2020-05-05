@@ -1,7 +1,7 @@
 int printf(char *, ...);
 void print(int x)
 {
-    printf("%i\n", x);
+    printf("%x\n", x);
 }
 
 
@@ -10,15 +10,16 @@ char glob2[] = {0x2, 0x3, 0b1101};
 
 int main()
 {
-    int x[4];
+    int x[4] = {0, 0, 0, 0};
     int z = 50;
     int y[2] = {456, 654};
     int a;
     char b[3] = {258, 5};
     int c;
     
+    print(x);
     print(*x);
-    print(y[-1] + 8);
+    print(y[1] + 8);
     
     print(x[1]);
     int i = 1;
@@ -30,12 +31,13 @@ int main()
 
     print(x[2]);
     int *h = x + 1;
+    print(h);
     print(*h);
     print(x[1]);
-    // print(y[1]);
+    print(y[1]);
 
-    /* print(x[2] + y[1]);
-     */
+    print(x[2] + y[1]);
+    
     char c1 = 0x41;
     char c2 = 0x42;
     char c3 = 0x43;
