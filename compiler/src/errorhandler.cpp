@@ -227,8 +227,8 @@ struct ErrorInfo ErrorHandler::createErrorInfo()
 struct ErrorInfo ErrorHandler::createErrorInfo(int line, int c)
 {
     struct ErrorInfo ret;
-    ret.line    = m_scanner->curStrLine();
     ret.tok     = m_scanner->token();
+    ret.line    = m_scanner->curStrLine(m_scanner->curOffset() - c);
     ret.lineNum = line;
     ret.charNum = c;
     ret.func    = m_scanner->curFunction();
@@ -241,7 +241,6 @@ void ErrorHandler::loadErrorInfo(struct ErrorInfo ei)
 {
     m_errInfo        = ei;
     m_justLoadedInfo = true;
-    DEBUG("just loaded")
 }
 
 void ErrorHandler::unloadErrorInfo()

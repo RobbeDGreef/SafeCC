@@ -14,7 +14,6 @@ Scanner::Scanner(const char *filename)
 
     /* Init ident buffer */
     m_identBuf.reserve(SCANNER_IDENTIFIER_LIMMIT + 1);
-    m_curLine = new char[MAX_LINE_LENGTH];
     m_putbackToken.set(-1, m_line, m_char);
 }
 
@@ -22,7 +21,6 @@ Scanner::Scanner(const char *filename)
 Scanner::~Scanner()
 {
     fclose(m_infile);
-    delete[] m_curLine;
 }
 
 int Scanner::curLine()
@@ -69,10 +67,7 @@ int Scanner::next()
         m_char = 0;
     }
     else
-    {
-        m_curLine[m_char++] = c;
-        m_curLine[m_char] = '\0';
-    }
+        m_char++;
     
     return c;
 }
@@ -221,7 +216,25 @@ string Scanner::curFunction()
     return g_symtable.getSymbol(g_symtable.currentFuncIdx())->name;
 }
 
-string Scanner::curStrLine()
+string Scanner::curStrLine(int loc)
 {
-    return string(m_curLine);
+    unsigned long pos = ftell(m_infile);
+    
+    string str = "";
+    fseek(m_infile, loc, SEEK_SET);
+    int c = fgetc(m_infile);
+    while (c != '\n')
+    {
+        str += c;
+        c = fgetc(m_infile);
+    }
+        
+    fseek(m_infile, pos, SEEK_SET);
+    
+    return str;
+}
+
+int Scanner::curOffset()
+{
+    return ftell(m_infile);
 }

@@ -18,7 +18,7 @@ class Scanner
 {
 
 private:
-    int         m_line = 1;     /* Line numbers start at 1 (you know because normal people start counting from 1) */
+    int         m_line = 1;     // Line numbers start at 1 (you know because normal people start counting from 1)
     int         m_char = 0;
 
     Token       m_token;
@@ -28,7 +28,6 @@ private:
     
     string      m_identBuf;
     string      m_ppFile;
-    char       *m_curLine;
 
     const char  *m_filename;
     FILE        *m_infile;
@@ -57,9 +56,10 @@ public:
     Token& token();
     int curLine();
     int curChar();
+    int curOffset();
     string curPPFile();
     string curFunction();
-    string curStrLine();
+    string curStrLine(int offset);
     string &identifier();
     int getTokenStart();
 
