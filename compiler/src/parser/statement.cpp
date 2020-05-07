@@ -59,10 +59,11 @@ struct ast_node *StatementParser::parseStatement()
     int              ptrOcc       = 0;
     int              storageClass = -1;
     struct ErrorInfo errinfo;
+    struct ast_node *node = 0;
 
 loop:;
     int         tok = m_scanner.token().token();
-    struct Type type;
+    struct Type type = NULLTYPE;
     string      ident;
 
     switch (tok)
@@ -74,6 +75,27 @@ loop:;
         storageClass = tok - Token::Tokens::AUTO;
         m_scanner.scan();
         goto loop;
+    
+    case Token::Tokens::IF:
+        return ifStatement();
+
+    case Token::Tokens::TYPEDEF:
+        return parseTypedef();
+
+    case Token::Tokens::WHILE:
+        return whileStatement();
+
+    case Token::Tokens::FOR:
+        return forStatement();
+
+    case Token::Tokens::RETURN:
+        return returnStatement();
+
+    case Token::Tokens::T_EOF:
+        err.fatal("EOF read while block was not terminated with a '}'");
+
+    case Token::Tokens::R_BRACE:
+        return NULL;
 
     case Token::Tokens::SIGNED:
     case Token::Tokens::UNSIGNED:
@@ -106,29 +128,8 @@ loop:;
 
         return parseDeclaration(type, storageClass);
 
-    case Token::Tokens::STAR:
-        while (m_scanner.token().token() == Token::Tokens::STAR)
-        {
-            ptrOcc++;
-            m_scanner.scan();
-        }
-
     case Token::Tokens::IDENTIFIER:
-        m_parser.matchNoScan(Token::Tokens::IDENTIFIER);
-
-        errinfo = err.createErrorInfo();
-        ident   = m_scanner.identifier();
-        type    = m_typeList.getType(ident);
-        m_scanner.scan();
-
-        if (m_scanner.token().token() == Token::Tokens::EQUALSIGN ||
-            m_scanner.token().token() == Token::Tokens::L_BRACKET ||
-            m_scanner.token().token() == Token::Tokens::DOT ||
-            m_scanner.token().token() == Token::Tokens::MINUS)
-            return variableAssignment(ptrOcc);
-
-        if (m_scanner.token().token() == Token::Tokens::L_PAREN)
-            return functionCall();
+        type = m_parser.parseType();
 
         if (type.typeType != 0)
         {
@@ -141,35 +142,26 @@ loop:;
             return parseDeclaration(type, storageClass);
         }
 
-        err.loadErrorInfo(errinfo);
-        err.unknownSymbol(ident);
-
-    case Token::Tokens::IF:
-        return ifStatement();
-
-    case Token::Tokens::TYPEDEF:
-        return parseTypedef();
-
-    case Token::Tokens::WHILE:
-        return whileStatement();
-
-    case Token::Tokens::FOR:
-        return forStatement();
-
-    case Token::Tokens::RETURN:
-        return returnStatement();
-
-    case Token::Tokens::T_EOF:
-        err.fatal("EOF read while block was not terminated with a '}'");
-
-    case Token::Tokens::R_BRACE:
-        return NULL;
-
     default:
-        err.unexpectedToken(tok);
+        node = m_parser.m_exprParser.parseBinaryOperation(0, NULLTYPE);
+        
+        if (node)
+            return node;
+        
     }
 
+    err.unexpectedToken(tok);
     return 0;
+}
+
+bool isStatement(int op)
+{
+    if (op == AST::Types::FUNCTIONCALL || op == AST::Types::ASSIGN ||
+        op == AST::Types::PADDING || op == AST::Types::RETURN ||
+        op == AST::Types::INITIALIZER)
+        return true;
+        
+    return false;
 }
 
 /// @brief  The actual parseblock function

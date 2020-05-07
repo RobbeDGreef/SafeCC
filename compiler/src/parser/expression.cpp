@@ -118,7 +118,10 @@ struct ast_node *ExpressionParser::parsePrimary(struct Type *ltype)
             val = truncateOverflow(*ltype, val);
             err.notice("Truncated value to '" + to_string(val) + "'");
         }
-
+        
+        if (ltype->ptrDepth)
+            ltype = &(PTRTYPE);
+        
         node = mkAstLeaf(AST::Types::INTLIT, val, *ltype, m_scanner.curLine(),
                          m_scanner.curChar());
         m_scanner.scan();
@@ -288,6 +291,9 @@ struct ast_node *ExpressionParser::parsePrefixOperator(struct Type *ltype)
         m_scanner.scan();
         node = parseLeft(ltype);
         
+        if (node->operation != AST::Types::IDENTIFIER)
+            err.fatal("Cannot increment a non-lvalue object");
+        
         left = mkAstLeaf(AST::Types::INTLIT, 1, INTTYPE, node->line, node->c);
         
         tmp = checkArithmetic(node, left, Token::Tokens::PLUS);
@@ -307,6 +313,9 @@ struct ast_node *ExpressionParser::parsePrefixOperator(struct Type *ltype)
     case Token::Tokens::DEC:
         m_scanner.scan();
         node = parseLeft(ltype);
+        
+        if (node->operation != AST::Types::IDENTIFIER)
+            err.fatal("Cannot decrement a non-lvalue object");
         
         left = mkAstLeaf(AST::Types::INTLIT, 1, INTTYPE, node->line, node->c);
         
@@ -439,6 +448,9 @@ struct ast_node *ExpressionParser::checkArithmetic(struct ast_node *left,
                                                    struct ast_node *right,
                                                    int              tok)
 {
+    if (tok == Token::Tokens::EQUALSIGN)
+        return NULL;
+    
     struct ast_node *ret = NULL;
 
     if ((left->type.typeType == TypeTypes::STRUCT && !left->type.ptrDepth) ||
@@ -500,6 +512,9 @@ struct ast_node *ExpressionParser::parsePostfixOperator(struct ast_node *tree, b
     case Token::Tokens::INC:
         m_scanner.scan();
         
+        if (tree->operation != AST::Types::IDENTIFIER)
+            err.fatal("Cannot increment a non-lvalue object");
+        
         left = mkAstLeaf(AST::Types::INTLIT, 1, INTTYPE, tree->line, tree->c);
         
         tmp = checkArithmetic(tree, left, Token::Tokens::PLUS);
@@ -514,10 +529,13 @@ struct ast_node *ExpressionParser::parsePostfixOperator(struct ast_node *tree, b
         tree = mkAstNode(AST::Types::INCREMENT, tree, NULL, left, 1, tree->type,
                          tree->line, tree->c);
     
-        break;
+        return tree;
     
     case Token::Tokens::DEC:
         m_scanner.scan();
+        
+        if (tree->operation != AST::Types::IDENTIFIER)
+            err.fatal("Cannot decrement a non-lvalue object");
         
         left = mkAstLeaf(AST::Types::INTLIT, 1, INTTYPE, tree->line, tree->c);
         
@@ -533,7 +551,7 @@ struct ast_node *ExpressionParser::parsePostfixOperator(struct ast_node *tree, b
         tree = mkAstNode(AST::Types::DECREMENT, tree, NULL, left, 1, tree->type,
                          tree->line, tree->c);
     
-        break;
+        return tree;
     
     default:
         return tree;
@@ -565,6 +583,9 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prev_prec,
 
     if (closingStatement(tok))
         return left;
+        
+    if (tok == AST::Types::ASSIGN)
+        type = &left->type;
 
     while (getOperatorPrecedence(tok) > prev_prec)
     {
@@ -585,8 +606,12 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prev_prec,
         }
         else
         {
+            bool onlyright = false;
+            if (tok == AST::Types::ASSIGN)
+                onlyright = true;
+            
             // Will automatically widen registers if needed
-            tmp = typeCompatible(left, right, false);
+            tmp = typeCompatible(left, right, onlyright);
             if (tmp)
             {
                 if (tmp->left == left)
