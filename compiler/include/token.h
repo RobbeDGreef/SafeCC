@@ -57,13 +57,16 @@ public:
         LOGAND, LOGOR, 
         LOGNOT, 
         
+        /* assignment */
+        EQUALSIGN,
+        
         INC, DEC, TIDDLE,
 
         INTLIT, STRINGLIT,
         IDENTIFIER,
         
         /* Punctuation */
-        EQUALSIGN, SEMICOLON, L_BRACE, R_BRACE, L_PAREN, R_PAREN, COMMA,
+        SEMICOLON, L_BRACE, R_BRACE, L_PAREN, R_PAREN, COMMA,
         L_BRACKET, R_BRACKET, DOT,
 
         /* Keywords */

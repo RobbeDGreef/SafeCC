@@ -86,6 +86,25 @@ int countDepth(struct ast_node *tree)
     return i;
 }
 
+int Generator::generateAssignment(struct ast_node *tree)
+{
+    struct ast_node *left;
+    int l = tree->left->line;
+    int c = tree->left->c;
+    
+    if (tree->left->operation == AST::Types::IDENTIFIER)
+        left = mkAstLeaf(AST::Types::LOADLOCATION, tree->left->value, tree->type, l, c);
+    else if (tree->left->operation == AST::Types::PTRACCESS)
+        left = tree->left->left;
+    else
+        left = tree->left;
+
+    int lreg = generateFromAst(left, 0, AST::Types::ASSIGN);
+    int rreg = generateFromAst(tree->right, 0, AST::Types::ASSIGN);
+    
+    return genStoreValue(rreg, lreg, tree->type);
+}
+
 int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
 {
     int leftreg = 0;
@@ -94,6 +113,8 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
     /* If no instructions are given just return */
     if (!tree)
         return -1;
+    
+    DEBUG("op: " << tree->operation)
 
     switch (tree->operation)
     {
@@ -118,13 +139,15 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
         return -1;
     
     case AST::Types::INCREMENT:
-        leftreg = generateFromAst(tree->left, -1, tree->operation);
-        return genIncrement(leftreg, tree->right->value, tree->value);
+        DEBUG("tree l " << tree->left << " r " << tree->right)
+        return genIncrement(tree->left->value, tree->right->value, tree->value);
     
     case AST::Types::DECREMENT:
         leftreg = generateFromAst(tree->left, -1, tree->operation);
         return genDecrement(leftreg, tree->right->value, tree->value);
     
+    case AST::Types::ASSIGN:
+        return generateAssignment(tree);       
     }
 
     if (tree->left)
@@ -145,10 +168,8 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
         return genDiv(leftreg, rightreg);
     case AST::Types::INTLIT:
         return genLoad(tree->value, tree->type.size);
-    case AST::Types::ASSIGN:
-        return rightreg;
     case AST::Types::IDENTIFIER:
-        return genLoadVariable(tree->value);
+        return genLoadVariable(tree->value, tree->type);
     case AST::Types::WIDEN:
         /**
          *  @todo   i could probably integrate this widen token into
@@ -159,8 +180,8 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
         return genWidenRegister(leftreg, tree->value, tree->type.size,
                                 tree->type.isSigned);
 
-    case AST::Types::LEFTVALIDENT:
-        return genStoreValue(reg, leftreg, tree->type);
+    //case AST::Types::LEFTVALIDENT:
+    //    return genStoreValue(reg, leftreg, tree->type);
     case AST::Types::PTRACCESS:
         return genPtrAccess(leftreg, tree->type.size);
     case AST::Types::EQUAL:
@@ -193,6 +214,9 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
 
     case AST::Types::NEGATE:
         return genNegate(leftreg);
+    
+    case AST::Types::INITIALIZER:
+        return leftreg;
 
     default:
         // This is more of a debugging check then a release thing because

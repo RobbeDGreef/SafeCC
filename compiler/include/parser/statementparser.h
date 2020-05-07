@@ -28,14 +28,13 @@ class StatementParser
     struct ast_node *parseStructInit(struct Type type, struct Symbol sym);
 
     struct ast_node *variableDecl(struct Type type, int storageClass);
-    struct ast_node *variableAssignment(int ptrDepth);
+    struct ast_node *variableAssignment(struct ast_node *lvalue);
     struct ast_node *functionDecl(struct Type type, int storageClass);
     struct ast_node *returnStatement();
 
     struct ast_node *ifStatement();
     struct ast_node *whileStatement();
     struct ast_node *forStatement();
-
 
     struct ast_node *parseStatement();
     struct ast_node *parseDeclaration(struct Type t, int storageClass);

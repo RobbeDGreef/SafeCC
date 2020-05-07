@@ -258,7 +258,7 @@ string variableAccess(int symbol, int offset = 0)
     }
 }
 
-int GeneratorX86::genLoadVariable(int symbol)
+int GeneratorX86::genLoadVariable(int symbol, struct Type t)
 {
     int reg = allocReg();
 
@@ -266,19 +266,18 @@ int GeneratorX86::genLoadVariable(int symbol)
     // if (regs != 1)
     //    write("xor", m_dwordRegisters[reg], m_dwordRegisters[reg]);
 
-    struct Symbol *s = g_symtable.getSymbol(symbol);
-    if (s->varType.isArray)
+    if (t.isArray)
     {
         m_usedRegisters[reg] = 1;
         write("lea", MEMACCESS(variableAccess(symbol)), GETREG(reg));
     }
-    else if (s->varType.typeType == TypeTypes::STRUCT && !s->varType.ptrDepth)
+    else if (t.typeType == TypeTypes::STRUCT && !t.ptrDepth)
     {
         write("lea", MEMACCESS(variableAccess(symbol)), GETREG(reg));
     }
     else
     {
-        int regs             = _regFromSize(s->varType.size);
+        int regs             = _regFromSize(t.size);
         m_usedRegisters[reg] = regs;
         write("mov", MEMACCESS(variableAccess(symbol)), GETREG(reg));
     }
@@ -606,5 +605,74 @@ int GeneratorX86::genAccessStruct(int symbol, int idx)
                                                                      offset)),
           GETREG(reg));
 
+    return reg;
+}
+
+int GeneratorX86::genIncrement(int symbol, int amount, int after)
+{
+    int reg = genLoadVariable(symbol, g_symtable.getSymbol(symbol)->varType);
+    int saveReg = -1;
+    
+    if (after)
+    {
+        saveReg = allocReg();
+        m_usedRegisters[saveReg] = m_usedRegisters[reg];
+        write("mov", GETREG(reg), GETREG(saveReg));
+    }
+    
+    if (amount == 1)
+        write("inc", GETREG(reg));
+    else
+        write("add", amount, GETREG(reg));
+    
+    int s = m_usedRegisters[reg];
+    write("mov", GETREG(reg), SPECIFYSIZE(s)+MEMACCESS(variableAccess(symbol)));
+        
+    if (after)
+    {
+        freeReg(reg);
+        return saveReg;
+    }
+    
+    return reg;
+}
+
+int GeneratorX86::genDecrement(int symbol, int amount, int after)
+{
+    int reg = genLoadVariable(symbol, g_symtable.getSymbol(symbol)->varType);
+    int saveReg = -1;
+    
+    if (amount == 1)
+        write("dec", GETREG(reg));
+    else
+        write("sub", amount, GETREG(reg));
+        
+    
+    if (after)
+    {
+        saveReg = allocReg();
+        m_usedRegisters[saveReg] = m_usedRegisters[reg];
+        write("mov", GETREG(reg), GETREG(saveReg));
+    }
+    
+    write("mov", GETREG(reg), SPECIFYSIZE(reg)+MEMACCESS(variableAccess(symbol)));
+        
+    if (after)
+    {
+        freeReg(reg);
+        return saveReg;
+    }
+    
+    return reg;
+}
+int GeneratorX86::genLeftShift(int reg, int amount)
+{
+    write("shr", GETREG(amount), GETREG(reg));
+    return reg;
+}
+
+int GeneratorX86::genRightShift(int reg, int amount)
+{
+    write("shl", GETREG(amount), GETREG(reg));
     return reg;
 }

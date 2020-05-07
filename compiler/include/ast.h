@@ -12,6 +12,9 @@ namespace AST
         OR, XOR, AND, L_SHIFT, R_SHIFT,
         EQUAL, NOTEQUAL, LESSTHAN, GREATERTHAN, LESSTHANEQUAL, GREATERTHANEQUAL,
         LOGAND, LOGOR, LOGNOT,
+        
+        ASSIGN, 
+        
         INCREMENT, DECREMENT, NOT,
     
         NEGATE,
@@ -20,10 +23,12 @@ namespace AST
         IDENTIFIER,
         
         LOADLOCATION, PTRACCESS, DIRECTMEMLOAD,
+        INITIALIZER,
+        
         STRUCTDEREFERENCE,
         // PADDING has no machine code, the generator will skip over it 
         PADDING, 
-        ASSIGN, WIDEN,
+        WIDEN,
         LEFTVALIDENT,
         IF,
         GLUE, FUNCTION,

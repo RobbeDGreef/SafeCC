@@ -107,13 +107,17 @@ struct ast_node *StatementParser::parseArrayInit(struct Type   type,
     else
         err.fatal("Invalid initializer");
 
-    return mkAstUnary(AST::Types::ASSIGN, tree, 0, m_scanner.curLine(),
+    return mkAstUnary(AST::Types::INITIALIZER, tree, 0, m_scanner.curLine(),
                       m_scanner.curChar());
 }
 
 struct ast_node *StatementParser::parseVarInit(struct Type   type,
                                                struct Symbol sym)
 {
+    struct ast_node *tree;
+    struct ast_node *right;
+    int id;
+    
     // Apparently the ISO c standard has no problem with this
     #if 0
     if (m_scanner.token().token() == Token::Tokens::STRINGLIT ||
@@ -124,28 +128,24 @@ struct ast_node *StatementParser::parseVarInit(struct Type   type,
     
     #endif
     
-    struct ast_node *left = m_parser.m_exprParser.parseBinaryOperation(0, type);
+    right = m_parser.m_exprParser.parseBinaryOperation(0, type);
 
-    if (left->operation == AST::Types::INTLIT)
+    if (right->operation == AST::Types::INTLIT)
     {
         if (g_symtable.isCurrentScopeGlobal())
         {
             // Simply set it as a initialiser value in the symbol table
-            sym.value = left->value;
+            sym.value = right->value;
             g_symtable.pushSymbol(sym);
             return mkAstLeaf(AST::Types::PADDING, 0, type, 0, 0);
         }
     }
 
-    int              id   = g_symtable.pushSymbol(sym);
-    struct ast_node *tree = mkAstLeaf(AST::Types::LOADLOCATION, id, type,
-                                      left->line, left->c);
+    id   = g_symtable.pushSymbol(sym);
+    tree = mkAstLeaf(AST::Types::IDENTIFIER, id, type, right->line, right->c);
 
-    tree = mkAstUnary(AST::Types::LEFTVALIDENT, tree, 0, type, left->line,
-                      left->c);
-
-    return mkAstNode(AST::Types::ASSIGN, left, NULL, tree, 0, type, left->line,
-                     left->c);
+    return mkAstNode(AST::Types::ASSIGN, tree, NULL, right, 0, type, right->line,
+                     right->c);
 }
 
 struct ast_node *StatementParser::variableDecl(struct Type type, int sc)
@@ -235,66 +235,27 @@ struct ast_node *StatementParser::variableDecl(struct Type type, int sc)
         }
     }
 }
+
 /////////////////////////////////////////////////////////
 /// @brief Generates a variable assignment ast tree
 ///
 /// @param ptrDepth the depth of the pointer
 /// @return struct ast_node* ast tree
 ///
-/// The tree generated here will be:
-///        |
-///      ASSIGN
-///      /    \
-///  primary  lvalident
-///             /
-///     (ptr accesses may happen depending on ptr depth)
-///           /
-///     loadaddress (of var)
-///
-///
-struct ast_node *StatementParser::variableAssignment(int ptrDepth)
+struct ast_node *StatementParser::variableAssignment(struct ast_node *lvalue)
 {
-    int id = g_symtable.findSymbol(m_scanner.identifier());
+    struct ast_node *right;
+    struct ast_node *left;
+    //right = mkAstUnary(AST::Types::LEFTVALIDENT, lvalue, 0, lvalue->type,
+    //                   m_scanner.curLine(), m_scanner.curChar());
+    
+    int l = lvalue->line;
+    int c = lvalue->c;
+    
+    right = m_parser.m_exprParser.parseBinaryOperation(0, lvalue->type);
 
-    if (id == -1)
-        err.fatal("Undeclared variable: '" + m_scanner.identifier() + "'");
-
-    struct Type type = g_symtable.getSymbol(id)->varType;
-
-    struct ast_node *right = mkAstLeaf(AST::Types::LOADLOCATION, id, type,
-                                       m_scanner.curLine(),
-                                       m_scanner.curChar());
-    if (type.typeType == TypeTypes::STRUCT && type.ptrDepth)
-        right = mkAstUnary(AST::Types::PTRACCESS, right, 0, type, right->line,
-                           right->c);
-
-    right = m_parser.m_exprParser.parsePostfixOperator(right, false);
-
-    type = right->type;
-
-    /* Check if pointer depth is correct */
-    if (ptrDepth > type.ptrDepth)
-        err.fatal("Variable '" + g_symtable.getSymbol(id)->name +
-                  "' does not have pointerdepth " + to_string(ptrDepth));
-
-    for (int i = 0; i < ptrDepth; i++)
-    {
-        dereference(&type);
-        right = mkAstUnary(AST::Types::PTRACCESS, right, 0, type, right->line,
-                           right->c);
-    }
-
-    struct ast_node *left = NULL;
-
-    right = mkAstUnary(AST::Types::LEFTVALIDENT, right, 0, type,
-                       m_scanner.curLine(), m_scanner.curChar());
-
-    m_parser.match(Token::Tokens::EQUALSIGN);
-
-    left = m_parser.m_exprParser.parseBinaryOperation(0, type);
-
-    struct ast_node *tree = mkAstNode(AST::Types::ASSIGN, left, NULL, right, 0,
-                                      type, m_scanner.curLine(),
+    struct ast_node *tree = mkAstNode(AST::Types::ASSIGN, lvalue, NULL, right, 0,
+                                      lvalue->type, m_scanner.curLine(),
                                       m_scanner.curChar());
     return tree;
 }
