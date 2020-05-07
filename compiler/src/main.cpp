@@ -144,8 +144,8 @@ int main(int argc, char *const *argv)
             return 0;
         
         Scanner scanner(ppfile.c_str());
-        // Make sure the error handler can get line numbers
         err.setupLinehandler(scanner);
+        generator.setupInfileHandler(scanner);
 
         Parser parser(scanner, generator);
 

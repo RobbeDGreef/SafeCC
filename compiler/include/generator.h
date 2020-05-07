@@ -51,6 +51,7 @@ protected:
 
 /*debugging */
 public:
+    virtual void genDebugComment(string s) {}
     virtual int genExtern(string name) {}
     virtual int genFunctionPreamble(int funcInx) {}
     virtual int genFunctionPostamble(int funcIdx) {}
@@ -59,5 +60,5 @@ public:
     Generator(string &outfile);
     void close();
     int generateFromAst(struct ast_node *tree, int reg, int parentOp);
-    
+    void setupInfileHandler(Scanner &scanner);
 };

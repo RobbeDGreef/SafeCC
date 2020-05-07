@@ -148,6 +148,11 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
     
     case AST::Types::ASSIGN:
         return generateAssignment(tree);       
+    
+    case AST::Types::DEBUGPRINT:
+        string comment = m_scanner->getStrFromTo(tree->value, tree->c);
+        genDebugComment(comment);
+        return generateFromAst(tree->left, -1, 0);
     }
 
     if (tree->left)
@@ -260,4 +265,9 @@ void Generator::write(string instruction)
 void Generator::write(string instruction, int source, string destination)
 {
     write(instruction, to_string(source), destination);
+}
+
+void Generator::setupInfileHandler(Scanner &scanner)
+{
+    m_scanner = &scanner;
 }

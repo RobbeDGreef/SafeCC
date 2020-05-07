@@ -238,3 +238,20 @@ int Scanner::curOffset()
 {
     return ftell(m_infile);
 }
+
+string Scanner::getStrFromTo(int from, int to)
+{
+    unsigned long pos = ftell(m_infile);
+    
+    string str = "";
+    fseek(m_infile, from, SEEK_SET);
+    
+    for (int i = from; i <= to; i++)
+    {
+        str += fgetc(m_infile);
+    }
+    
+    fseek(m_infile, pos, SEEK_SET);
+    
+    return str;
+}

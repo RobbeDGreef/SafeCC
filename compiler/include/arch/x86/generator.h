@@ -66,6 +66,7 @@ protected:
 
 public:
     GeneratorX86(string);
+    void genDebugComment(string);
     int genDataSection();
     int genExternSection();
 

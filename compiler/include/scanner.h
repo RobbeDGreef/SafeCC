@@ -60,6 +60,7 @@ public:
     string curPPFile();
     string curFunction();
     string curStrLine(int offset);
+    string getStrFromTo(int from, int to);
     string &identifier();
     int getTokenStart();
 

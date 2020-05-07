@@ -59,7 +59,7 @@ struct ast_node *StatementParser::parseStatement()
     int              ptrOcc       = 0;
     int              storageClass = -1;
     struct ErrorInfo errinfo;
-    struct ast_node *node = 0;
+    struct ast_node *node = NULL;
 
 loop:;
     int         tok = m_scanner.token().token();
@@ -77,25 +77,29 @@ loop:;
         goto loop;
     
     case Token::Tokens::IF:
-        return ifStatement();
+        node = ifStatement();
+        break;
 
     case Token::Tokens::TYPEDEF:
-        return parseTypedef();
-
+        node = parseTypedef();
+        break;
+        
     case Token::Tokens::WHILE:
-        return whileStatement();
-
+        node = whileStatement();
+        break;
+        
     case Token::Tokens::FOR:
-        return forStatement();
-
+        node = forStatement();
+        break;
+        
     case Token::Tokens::RETURN:
-        return returnStatement();
-
+        node = returnStatement();
+        break;
     case Token::Tokens::T_EOF:
         err.fatal("EOF read while block was not terminated with a '}'");
 
     case Token::Tokens::R_BRACE:
-        return NULL;
+        break;
 
     case Token::Tokens::SIGNED:
     case Token::Tokens::UNSIGNED:
@@ -114,11 +118,20 @@ loop:;
             m_scanner.token().token() == Token::Tokens::L_BRACE)
         {
             if (tok == Token::Tokens::STRUCT)
-                return declStruct(storageClass);
+            {
+                node = declStruct(storageClass);
+                break;
+            }
             else if (tok == Token::Tokens::UNION)
-                return declUnion(storageClass);
+            {
+                node = declUnion(storageClass);
+                break;
+            }
             else if (tok == Token::Tokens::ENUM)
-                return declEnum();
+            {
+                node = declEnum();
+                break;
+            }
 
             err.unknownType(m_scanner.identifier());
         }
@@ -126,7 +139,8 @@ loop:;
         if (type.typeType == TypeTypes::ENUM)
             type.typeType = TypeTypes::VARIABLE;
 
-        return parseDeclaration(type, storageClass);
+        node = parseDeclaration(type, storageClass);
+        break;
 
     case Token::Tokens::IDENTIFIER:
         type = m_parser.parseType();
@@ -139,19 +153,23 @@ loop:;
                 m_scanner.scan();
             }
             type.ptrDepth += ptrOcc;
-            return parseDeclaration(type, storageClass);
+            node = parseDeclaration(type, storageClass);
+            break;
         }
 
     default:
         node = m_parser.m_exprParser.parseBinaryOperation(0, NULLTYPE);
-        
-        if (node)
-            return node;
-        
+        break;
     }
 
-    err.unexpectedToken(tok);
-    return 0;
+    if (node && node->operation != AST::Types::PADDING)
+    {
+        // Place statement strings into the asm files for debugging purposes
+        node = mkAstUnary(AST::Types::DEBUGPRINT, node, m_lastOffset+1, 
+                          m_scanner.curLine(), m_scanner.curOffset()-1);
+    }
+    m_lastOffset = m_scanner.curOffset();
+    return node;
 }
 
 bool isStatement(int op)

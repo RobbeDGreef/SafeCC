@@ -13,11 +13,12 @@ class StatementParser
 {
 
   private:
-    Scanner &  m_scanner;
-    Parser &   m_parser;
+    Scanner   &m_scanner;
+    Parser    &m_parser;
     Generator &m_generator;
-    TypeList & m_typeList;
-
+    TypeList  &m_typeList;
+    int m_lastOffset = 0;
+  
   private:
     struct ast_node *parseBlock();
     struct ast_node *parseBlock(vector<struct Symbol> arguments);

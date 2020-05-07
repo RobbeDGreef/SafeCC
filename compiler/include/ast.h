@@ -34,7 +34,9 @@ namespace AST
         GLUE, FUNCTION,
         WHILE,
         FUNCTIONCALL, FUNCTIONARGUMENT,
-        RETURN
+        RETURN,
+        
+        DEBUGPRINT
     };
 };
 
