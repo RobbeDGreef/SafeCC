@@ -103,8 +103,6 @@ int SymbolTable::_addVariable(struct Symbol sym)
         sym.storageClass != StorageClass::STATIC)
     {
         sym.stackLoc = func->localVarAmount;
-        DEBUGB("sym: " << sym.name << " stackloc: " << sym.stackLoc)
-
         if (sym.varType.isArray)
         {
             func->localVarAmount += varSize;

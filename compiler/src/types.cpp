@@ -80,7 +80,8 @@ int typeToSize(int type)
     case PrimitiveTypes::VOID:
         return INT_SIZE;
     }
-    DEBUGR("WAAAARNIIINNGG " << type)
+    
+    err.warning("YO WTH?\n");
     
     return -1;
 }
@@ -118,7 +119,7 @@ struct Type tokenToType(vector<int> &tokens)
     if (tokens.size() == 0)
         err.fatal("No type was specified");
 
-    /* Variables are defaultly signed */
+    /* Variables are signed by default */
     bool sign = true;
     if (hasItem<int>(tokens, Token::Tokens::UNSIGNED))
         sign = false;

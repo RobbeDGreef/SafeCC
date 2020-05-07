@@ -134,7 +134,7 @@ struct ast_node *StatementParser::parseVarInit(struct Type   type,
     {
         if (g_symtable.isCurrentScopeGlobal())
         {
-            // Simply set it as a initialiser value in the symbol table
+            // Simply set it as a initializer value in the symbol table
             sym.value = right->value;
             g_symtable.pushSymbol(sym);
             return mkAstLeaf(AST::Types::PADDING, 0, type, 0, 0);
