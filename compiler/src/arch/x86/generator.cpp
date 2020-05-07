@@ -3,7 +3,7 @@
 #include <symbols.h>
 #include <types.h>
 
-/* Helper nctions */
+/* Helper functions */
 int _sizeToDataSize(int size)
 {
     switch (size)
@@ -83,7 +83,7 @@ int GeneratorX86::allocReg()
     {
         if (!m_usedRegisters[i])
         {
-            /* Alocate dword register */
+            /* Allocate dword register */
             m_usedRegisters[i] = 1;
             return i;
         }
@@ -667,12 +667,79 @@ int GeneratorX86::genDecrement(int symbol, int amount, int after)
 }
 int GeneratorX86::genLeftShift(int reg, int amount)
 {
-    write("shr", GETREG(amount), GETREG(reg));
+    allocReg(ECX);
+    move("mov", GETREG(amount), "ecx");
+    freeReg(amount);
+    write("shl", "cl", GETREG(reg));
     return reg;
 }
 
 int GeneratorX86::genRightShift(int reg, int amount)
 {
-    write("shl", GETREG(amount), GETREG(reg));
+    allocReg(ECX);
+    move("mov", GETREG(amount), "ecx");
+    freeReg(amount);
+    write("shr", "cl", GETREG(reg));
     return reg;
+}
+
+int GeneratorX86::genModulus(int reg1, int reg2)
+{
+    DEBUG("MOD")
+    int reg3 = -1;
+    int reg4 = -1;
+
+    write("push", GETREG(reg2));
+    freeReg(reg2);
+
+    if (m_usedRegisters[EAX] && reg1 != EAX)
+    {
+        /* Allocate register eax */
+        reg3 = allocReg(EAX);
+    }
+
+    if (m_usedRegisters[EDX])
+    {
+        /* Allocate register edx */
+        reg4 = allocReg(EDX);
+    }
+
+    write("xor", "edx", "edx");
+    move("mov", GETREG(reg1), "eax");
+    write("cdq");
+    write("idiv", "dword [esp]");
+    move("mov", "edx", GETREG(reg1));
+
+    if (reg3 >= 0)
+    {
+        write("mov", GETREG(reg3), "eax");
+        freeReg(reg3);
+    }
+
+    if (reg4 >= 0)
+    {
+        write("mov", GETREG(reg4), "edx");
+        freeReg(reg4);
+    }
+
+    write("add", 4, "esp");
+
+    DEBUG("ENDDIV")
+    return reg1;
+}
+
+void GeneratorX86::genDebugComment(string comment)
+{
+    int end = comment.length();
+    
+    for (int i = 0; i < end; i++)
+    {
+        if (comment[i] == '\n')
+        {
+            comment.insert(++i, "; ");
+            end++;
+        }
+    }
+    
+    fprintf(m_outfile, "; %s\n", comment.c_str());
 }

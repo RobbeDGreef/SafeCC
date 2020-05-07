@@ -171,6 +171,12 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
         return genMul(leftreg, rightreg);
     case AST::Types::DIVIDE:
         return genDiv(leftreg, rightreg);
+    case AST::Types::L_SHIFT:
+        return genLeftShift(leftreg, rightreg);
+    case AST::Types::R_SHIFT:
+        return genRightShift(leftreg, rightreg);
+    case AST::Types::MODULUS:
+        return genModulus(leftreg, rightreg);
     case AST::Types::INTLIT:
         return genLoad(tree->value, tree->type.size);
     case AST::Types::IDENTIFIER:

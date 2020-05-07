@@ -38,7 +38,7 @@ protected:
     int genMul(int reg1, int reg2);
     int genDiv(int reg1, int reg2);
 
-    int genLoadVariable(int symbolidx);
+    int genLoadVariable(int symbolidx, struct Type t);
     int genStoreValue(int reg, int memloc, struct Type t);
 
     int genCompareJump(int op, int reg1, int reg2, int label);
@@ -55,7 +55,11 @@ protected:
     int genDirectMemLoad(int offset, int symbol, int reg, int size);
     int genNegate(int reg);
     int genAccessStruct(int symbol, int idx);
-
+    int genIncrement(int sym, int amount, int after);
+    int genDecrement(int sym, int amount, int after);
+    int genLeftShift(int reg1, int amount);
+    int genRightShift(int reg1, int amount);
+    int genModulus(int reg1, int reg2);
     void freeReg(int reg);
     int allocReg();
     int allocReg(int r);

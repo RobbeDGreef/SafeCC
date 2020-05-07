@@ -9,6 +9,7 @@ class Generator
 protected:
     FILE        *m_outfile;
     int         m_labelCount = 0;
+    Scanner     *m_scanner;         // Used only for debugging
 
 protected:
     void write(string instruction, string source, string destination);
@@ -19,6 +20,7 @@ protected:
     int generateIf(struct ast_node *tree);
     int generateWhile(struct ast_node *tree);
     int generateArgumentPush(struct ast_node *tree);
+    int generateAssignment(struct ast_node *tree);
     int label();
 
     /* Arch dependant functions, get overwritten in arch/ARCH folder */
@@ -28,7 +30,7 @@ protected:
     virtual int genSub(int reg1, int reg2) {}
     virtual int genMul(int reg1, int reg2) {}
     virtual int genDiv(int reg1, int reg2) {}
-    virtual int genLoadVariable(int symbol) {}
+    virtual int genLoadVariable(int symbol, struct Type t) {}
     virtual int genStoreValue(int reg, int memloc, struct Type t) {}
     virtual int genCompareJump(int op, int reg1, int reg2, int label) {}
     virtual int genCompareSet(int op, int reg1, int reg2) {}
@@ -43,10 +45,11 @@ protected:
     virtual int genDirectMemLoad(int offset, int symbol, int reg, int size) {}
     virtual int genNegate(int reg) {}
     virtual int genAccessStruct(int symbol, int idx) {}
-    virtual int genIncrement(int reg, int amount, bool incrAfter) {}
-    virtual int genDecrement(int reg, int amount, bool decrAfter) {}
-    virtual int genLeftShift(int reg1, int reg2, int size) {}
-    virtual int genRightShift(int reg1, int reg2, int size) {}
+    virtual int genIncrement(int symbol, int amount, int after) {}
+    virtual int genDecrement(int symbol, int amount, int after) {}
+    virtual int genLeftShift(int reg1, int reg2) {}
+    virtual int genRightShift(int reg1, int reg2) {}
+    virtual int genModulus(int leftreg, int rightreg) {}
     
 
 /*debugging */
