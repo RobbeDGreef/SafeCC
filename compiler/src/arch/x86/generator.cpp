@@ -63,12 +63,30 @@ GeneratorX86::GeneratorX86(string outfile) : Generator(outfile)
 
 void GeneratorX86::freeAllReg()
 {
+    m_spilledRegisters = 0;
     for (int i = 0; i < SIZE(m_usedRegisters); i++)
         m_usedRegisters[i] = 0;
 }
 
+void GeneratorX86::spillReg(int reg)
+{
+    write("push", GETREG(reg));
+}
+
+void GeneratorX86::loadReg(int reg)
+{
+    write("pop", GETREG(reg));
+}
+
 void GeneratorX86::freeReg(int reg)
 {
+    if (m_spilledRegisters && (m_spilledRegisters - 1) % REGAMOUNT == reg)
+    {
+        loadReg(reg);
+        m_spilledRegisters--;
+        return;
+    }
+    
     if (m_usedRegisters[reg] == 0)
     {
         err.warningNL("Trying to free a register that is already free: " +
@@ -88,7 +106,12 @@ int GeneratorX86::allocReg()
             return i;
         }
     }
-    err.fatalNL("Ran out of usable registers");
+    
+    int reg = m_spilledRegisters % REGAMOUNT;
+    m_spilledRegisters++;
+    spillReg(reg);
+    
+    return reg;
 }
 
 /**
@@ -182,49 +205,51 @@ int GeneratorX86::genMul(int r1, int r2)
     return r1;
 }
 
-int GeneratorX86::genDiv(int r1, int r2)
+int GeneratorX86::_genIDiv(int r1, int r2, bool quotient)
 {
     DEBUG("DIV")
-    int r3 = -1;
-    int r4 = -1;
+    bool r3 = false;
+    bool r4 = false;
+    
+    if (m_usedRegisters[EAX] && r1 != EAX)
+    {
+        r3 = true;
+        write("push", "eax");
+        write("mov", GETREG(r1), "eax");
+    }
+    
+    if (m_usedRegisters[EDX])
+    {
+        r4 = true;
+        write("push", "edx");
+    }
 
     write("push", GETREG(r2));
     freeReg(r2);
-
-    if (m_usedRegisters[EAX] && r1 != EAX)
-    {
-        /* Allocate register eax */
-        r3 = allocReg(EAX);
-    }
-
-    if (m_usedRegisters[EDX])
-    {
-        /* Allocate register edx */
-        r4 = allocReg(EDX);
-    }
 
     write("xor", "edx", "edx");
     move("mov", GETREG(r1), "eax");
     write("cdq");
     write("idiv", "dword [esp]");
-    move("mov", "eax", GETREG(r1));
-
-    if (r3 >= 0)
-    {
-        write("mov", GETREG(r3), "eax");
-        freeReg(r3);
-    }
-
-    if (r4 >= 0)
-    {
-        write("mov", GETREG(r4), "edx");
-        freeReg(r4);
-    }
-
+    
+    string ret = "edx";
+    if (quotient)
+        ret = "eax";
+    move("mov", ret, GETREG(r1));
     write("add", 4, "esp");
 
-    DEBUG("ENDDIV")
+    if (r4)
+        write("pop", "edx");
+
+    if (r3)
+        write("pop", "eax");
+    
     return r1;
+}
+
+int GeneratorX86::genDiv(int r1, int r2)
+{
+    return _genIDiv(r1, r2, true);
 }
 
 string variableAccess(int symbol, int offset = 0)
@@ -241,13 +266,16 @@ string variableAccess(int symbol, int offset = 0)
         }
         else
         {
+            int varSize = getTypeSize(*s);
             if (s->varType.typeType == TypeTypes::STRUCT &&
                 !s->varType.ptrDepth)
                 offset += s->varType.size -
                           s->varType.contents.back().itemType.size;
 
             else if (s->varType.isArray /*&& !(s->varType.ptrDepth - 1) */)
-                offset += s->varType.size * s->value - 4;
+                offset += varSize - 4;
+            
+            DEBUGR("offset: " << offset)
 
             return "ebp-" + to_string(s->stackLoc + 4 + offset);
         }
@@ -683,49 +711,9 @@ int GeneratorX86::genRightShift(int reg, int amount)
     return reg;
 }
 
-int GeneratorX86::genModulus(int reg1, int reg2)
+int GeneratorX86::genModulus(int r1, int r2)
 {
-    DEBUG("MOD")
-    int reg3 = -1;
-    int reg4 = -1;
-
-    write("push", GETREG(reg2));
-    freeReg(reg2);
-
-    if (m_usedRegisters[EAX] && reg1 != EAX)
-    {
-        /* Allocate register eax */
-        reg3 = allocReg(EAX);
-    }
-
-    if (m_usedRegisters[EDX])
-    {
-        /* Allocate register edx */
-        reg4 = allocReg(EDX);
-    }
-
-    write("xor", "edx", "edx");
-    move("mov", GETREG(reg1), "eax");
-    write("cdq");
-    write("idiv", "dword [esp]");
-    move("mov", "edx", GETREG(reg1));
-
-    if (reg3 >= 0)
-    {
-        write("mov", GETREG(reg3), "eax");
-        freeReg(reg3);
-    }
-
-    if (reg4 >= 0)
-    {
-        write("mov", GETREG(reg4), "edx");
-        freeReg(reg4);
-    }
-
-    write("add", 4, "esp");
-
-    DEBUG("ENDDIV")
-    return reg1;
+    return _genIDiv(r1, r2, false);
 }
 
 void GeneratorX86::genDebugComment(string comment)
