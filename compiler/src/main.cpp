@@ -166,7 +166,7 @@ int main(int argc, char *const *argv)
         goto end;
 
     status =
-        system((assembler + " -felf -o " + linkfile + " " + asmfile).c_str());
+        system((assembler + " -F dwarf -g -felf -o " + linkfile + " " + asmfile).c_str());
 
     if (status)
         err.fatalNL("Failed to assemble binary");
