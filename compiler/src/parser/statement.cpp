@@ -142,7 +142,11 @@ loop:;
         node = parseDeclaration(type, storageClass);
         break;
 
-    case Token::Tokens::IDENTIFIER:
+    default:
+        node = m_parser.m_exprParser.parseBinaryOperation(0, NULLTYPE);
+        if (node)
+            break;
+    
         type = m_parser.parseType();
 
         if (type.typeType != 0)
@@ -156,10 +160,8 @@ loop:;
             node = parseDeclaration(type, storageClass);
             break;
         }
-
-    default:
-        node = m_parser.m_exprParser.parseBinaryOperation(0, NULLTYPE);
-        break;
+        
+        err.unknownSymbol(m_scanner.identifier());
     }
 
     if (node && node->operation != AST::Types::PADDING)
