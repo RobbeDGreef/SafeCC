@@ -21,7 +21,7 @@ int test(int x)
 
 int receive(struct hellostruct x)
 {
-    printf("%x %x %x", x, x.x);
+    printf("%x %i %i %i\n", &x, x.x, x.y, x.z);
 }
 
 int main()
