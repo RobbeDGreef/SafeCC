@@ -83,7 +83,7 @@ int SymbolTable::_addVariable(struct Symbol sym)
     }
     
     int varSize = getTypeSize(sym);
-
+    
     if (sym.storageClass == StorageClass::STATIC)
     {
         sym.stackLoc = m_staticVariableOffset;
@@ -107,7 +107,6 @@ int SymbolTable::_addVariable(struct Symbol sym)
         {
             func->localVarAmount += varSize;
             
-            DEBUG("what: " << func->localVarAmount % INT_SIZE << " tf " << varSize << " " << INT_SIZE << " im trippin" << func->localVarAmount)
             // Making sure the bytealignment stays correct
             if (func->localVarAmount % INT_SIZE)
                 func->localVarAmount += INT_SIZE -
