@@ -191,6 +191,7 @@ struct ast_node *StatementParser::functionCall()
     {
         arg = m_parser.m_exprParser.parseBinaryOperation(0, g_symtable.getSymbol(id)->arguments[i]);
 
+#if 0
         if (arg->type.typeType == TypeTypes::STRUCT && !arg->type.ptrDepth)
         {
             for (int j = 0; j < arg->type.contents.size(); j++)
@@ -209,6 +210,7 @@ struct ast_node *StatementParser::functionCall()
             }
         }
         else
+#endif
             tree = mkAstNode(AST::Types::FUNCTIONARGUMENT, tree, NULL, arg, i,
                              m_scanner.curLine(), m_scanner.curChar());
 

@@ -63,7 +63,7 @@ struct ast_node *StatementParser::parseStructInit(struct Type   structType,
         int l = m_scanner.curLine();
         int c = m_scanner.curChar();
 
-        tree = mkAstUnary(AST::Types::LEFTVALIDENT, ident, 0, structType, l, c);
+        tree = mkAstNode(AST::Types::ASSIGN, left, NULL, ident, 0, structType, l, c);
     }
     else
     {
@@ -130,7 +130,7 @@ struct ast_node *StatementParser::parseStructInit(struct Type   structType,
     ident->value = id;
 
     DEBUG("leaving")
-    return mkAstNode(AST::Types::ASSIGN, left, NULL, tree, 0,
+    return mkAstNode(AST::Types::INITIALIZER, left, NULL, tree, 0,
                      m_scanner.curLine(), m_scanner.curChar());
 }
 

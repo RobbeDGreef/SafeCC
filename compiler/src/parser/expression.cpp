@@ -131,7 +131,7 @@ struct ast_node *ExpressionParser::parsePrimary(struct Type *ltype)
     case Token::Tokens::IDENTIFIER:
         id = g_symtable.findSymbol(m_scanner.identifier());
         if (id == -1)
-            err.fatal("Unknown symbol: '" + m_scanner.identifier() + "'");
+            return NULL;
 
         s = g_symtable.getSymbol(id);
         
@@ -578,6 +578,9 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prev_prec,
     struct ast_node *left;
     
     left = parseLeft(type);
+    
+    if (!left)
+        return left;
 
     int tok = m_scanner.token().token();
 
@@ -593,6 +596,9 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prev_prec,
 
         struct ast_node *right = parseBinaryOperator(OperatorPrecedence[tok],
                                                      type);
+        
+        if (!right)
+            err.unknownSymbol(m_scanner.identifier());
 
         struct ast_node *tmp = checkArithmetic(left, right, tok);
         if (tmp)
@@ -654,8 +660,11 @@ struct ast_node *ExpressionParser::parseBinaryOperation(int         prev_prec,
     }
 
     struct ast_node *node = parseBinaryOperator(prev_prec, &inttypes);
-    struct ast_node *tmp;
     
+    if (!node)
+        return node;
+    
+    struct ast_node *tmp;
     if (type.typeType != 0)
     {
         // This is just a padding instruction to hold the type specifier and

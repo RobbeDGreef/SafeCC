@@ -148,7 +148,7 @@ int GeneratorX86::genFunctionPreamble(int funcIdx)
     fprintf(m_outfile, "%s:\n", s->name.c_str());
     write("push", "ebp");
     write("mov", "esp", "ebp");
-    write("sub", s->localVarAmount, "esp");
+    write("sub", s->localVarAmount + 4, "esp");
     return -1;
 }
 
@@ -269,8 +269,7 @@ string variableAccess(int symbol, int offset = 0)
             int varSize = getTypeSize(*s);
             if (s->varType.typeType == TypeTypes::STRUCT &&
                 !s->varType.ptrDepth)
-                offset += s->varType.size -
-                          s->varType.contents.back().itemType.size;
+                offset += s->varType.size;
 
             else if (s->varType.isArray /*&& !(s->varType.ptrDepth - 1) */)
                 offset += varSize - 4;
@@ -293,8 +292,10 @@ int GeneratorX86::genLoadVariable(int symbol, struct Type t)
     // Clear the register if it is smaller then a DWORD
     // if (regs != 1)
     //    write("xor", m_dwordRegisters[reg], m_dwordRegisters[reg]);
+    
+    struct Symbol *s = g_symtable.getSymbol(symbol);
 
-    if (t.isArray)
+    if (s->varType.isArray)
     {
         m_usedRegisters[reg] = 1;
         write("lea", MEMACCESS(variableAccess(symbol)), GETREG(reg));
@@ -630,7 +631,7 @@ int GeneratorX86::genAccessStruct(int symbol, int idx)
     int offset = s->varType.contents[idx].offset;
     write("mov",
           SPECIFYSIZE(_regFromSize(size)) + MEMACCESS(variableAccess(symbol,
-                                                                     offset)),
+                                                                     -offset)),
           GETREG(reg));
 
     return reg;

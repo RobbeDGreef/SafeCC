@@ -54,12 +54,11 @@ int Generator::generateWhile(struct ast_node *tree)
 
 int Generator::generateArgumentPush(struct ast_node *tree)
 {
-    #if 0
     if (tree->right->operation == AST::Types::IDENTIFIER && 
         tree->right->type.typeType == TypeTypes::STRUCT &&
         !tree->right->type.ptrDepth)
     {
-        vector<struct StructItem> sitems = tree->right->type.structContents;
+        vector<struct StructItem> sitems = tree->right->type.contents;
         for (int i = sitems.size() - 1; i >= 0; i--)
         {
             int right = genAccessStruct(tree->right->value, i);
@@ -68,10 +67,9 @@ int Generator::generateArgumentPush(struct ast_node *tree)
     }
     else
     {
-    #endif
         int right = generateFromAst(tree->right, -1, tree->operation);
         genPushArgument(right, tree->value);
-    //}
+    }
     generateFromAst(tree->left, -1, tree->operation);
     
     return -1;
