@@ -43,4 +43,9 @@ int main()
     {
         printf("one or the other\n");
     }
+    
+    if (!b)
+    {
+        printf("B is 0\n");
+    }
 }
