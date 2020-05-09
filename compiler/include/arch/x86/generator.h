@@ -59,24 +59,34 @@ private:
     int genDiv(int reg1, int reg2);
     int genModulus(int reg1, int reg2);
     
+    int genAnd(int reg1, int reg2);
+    int genOr(int reg1, int reg2);
+    int genXor(int reg1, int reg2);
+    
 
     int genLoadVariable(int symbolidx, struct Type t);
     int genStoreValue(int reg, int memloc, struct Type t);
 
-    int genCompareJump(int op, int reg1, int reg2, int label);
+    int genCompare(int op, int reg1, int reg2);
     int genCompareSet(int op, int reg1, int reg2);
+    int genFlagJump(int op, int label);
 
-    int  genJump(int label);
-    int  genLabel(int label);
-    int  genWidenRegister(int reg, int oldsize, int newsize, bool isSigned);
-    int  genPushArgument(int reg, int argindex);
-    int  genFunctionCall(int symbolidx, int parameters);
-    int  genReturnJump(int reg, int funcIdx);
-    int  genLoadLocation(int symbolidx);
-    int  genPtrAccess(int reg, int size);
-    int  genDirectMemLoad(int offset, int symbol, int reg, int size);
-    int  genNegate(int reg);
-    int  genAccessStruct(int symbol, int idx);
+    int genJump(int label);
+    int genLabel(int label);
+    int genWidenRegister(int reg, int oldsize, int newsize, bool isSigned);
+    int genPushArgument(int reg, int argindex);
+    int genFunctionCall(int symbolidx, int parameters);
+    int genReturnJump(int reg, int funcIdx);
+    int genLoadLocation(int symbolidx);
+    int genPtrAccess(int reg, int size);
+    int genDirectMemLoad(int offset, int symbol, int reg, int size);
+    int genNegate(int reg);
+    int genAccessStruct(int symbol, int idx);
+    int genBinNegate(int reg);
+    int genIsZero(int reg);
+    int genIsZeroSet(int reg);
+    int genLogAnd(int reg1, int reg2);
+    int genLogOr(int reg1, int reg2);
     
   public:
     GeneratorX86(string);

@@ -736,6 +736,34 @@ void GeneratorX86::genDebugComment(string comment)
     
     fprintf(m_outfile, "; %s\n", comment.c_str());
 }
+
+int GeneratorX86::genAnd(int reg1, int reg2)
+{
+    write("and", GETREG(reg2), GETREG(reg1));
+    freeReg(reg2);
+    return reg1;
+}
+
+int GeneratorX86::genOr(int reg1, int reg2)
+{
+    write("or", GETREG(reg2), GETREG(reg1));
+    freeReg(reg2);
+    return reg1;
+}
+
+int GeneratorX86::genXor(int reg1, int reg2)
+{
+    write("xor", GETREG(reg2), GETREG(reg1));
+    freeReg(reg2);
+    return reg1;
+}
+
+int GeneratorX86::genBinNegate(int reg1)
+{
+    write("not", GETREG(reg1));
+    return reg1;
+}
+
 int GeneratorX86::genIsZero(int reg)
 {
     write("test", GETREG(reg), GETREG(reg));

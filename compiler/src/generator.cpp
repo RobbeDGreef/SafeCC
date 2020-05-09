@@ -220,7 +220,7 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
         // Because arguments are pushed in reverse order
         generateArgumentPush(tree);
         return -1;
-    
+        
     case AST::Types::INCREMENT:
         DEBUG("tree l " << tree->left << " r " << tree->right)
         return genIncrement(tree->left->value, tree->right->value, tree->value);
@@ -228,8 +228,8 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
         leftreg = generateFromAst(tree->left, -1, tree->operation);
         return genDecrement(leftreg, tree->right->value, tree->value);
     case AST::Types::ASSIGN:
-        return generateAssignment(tree);       
-    
+        return generateAssignment(tree);
+        
     case AST::Types::DEBUGPRINT:
         string comment = m_scanner->getStrFromTo(tree->value, tree->c);
         genDebugComment(comment);
@@ -258,6 +258,16 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
         return genRightShift(leftreg, rightreg);
     case AST::Types::MODULUS:
         return genModulus(leftreg, rightreg);
+    case AST::Types::AND:
+        return genAnd(leftreg, rightreg);
+    case AST::Types::OR:
+        return genOr(leftreg, rightreg);
+    case AST::Types::XOR:
+        return genXor(leftreg, rightreg);
+    
+    case AST::Types::NOT:
+        return genBinNegate(leftreg);
+    
     case AST::Types::INTLIT:
         return genLoad(tree->value, tree->type.size);
     case AST::Types::IDENTIFIER:
@@ -285,7 +295,7 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
     case AST::Types::GREATERTHANEQUAL:
         if (!isFlowStatement(parentOp))
             return genCompareSet(tree->operation, leftreg, rightreg);
-
+        
         return genCompare(tree->operation, leftreg, rightreg);
     
     case AST::Types::LOGAND:
