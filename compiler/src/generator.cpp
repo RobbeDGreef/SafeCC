@@ -18,7 +18,7 @@ int Generator::generateIf(struct ast_node *tree)
     if (tree->right)
         endLabel = label();
 
-    generateCondition(tree->left, condEndLabel, falseLabel, tree->operation, true);
+    generateCondition(tree->left, condEndLabel, falseLabel, tree->operation);
     freeAllReg();
     genLabel(condEndLabel);
 
@@ -47,7 +47,7 @@ int Generator::generateWhile(struct ast_node *tree)
     int condEndLabel = label();
 
     genLabel(startLabel);
-    generateCondition(tree->left, condEndLabel, endLabel, tree->operation, true);
+    generateComparison(tree->left, condEndLabel, endLabel, tree->operation);
     freeAllReg();
     genLabel(condEndLabel);
     generateFromAst(tree->right, -1, tree->operation);
@@ -81,7 +81,7 @@ int Generator::generateArgumentPush(struct ast_node *tree)
     return -1;
 }
 
-int countDepth(struct ast_node *tree)
+static int countDepth(struct ast_node *tree)
 {
     int i = 0;
     while ((tree = tree->left) != NULL)
@@ -109,7 +109,7 @@ int Generator::generateAssignment(struct ast_node *tree)
     return genStoreValue(rreg, lreg, tree->type);
 }
 
-bool isFlowStatement(int tok)
+static bool isFlowStatement(int tok)
 {
     if (tok == AST::Types::IF || tok == AST::Types::WHILE)
         return true;
@@ -117,7 +117,7 @@ bool isFlowStatement(int tok)
     return false;
 }
 
-int logicalNot(int op)
+static int logicalNot(int op)
 {
     switch(op)
     {
@@ -132,27 +132,54 @@ int logicalNot(int op)
     return 0;
 }
 
+static bool isLogOp(int tok)
+{
+    switch (tok)
+    {
+    case AST::Types::LOGAND:
+    case AST::Types::LOGOR:
+    case AST::Types::LOGNOT:
+        return false;
+    }
+    
+    return false;
+}
+
+static bool isCompareOp(int tok)
+{
+    if (tok <= AST::Types::GREATERTHANEQUAL || tok >= AST::Types::EQUAL)
+        return true;
+    
+    return false;
+}
+
+int Generator::generateComparison(struct ast_node *tree, int condEndLabel, 
+                                  int endLabel, int parentOp)
+{
+    generateCondition(tree, condEndLabel, endLabel, parentOp, 0);
+    if (!isLogOp(tree->operation))
+        genFlagJump(logicalNot(tree->operation), endLabel);
+}
+
 int Generator::generateCondition(struct ast_node *tree, int condEndLabel,
-                                 int endLabel, int parentOp, bool start)
+                                 int endLabel, int parentOp, int condOp)
 {
     int leftreg = 0, rightreg = 0;
+    int op;
     
-    // It is important to note that the boolean operations are parsed
-    // like normal operators in the expression parser. This means that
-    // their trees are 'mirrored', the left node is the right part of the 
-    // comparison and the right node is left part. So we generate them her
-    // left to right
-    
-    DEBUGB("op: " << tree->operation)
-      
     switch(tree->operation)
     {
     case AST::Types::LOGNOT:
-        return generateCondition(tree->left, condEndLabel, endLabel, parentOp);
+        op = logicalNot(tree->left->operation);
+        if (op)
+            tree->left->operation = op;
+        
+        return generateCondition(tree->left, condEndLabel, endLabel, parentOp,
+                                 AST::Types::LOGNOT);
+        
     case AST::Types::LOGOR:
         leftreg = generateCondition(tree->left, condEndLabel, endLabel, parentOp);
-        if (tree->left->operation != AST::Types::LOGAND && 
-            tree->left->operation != AST::Types::LOGOR)
+        if (isLogOp(tree->left->operation))
             genFlagJump(tree->left->operation, condEndLabel);
         
         generateCondition(tree->right, condEndLabel, endLabel, parentOp);
@@ -160,10 +187,9 @@ int Generator::generateCondition(struct ast_node *tree, int condEndLabel,
         return -1;
         
     case AST::Types::LOGAND:
-        DEBUGB("LOGAND");
         leftreg = generateCondition(tree->left, condEndLabel, endLabel, parentOp);
         
-        int op = logicalNot(tree->left->operation);
+        op = logicalNot(tree->left->operation);
         if (op)
             genFlagJump(op, endLabel);
             
@@ -173,17 +199,16 @@ int Generator::generateCondition(struct ast_node *tree, int condEndLabel,
     }
     
     int ret = generateFromAst(tree, 0, parentOp);
-    if (tree->operation > AST::Types::GREATERTHANEQUAL ||
-        tree->operation < AST::Types::EQUAL)
+    if (!isCompareOp(tree->operation))
     {
-        tree->operation = AST::Types::NOTEQUAL;
+        if (condOp == AST::Types::LOGNOT)
+            tree->operation = AST::Types::EQUAL;
+        else
+            tree->operation = AST::Types::NOTEQUAL;
         genIsZero(ret);
     }
     
-    if (start)
-        genFlagJump(logicalNot(tree->operation), endLabel);
-    
-    return ret;
+    return -1;
 }
 
 int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
@@ -273,17 +298,9 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
     case AST::Types::IDENTIFIER:
         return genLoadVariable(tree->value, tree->type);
     case AST::Types::WIDEN:
-        /**
-         *  @todo   i could probably integrate this widen token into
-         * genLoadGlobal() and reducing asm instructions
-         *
-         * also this is a really hacky fix
-         */
         return genWidenRegister(leftreg, tree->value, tree->type.size,
                                 tree->type.isSigned);
 
-    //case AST::Types::LEFTVALIDENT:
-    //    return genStoreValue(reg, leftreg, tree->type);
     case AST::Types::PTRACCESS:
         return genPtrAccess(leftreg, tree->type.size);
         
