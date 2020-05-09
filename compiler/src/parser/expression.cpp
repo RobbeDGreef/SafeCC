@@ -252,7 +252,7 @@ struct ast_node *ExpressionParser::parsePrefixOperator(struct Type *ltype)
         else
             node = mkAstUnary(AST::Types::PTRACCESS, node, 0, type, node->line,
                           node->c);
-
+        
         break;
 
     case Token::Tokens::MINUS:
@@ -459,6 +459,9 @@ struct ast_node *ExpressionParser::checkArithmetic(struct ast_node *left,
 
     if (left->type.ptrDepth || right->type.ptrDepth)
     {
+        if (!isArithmetic(tok))
+            return NULL;
+            
         if (tok != Token::Tokens::MINUS && tok != Token::Tokens::PLUS)
         {
             err.fatal("Pointer arithmetic only allows + and - to be used ");

@@ -54,3 +54,19 @@ int Token::endCol()
 {
     return m_endCol;
 }
+
+int isArithmetic(int tok)
+{
+    if (tok == Token::Tokens::PLUS ||
+        tok == Token::Tokens::MINUS ||
+        tok == Token::Tokens::STAR ||
+        tok == Token::Tokens::SLASH ||
+        tok == Token::Tokens::MODULUS ||
+        tok == Token::Tokens::INC ||
+        tok == Token::Tokens::DEC)
+    {
+        return true;
+    }
+    
+    return false;
+}
