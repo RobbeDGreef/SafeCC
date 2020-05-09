@@ -22,6 +22,8 @@ protected:
     int generateArgumentPush(struct ast_node *tree);
     int generateAssignment(struct ast_node *tree);
     int label();
+    int generateCondition(struct ast_node *tree, int condLable, int endLabel,
+                          int parentOp, bool start=false);
 
     /* Arch dependant functions, get overwritten in arch/ARCH folder */
     virtual void freeAllReg() {}
@@ -32,8 +34,11 @@ protected:
     virtual int genDiv(int reg1, int reg2) {}
     virtual int genLoadVariable(int symbol, struct Type t) {}
     virtual int genStoreValue(int reg, int memloc, struct Type t) {}
-    virtual int genCompareJump(int op, int reg1, int reg2, int label) {}
+    
+    virtual int genCompare(int op, int reg1, int reg2) {}
     virtual int genCompareSet(int op, int reg1, int reg2) {}
+    virtual int genFlagJump(int op, int label) {}
+    
     virtual int genLabel(int label) {}
     virtual int genJump(int label) {}
     virtual int genWidenRegister(int reg, int oldsize, int newsize, bool isSigned) {}
@@ -50,7 +55,15 @@ protected:
     virtual int genLeftShift(int reg1, int reg2) {}
     virtual int genRightShift(int reg1, int reg2) {}
     virtual int genModulus(int leftreg, int rightreg) {}
+    virtual int genAnd(int reg1, int reg2) {}
+    virtual int genOr(int reg1, int reg2) {}
+    virtual int genXor(int reg1, int reg2) {}
+    virtual int genBinNegate(int reg) {}
+    virtual int genLogAnd(int reg1, int reg2) {}
+    virtual int genLogOr(int reg1, int reg2) {}
     
+    virtual int genIsZero(int reg) {}
+    virtual int genIsZeroSet(int reg) {}
 
 /*debugging */
 public:

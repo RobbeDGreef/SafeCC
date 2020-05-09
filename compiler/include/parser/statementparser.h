@@ -36,6 +36,7 @@ class StatementParser
     struct ast_node *ifStatement();
     struct ast_node *whileStatement();
     struct ast_node *forStatement();
+    struct ast_node *comparison();
 
     struct ast_node *parseStatement();
     struct ast_node *parseDeclaration(struct Type t, int storageClass);

@@ -55,7 +55,7 @@ public:
         
         /* Logical operators */
         LOGAND, LOGOR, 
-        LOGNOT, 
+        LOGNOT,
         
         /* assignment */
         EQUALSIGN,
@@ -93,3 +93,4 @@ public:
 
 
 string tokToStr(int token);
+int isArithmetic(int tok);

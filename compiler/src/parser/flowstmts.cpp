@@ -3,15 +3,26 @@
 #include <token.h>
 #include <errorhandler.h>
 
+struct ast_node *StatementParser::comparison()
+{
+    struct ast_node *cond = m_parser.m_exprParser.parseBinaryOperation(0, NULLTYPE);
+
+#if 0
+    if (cond->operation < AST::Types::EQUAL ||
+        cond->operation > AST::Types::GREATERTHANEQUAL)
+    {
+        cond = mkAstUnary(AST::Types::ISZERO, cond, 0, cond->line, cond->c);
+    }
+#endif
+    
+    return cond;
+}
+
 struct ast_node *StatementParser::ifStatement()
 {
     m_scanner.scan();
     m_parser.match(Token::Tokens::L_PAREN);
-    struct ast_node *cond = m_parser.m_exprParser.parseBinaryOperation(0, NULLTYPE);
-
-    if (cond->operation < AST::Types::EQUAL || cond->operation > AST::Types::GREATERTHANEQUAL)
-        err.fatal("Bad comparison operator (not supported)");
-
+    struct ast_node *cond = comparison();
     m_parser.match(Token::Tokens::R_PAREN);
 
     struct ast_node *true_branch = parseBlock();
@@ -30,12 +41,7 @@ struct ast_node *StatementParser::whileStatement()
 {
     m_scanner.scan();
     m_parser.match(Token::Tokens::L_PAREN);
-
-    struct ast_node *cond = m_parser.m_exprParser.parseBinaryOperation(0, NULLTYPE);
-
-    if (cond->operation < AST::Types::EQUAL || cond->operation > AST::Types::GREATERTHANEQUAL)
-        err.fatal("Bad comparison operator (not supported)");
-
+    struct ast_node *cond = comparison();
     m_parser.match(Token::Tokens::R_PAREN);
 
     struct ast_node *loopbody = parseBlock();
@@ -51,7 +57,7 @@ struct ast_node *StatementParser::forStatement()
     struct ast_node *forInit = parseStatement();
     m_parser.match(Token::Tokens::SEMICOLON);
     
-    struct ast_node *forCond = m_parser.m_exprParser.parseBinaryOperation(0, NULLTYPE);
+    struct ast_node *forCond = comparison();
     m_parser.match(Token::Tokens::SEMICOLON);
     
     struct ast_node *forIter = parseStatement();

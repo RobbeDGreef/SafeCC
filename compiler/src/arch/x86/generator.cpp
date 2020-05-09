@@ -414,14 +414,18 @@ int GeneratorX86::genDataSection()
 static string setinstr[] = {"sete", "setne", "setl", "setg", "setle", "setge"};
 
 /* Inverted jump instructions */
-static string jmpinstr[] = {"jne", "je", "jge", "jle", "jg", "jl"};
+static string jmpinstr[] = {"je", "jne", "jl", "jg", "jle", "jge"};
 
-int GeneratorX86::genCompareJump(int op, int reg1, int reg2, int label)
+int GeneratorX86::genCompare(int op, int reg1, int reg2)
 {
     write("cmp", GETREG(reg2), GETREG(reg1));
-    write(jmpinstr[op - AST::Types::EQUAL], LABEL(label));
     freeReg(reg1);
     freeReg(reg2);
+    return -1;
+}
+int GeneratorX86::genFlagJump(int op, int label)
+{
+    write(jmpinstr[op - AST::Types::EQUAL], LABEL(label));
     return -1;
 }
 
@@ -731,4 +735,33 @@ void GeneratorX86::genDebugComment(string comment)
     }
     
     fprintf(m_outfile, "; %s\n", comment.c_str());
+}
+int GeneratorX86::genIsZero(int reg)
+{
+    write("test", GETREG(reg), GETREG(reg));
+    freeReg(reg);
+    return -1;
+}
+
+int GeneratorX86::genLogAnd(int reg1, int reg2)
+{
+    write("and", GETREG(reg2), GETREG(reg1));
+    freeReg(reg2);
+    return reg1;
+}
+int GeneratorX86::genLogOr(int reg1, int reg2)
+{
+    write("or", GETREG(reg2), GETREG(reg1));
+    freeReg(reg2);
+    return reg1;
+}
+
+int GeneratorX86::genIsZeroSet(int reg1)
+{
+    int reg2 = allocReg();
+    write("test", GETREG(reg1), GETREG(reg1));
+    write(setinstr[0], m_loByteRegisters[reg2]);
+    write("movzx", m_loByteRegisters[reg2], GETREG(reg2));
+    freeReg(reg1);
+    return reg2;
 }
