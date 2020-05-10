@@ -11,17 +11,13 @@ int Generator::generateIf(struct ast_node *tree)
 {
     int falseLabel = -1;
     int endLabel = -1;
-    int condEndLabel = -1;
-
-    condEndLabel = label();
     falseLabel = label();
     if (tree->right)
         endLabel = label();
 
-    generateCondition(tree->left, condEndLabel, falseLabel, tree->operation);
+    generateComparison(tree->left, falseLabel, tree->operation);
     freeAllReg();
-    genLabel(condEndLabel);
-
+    
     generateFromAst(tree->mid, -1, tree->operation);
     freeAllReg();
 
@@ -44,12 +40,10 @@ int Generator::generateWhile(struct ast_node *tree)
 {
     int startLabel = label();
     int endLabel   = label();
-    int condEndLabel = label();
 
     genLabel(startLabel);
-    generateComparison(tree->left, condEndLabel, endLabel, tree->operation);
+    generateComparison(tree->left, endLabel, tree->operation);
     freeAllReg();
-    genLabel(condEndLabel);
     generateFromAst(tree->right, -1, tree->operation);
     freeAllReg();
     genJump(startLabel);
@@ -139,7 +133,7 @@ static bool isLogOp(int tok)
     case AST::Types::LOGAND:
     case AST::Types::LOGOR:
     case AST::Types::LOGNOT:
-        return false;
+        return true;
     }
     
     return false;
@@ -147,18 +141,65 @@ static bool isLogOp(int tok)
 
 static bool isCompareOp(int tok)
 {
-    if (tok <= AST::Types::GREATERTHANEQUAL || tok >= AST::Types::EQUAL)
+    if (tok <= AST::Types::GREATERTHANEQUAL && tok >= AST::Types::EQUAL)
         return true;
     
     return false;
 }
 
-int Generator::generateComparison(struct ast_node *tree, int condEndLabel, 
+int Generator::generateComparison(struct ast_node *tree, 
                                   int endLabel, int parentOp)
 {
-    generateCondition(tree, condEndLabel, endLabel, parentOp, 0);
+    int condEndLabel = label();
+    generateCondition(tree, condEndLabel, endLabel, parentOp);
     if (!isLogOp(tree->operation))
         genFlagJump(logicalNot(tree->operation), endLabel);
+    
+    genLabel(condEndLabel);
+}
+
+static ast_node *getRightLeaf(struct ast_node *tree)
+{
+    struct ast_node *tmp = tree;
+    if (!tmp->right)
+        return 0;
+        
+    while (isCompareOp(tmp->right->operation))
+        tmp = tmp->right;
+    
+    return tmp;
+}
+
+static void morgansLawNegation(struct ast_node *tree)
+{
+    // Here we use De Morgans law of boolean negation
+    // in a recursive manner, ei
+    // and's become or's and vice versa. and the sub trees get negated as well
+    switch(tree->operation)
+    {
+    case AST::Types::LOGAND:
+        tree->operation = AST::Types::LOGOR;
+        morgansLawNegation(tree->left);
+        morgansLawNegation(tree->right);
+        return;
+        
+    case AST::Types::LOGOR:
+        tree->operation = AST::Types::LOGAND;
+        morgansLawNegation(tree->left);
+        morgansLawNegation(tree->right);
+        return;
+
+    case AST::Types::LOGNOT:
+        // We can skip over these since we will automatically
+        // 'correct' them when the next iteration in the ast tree happens
+        morgansLawNegation(tree->left);
+        return;
+    }
+    
+    if (isCompareOp(tree->operation))
+        tree->operation = logicalNot(tree->operation);
+    
+
 }
 
 int Generator::generateCondition(struct ast_node *tree, int condEndLabel,
@@ -166,24 +207,41 @@ int Generator::generateCondition(struct ast_node *tree, int condEndLabel,
 {
     int leftreg = 0, rightreg = 0;
     int op;
+    int curCondLabel = -1;
     
     switch(tree->operation)
     {
     case AST::Types::LOGNOT:
-        op = logicalNot(tree->left->operation);
-        if (op)
-            tree->left->operation = op;
+        // Thank you Augustus De Morgan :)
+        morgansLawNegation(tree->left);
+        generateCondition(tree->left, condEndLabel, endLabel, parentOp,
+                          AST::Types::LOGNOT);
         
-        return generateCondition(tree->left, condEndLabel, endLabel, parentOp,
-                                 AST::Types::LOGNOT);
+        if (isLogOp(tree->left->operation))
+        {
+            int op = getRightLeaf(tree->left)->operation;
+            genFlagJump(logicalNot(op), endLabel);
+            return -1;
+        }
+        
+        genFlagJump(logicalNot(tree->left->operation), endLabel);
+        return -1;
         
     case AST::Types::LOGOR:
-        leftreg = generateCondition(tree->left, condEndLabel, endLabel, parentOp);
+        curCondLabel = label();
+        leftreg = generateCondition(tree->left, condEndLabel, curCondLabel, parentOp);
+        
         if (isLogOp(tree->left->operation))
-            genFlagJump(tree->left->operation, condEndLabel);
+            genJump(condEndLabel);
+        
+        genLabel(curCondLabel);
         
         generateCondition(tree->right, condEndLabel, endLabel, parentOp);
-        genFlagJump(logicalNot(tree->right->operation), endLabel);
+        if (isCompareOp(tree->right->operation))
+        {
+            genFlagJump(logicalNot(tree->right->operation), endLabel);
+
+        }
         return -1;
         
     case AST::Types::LOGAND:
@@ -194,7 +252,9 @@ int Generator::generateCondition(struct ast_node *tree, int condEndLabel,
             genFlagJump(op, endLabel);
             
         generateCondition(tree->right, condEndLabel, endLabel, parentOp);
-        genFlagJump(logicalNot(tree->right->operation), endLabel);
+        if (!isLogOp(tree->left->operation))
+            genFlagJump(logicalNot(tree->right->operation), endLabel);
+        
         return -1;
     }
     

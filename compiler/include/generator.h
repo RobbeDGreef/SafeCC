@@ -22,9 +22,9 @@ protected:
     int generateArgumentPush(struct ast_node *tree);
     int generateAssignment(struct ast_node *tree);
     int label();
-    int generateCondition(struct ast_node *tree, int condLable, int endLabel,
-                          int parentOp, int condOp=0);
-    int generateComparison(struct ast_node *tree, int condEndLabel, 
+    int generateCondition(struct ast_node *tree, int condEndLabel, int endLabel, int parentOp,
+                          int condOp=0);
+    int generateComparison(struct ast_node *tree, 
                                   int endLabel, int parentOp);
 
     /* Arch dependant functions, get overwritten in arch/ARCH folder */

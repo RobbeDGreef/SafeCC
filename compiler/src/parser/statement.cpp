@@ -248,12 +248,20 @@ struct ast_node *StatementParser::parseBlock(vector<struct Symbol> arguments)
 
 struct ast_node *StatementParser::parseBlock()
 {
-    /* Each block should start with a { */
-    m_parser.match(Token::Tokens::L_BRACE);
-
     g_symtable.newScope();
-    struct ast_node *tree = _parseBlock();
-    m_parser.match(Token::Tokens::R_BRACE);
+    struct ast_node *tree;
+    if (m_scanner.token().token() != Token::Tokens::L_BRACE)
+    {
+        tree = parseStatement();
+        m_parser.match(Token::Tokens::SEMICOLON);
+    }
+    else
+    {
+        m_scanner.scan();
+        tree = _parseBlock();
+        m_parser.match(Token::Tokens::R_BRACE);
+    }
+    
     g_symtable.popScope();
     return tree;
 }
