@@ -228,6 +228,14 @@ struct ast_node *StatementParser::_parseBlock()
     }
 }
 
+static bool isFlowStatement(int op)
+{
+    if (op == AST::Types::IF || op == AST::Types::WHILE)
+        return true;
+    
+    return false;
+}
+
 struct ast_node *StatementParser::parseBlock(vector<struct Symbol> arguments)
 {
     /* Each block should start with a { */
@@ -253,7 +261,14 @@ struct ast_node *StatementParser::parseBlock()
     if (m_scanner.token().token() != Token::Tokens::L_BRACE)
     {
         tree = parseStatement();
-        m_parser.match(Token::Tokens::SEMICOLON);
+        int op = tree->operation;
+        
+        // Due to the debugprint ast nodes:
+        if (op == AST::Types::DEBUGPRINT)
+            op = tree->left->operation;
+        
+        if (!isFlowStatement(op))
+            m_parser.match(Token::Tokens::SEMICOLON);
     }
     else
     {
