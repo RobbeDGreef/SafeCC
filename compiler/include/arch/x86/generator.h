@@ -34,7 +34,6 @@ class GeneratorX86 : public Generator
     string m_initDataSize[4] = {"db", "dw", "dd", "dq"};
 
 private:
-    void freeReg(int reg);
     void freeAllReg();
     int  allocReg();
     int  allocReg(int r);
@@ -87,6 +86,7 @@ private:
     int genIsZeroSet(int reg);
     int genLogAnd(int reg1, int reg2);
     int genLogOr(int reg1, int reg2);
+    void freeReg(int reg);
     
   public:
     GeneratorX86(string);
