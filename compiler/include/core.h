@@ -36,6 +36,9 @@ void debughandler(int sig);
 #define DEBUGW(x) std::cout << "\u001b[37;1mDEBUG\u001b[0m: " << x << "\n";
 #else
 #define DEBUG(x)
+#define DEBUGB(x)
+#define DEBUGR(x)
+#define DEBUGW(x)
 #endif
 
 template <class T> int hasItem(vector<T> &items, T item)
