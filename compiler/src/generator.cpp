@@ -233,15 +233,15 @@ int Generator::generateCondition(struct ast_node *tree, int condEndLabel,
         
         if (isLogOp(tree->left->operation))
             genJump(condEndLabel);
+        else
+            genFlagJump(tree->left->operation, endLabel);
         
         genLabel(curCondLabel);
         
         generateCondition(tree->right, condEndLabel, endLabel, parentOp);
         if (isCompareOp(tree->right->operation))
-        {
             genFlagJump(logicalNot(tree->right->operation), endLabel);
-
-        }
+        
         return -1;
         
     case AST::Types::LOGAND:
@@ -270,6 +270,87 @@ int Generator::generateCondition(struct ast_node *tree, int condEndLabel,
     
     return -1;
 }
+
+int Generator::generateBinaryComparison(struct ast_node *tree, int parentOp)
+{
+    int condEndLabel = label();
+    int reg = generateBinaryCondition(tree, condEndLabel, parentOp);
+    
+    if (!isLogOp(tree->operation))
+        genFlagSet(logicalNot(tree->operation), reg);
+    
+    genLabel(condEndLabel);
+    
+    return reg;
+}
+
+int Generator::generateBinaryCondition(struct ast_node *tree, int endLabel,
+                                 int parentOp, int condOp)
+{
+    int leftreg = 0, rightreg = 0;
+    int op;
+    int curCondLabel = -1;
+    
+    switch(tree->operation)
+    {
+    case AST::Types::LOGNOT:
+        // Thank you Augustus De Morgan :)
+        morgansLawNegation(tree->left);
+        leftreg = generateBinaryCondition(tree->left, endLabel, parentOp, AST::Types::LOGNOT);
+        
+        if (isLogOp(tree->left->operation))
+            op = getRightLeaf(tree->left)->operation;
+        else
+            op = tree->left->operation;
+        
+        genFlagSet(logicalNot(tree->left->operation), leftreg);
+        return leftreg;
+        
+    case AST::Types::LOGOR:
+        curCondLabel = label();
+        leftreg = generateBinaryCondition(tree->left, curCondLabel, parentOp);
+        
+        if (isLogOp(tree->left->operation))
+            genJump(endLabel);
+        else
+            genFlagJump(tree->left->operation, endLabel);
+        
+        freeReg(leftreg);
+        genLabel(curCondLabel);
+        
+        return generateBinaryCondition(tree->right, endLabel, parentOp);
+        
+    case AST::Types::LOGAND:
+        leftreg = generateBinaryCondition(tree->left, endLabel, parentOp);
+        
+        op = logicalNot(tree->left->operation);
+        if (op)
+            genFlagJump(op, endLabel);
+        
+        freeReg(leftreg);
+            
+        rightreg = generateBinaryCondition(tree->right, endLabel, parentOp);
+        op = logicalNot(tree->right->operation);
+        if (op)
+            genFlagJump(op, endLabel);
+        
+        return rightreg;
+    }
+    
+    int ret = generateFromAst(tree, 0, parentOp);
+    if (!isCompareOp(tree->operation))
+    {
+        if (condOp == AST::Types::LOGNOT)
+            tree->operation = AST::Types::EQUAL;
+        else
+            tree->operation = AST::Types::NOTEQUAL;
+        genIsZeroSet(ret);
+    }
+    
+    return ret;
+}
+
+
 
 int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
 {
@@ -315,10 +396,16 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
     case AST::Types::ASSIGN:
         return generateAssignment(tree);
         
+    case AST::Types::LOGAND:
+    case AST::Types::LOGNOT:
+    case AST::Types::LOGOR:
+        return generateBinaryComparison(tree, tree->operation);
+
     case AST::Types::DEBUGPRINT:
         string comment = m_scanner->getStrFromTo(tree->value, tree->c);
         genDebugComment(comment);
         return generateFromAst(tree->left, -1, 0);
+    
     }
 
     if (tree->left)
@@ -374,11 +461,6 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
             return genCompareSet(tree->operation, leftreg, rightreg);
         
         return genCompare(tree->operation, leftreg, rightreg);
-    
-    case AST::Types::LOGAND:
-        return genLogAnd(leftreg, rightreg);
-    case AST::Types::LOGOR:
-        return genLogOr(leftreg, rightreg);
 
     case AST::Types::FUNCTIONCALL:
         DEBUG("GENERATING FUNC CALL")
