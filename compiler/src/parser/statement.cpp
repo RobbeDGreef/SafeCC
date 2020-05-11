@@ -100,6 +100,10 @@ loop:;
 
     case Token::Tokens::R_BRACE:
         break;
+    
+    case Token::Tokens::GOTO:
+        node = gotoStatement();
+        break;
 
     case Token::Tokens::SIGNED:
     case Token::Tokens::UNSIGNED:
@@ -161,7 +165,15 @@ loop:;
             break;
         }
         
-        err.unknownSymbol(m_scanner.identifier());
+        string ident = m_scanner.identifier();
+        m_scanner.scan();
+        if (m_scanner.token().token() == Token::Tokens::COLON)
+        {
+            node = parseLabel(ident);
+            break;
+        }
+        
+        err.unknownSymbol(ident);
     }
 
     if (node && node->operation != AST::Types::PADDING)
@@ -178,7 +190,7 @@ bool isStatement(int op)
 {
     if (op == AST::Types::FUNCTIONCALL || op == AST::Types::ASSIGN ||
         op == AST::Types::PADDING || op == AST::Types::RETURN ||
-        op == AST::Types::INITIALIZER)
+        op == AST::Types::INITIALIZER || op == AST::Types::LABEL)
         return true;
         
     return false;
@@ -226,14 +238,6 @@ struct ast_node *StatementParser::_parseBlock()
             return left;
         }
     }
-}
-
-static bool isFlowStatement(int op)
-{
-    if (op == AST::Types::IF || op == AST::Types::WHILE)
-        return true;
-    
-    return false;
 }
 
 struct ast_node *StatementParser::parseBlock(vector<struct Symbol> arguments)

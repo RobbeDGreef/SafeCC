@@ -297,7 +297,11 @@ int Scanner::scan()
     case '%':
         m_token.set(Token::Tokens::MODULUS, m_line, m_char);
         break;
-        
+    
+    case ':':
+        m_token.set(Token::Tokens::COLON, m_line, m_char);
+        break;
+    
     case '0':
         /* checking whether it is an octal, hexadecimal or binary number */
         c = next();

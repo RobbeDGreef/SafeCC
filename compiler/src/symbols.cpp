@@ -99,7 +99,7 @@ int SymbolTable::_addVariable(struct Symbol sym)
         return 0;
     }
 
-    if (sym.symType != SymTypes::ARGUMENT && 
+    if (sym.symType != SymTypes::ARGUMENT && sym.symType != SymTypes::LABEL &&
         sym.storageClass != StorageClass::STATIC)
     {
         sym.stackLoc = func->localVarAmount;

@@ -72,6 +72,8 @@ private:
 
     int genJump(int label);
     int genLabel(int label);
+    int genLabel(string label);
+    int genGoto(string label);
     int genWidenRegister(int reg, int oldsize, int newsize, bool isSigned);
     int genPushArgument(int reg, int argindex);
     int genFunctionCall(int symbolidx, int parameters);

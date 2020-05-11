@@ -793,3 +793,15 @@ int GeneratorX86::genIsZeroSet(int reg1)
     freeReg(reg1);
     return reg2;
 }
+
+int GeneratorX86::genLabel(string label)
+{
+    fprintf(m_outfile, "%s\n", ("." + label + ":").c_str());
+    return -1;
+}
+
+int GeneratorX86::genGoto(string label)
+{
+    write("jmp", "." + label);
+    return -1;
+}

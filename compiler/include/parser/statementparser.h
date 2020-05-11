@@ -37,6 +37,8 @@ class StatementParser
     struct ast_node *whileStatement();
     struct ast_node *forStatement();
     struct ast_node *comparison();
+    struct ast_node *gotoStatement();
+    struct ast_node *parseLabel(string label);
 
     struct ast_node *parseStatement();
     struct ast_node *parseDeclaration(struct Type t, int storageClass);
@@ -54,3 +56,5 @@ class StatementParser
     StatementParser(Scanner &scanner, Parser &parser, Generator &gen,
                     TypeList &typelist);
 };
+
+bool isFlowStatement(int op);

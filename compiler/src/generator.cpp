@@ -350,7 +350,15 @@ int Generator::generateBinaryCondition(struct ast_node *tree, int endLabel,
     return ret;
 }
 
-
+int Generator::generateGoto(struct ast_node *tree)
+{
+    struct Symbol *s = g_symtable.getSymbol(tree->value);
+    
+    if (!s->defined)
+        err.fatal("Label " + HL(s->name) + " undefined", tree->line, tree->c);
+    
+    genGoto(s->name);
+}
 
 int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
 {
@@ -400,6 +408,10 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
     case AST::Types::LOGNOT:
     case AST::Types::LOGOR:
         return generateBinaryComparison(tree, tree->operation);
+    
+    case AST::Types::LABEL:
+        genLabel(g_symtable.getSymbol(tree->value)->name);
+        return generateFromAst(tree->left, 0, tree->operation);
 
     case AST::Types::DEBUGPRINT:
         string comment = m_scanner->getStrFromTo(tree->value, tree->c);
@@ -484,6 +496,10 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
     
     case AST::Types::INITIALIZER:
         return leftreg;
+        
+    case AST::Types::GOTO:
+        generateGoto(tree);
+        return -1;
 
     default:
         // This is more of a debugging check then a release thing because

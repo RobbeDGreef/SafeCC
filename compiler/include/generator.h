@@ -29,6 +29,8 @@ protected:
     int generateBinaryComparison(struct ast_node *tree, int parentOp);
     int generateBinaryCondition(struct ast_node *tree, int condEndLabel, int parentOp,
                           int condOp=0);
+    
+    int generateGoto(struct ast_node *tree);
 
     /* Arch dependant functions, get overwritten in arch/ARCH folder */
     virtual void freeAllReg() {}
@@ -46,6 +48,8 @@ protected:
     virtual int genFlagSet(int op, int reg) {}
     
     virtual int genLabel(int label) {}
+    virtual int genLabel(string label) {}
+    virtual int genGoto(string label) {}
     virtual int genJump(int label) {}
     virtual int genWidenRegister(int reg, int oldsize, int newsize, bool isSigned) {}
     virtual int genPushArgument(int reg, int argindex) {}

@@ -69,3 +69,56 @@ struct ast_node *StatementParser::forStatement()
     tree = mkAstNode(AST::Types::WHILE, forCond, NULL, tree, 0, forCond->line, forCond->c);
     return mkAstNode(AST::Types::GLUE, forInit, NULL, tree, 0, forInit->line, forInit->c);
 }
+
+struct ast_node *StatementParser::gotoStatement()
+{
+    m_scanner.scan();
+    m_parser.matchNoScan(Token::Tokens::IDENTIFIER);
+    string labelstr = m_scanner.identifier();
+    m_scanner.scan();
+    
+    int id;
+    if ((id = g_symtable.findSymbol(labelstr)) == -1)
+    {
+        id = g_symtable.addSymbol(labelstr, 0, SymbolTable::SymTypes::LABEL, 0);
+    }
+    g_symtable.getSymbol(id)->used = true;
+    
+    struct ast_node *go = mkAstLeaf(AST::Types::GOTO, id, m_scanner.curLine(), 
+                                       m_scanner.curChar());
+    return go;
+}
+
+bool isLabelStatement(int op)
+{
+    if (op == AST::Types::INITIALIZER || op == AST::Types::PADDING)
+        return false;
+    
+    return true;
+}
+
+bool isFlowStatement(int op)
+{
+    if (op == AST::Types::IF || op == AST::Types::WHILE)
+        return true;
+    
+    return false;
+}
+
+struct ast_node *StatementParser::parseLabel(string label)
+{
+    m_scanner.scan();
+    struct ast_node *left = parseStatement();
+    if (left && !isFlowStatement(left->operation))
+        m_parser.match(Token::Tokens::SEMICOLON);
+    
+    else if (left && !isLabelStatement(left->operation))
+        err.fatal("Label must be placed in front of valid statement\n");
+    
+    int id = g_symtable.addSymbol(label, 0, SymbolTable::SymTypes::LABEL, 0);
+    struct Symbol *s = g_symtable.getSymbol(id);
+    s->defined = true;
+    
+    struct ast_node *ret = mkAstUnary(AST::Types::LABEL, left, id, left->line, left->c);
+    return ret;
+}

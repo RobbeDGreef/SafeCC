@@ -33,6 +33,11 @@ int Scanner::identifyKeyword(string keyword)
             return Token::Tokens::FOR;
         break;
 
+    case 'g':
+        if (!keyword.compare("goto"))
+            return Token::Tokens::GOTO;
+        break;
+        
     case 'i':
         if (!keyword.compare("int"))
             return Token::Tokens::INT;

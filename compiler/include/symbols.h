@@ -51,7 +51,8 @@ class SymbolTable
         FUNCTION,
         ARGUMENT,
         VARIABLE,
-        IMPLICIT
+        IMPLICIT,
+        LABEL
     };
 
     enum StorageClass

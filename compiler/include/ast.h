@@ -36,6 +36,8 @@ namespace AST
         FUNCTIONCALL, FUNCTIONARGUMENT,
         RETURN,
         
+        GOTO, LABEL,
+        
         DEBUGPRINT
     };
 };
