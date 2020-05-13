@@ -2,8 +2,10 @@
 
 int main()
 {
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 10; i++)
     {
+        if (i > 5)
+            continue;
         switch (i)
         {
             case 2:
@@ -11,7 +13,7 @@ int main()
                 break;
             
             case 4:
-                printf("For\n");
+                printf("Four\n");
                 break;
             
             default:
