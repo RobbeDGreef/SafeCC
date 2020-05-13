@@ -7,7 +7,7 @@ int Generator::label()
     return m_labelCount++;
 }
 
-int Generator::generateIf(struct ast_node *tree)
+int Generator::generateIf(struct ast_node *tree, int condLabel, int parentEndLabel)
 {
     int falseLabel = -1;
     int endLabel = -1;
@@ -18,7 +18,7 @@ int Generator::generateIf(struct ast_node *tree)
     generateComparison(tree->left, falseLabel, tree->operation);
     freeAllReg();
     
-    generateFromAst(tree->mid, -1, tree->operation);
+    generateFromAst(tree->mid, -1, tree->operation, condLabel, parentEndLabel);
     freeAllReg();
 
     if (tree->right)
@@ -28,7 +28,7 @@ int Generator::generateIf(struct ast_node *tree)
 
     if (tree->right)
     {
-        generateFromAst(tree->right, -1, tree->operation);
+        generateFromAst(tree->right, -1, tree->operation, condLabel, parentEndLabel);
         freeAllReg();
         genLabel(endLabel);
     }
@@ -44,7 +44,7 @@ int Generator::generateWhile(struct ast_node *tree)
     genLabel(startLabel);
     generateComparison(tree->left, endLabel, tree->operation);
     freeAllReg();
-    generateFromAst(tree->right, -1, tree->operation);
+    generateFromAst(tree->right, -1, tree->operation, startLabel, endLabel);
     freeAllReg();
     genJump(startLabel);
     genLabel(endLabel);
@@ -103,7 +103,7 @@ int Generator::generateAssignment(struct ast_node *tree)
     return genStoreValue(rreg, lreg, tree->type);
 }
 
-int Generator::generateSwitch(struct ast_node *tree)
+int Generator::generateSwitch(struct ast_node *tree, int condLabel)
 {
     struct ast_node *caseIter = tree->right;
     int exprReg = generateFromAst(tree->left, -1, tree->operation);
@@ -111,6 +111,7 @@ int Generator::generateSwitch(struct ast_node *tree)
     vector<int> caseLabels;
     int caseLabel;
     int endLabel = label();
+    bool defaultFlag = false;
     
     // Generating branchtable   
     while (caseIter)
@@ -119,6 +120,7 @@ int Generator::generateSwitch(struct ast_node *tree)
         {
             caseLabels.push_back(endLabel);
             caseIter = caseIter->right;
+            defaultFlag = true;
             continue;
         }
         
@@ -132,19 +134,18 @@ int Generator::generateSwitch(struct ast_node *tree)
     }
     
     genJump(endLabel);
+    if (defaultFlag)
+        endLabel = label();
     
     // Reloop the caselist to generate the statements
     caseIter = tree->right;
     int i = 0;
     while (caseIter)
-    {
-        if (caseIter->operation == AST::Types::DEFAULT)
-            endLabel = label();
-            
+    {    
         genLabel(caseLabels[i]);
         
         // This freeReg() call is just a safety mechanism
-        int reg = generateFromAst(caseIter->left, -1, tree->operation);
+        int reg = generateFromAst(caseIter->left, -1, tree->operation, condLabel, endLabel);
         if (reg != -1)
             freeReg(reg);
         
@@ -413,7 +414,8 @@ int Generator::generateGoto(struct ast_node *tree)
     genGoto(s->name);
 }
 
-int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
+int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp, 
+                               int condLabel, int endLabel)
 {
     int leftreg = 0;
     int rightreg = 0;
@@ -427,21 +429,21 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
     switch (tree->operation)
     {
     case AST::Types::GLUE:
-        generateFromAst(tree->left, -1, tree->operation);
+        generateFromAst(tree->left, -1, tree->operation, condLabel, endLabel);
         freeAllReg();
-        generateFromAst(tree->right, -1, tree->operation);
+        generateFromAst(tree->right, -1, tree->operation, condLabel, endLabel);
         freeAllReg();
         return -1;
         
     case AST::Types::IF:
-        return generateIf(tree);
+        return generateIf(tree, condLabel, endLabel);
     case AST::Types::WHILE:
         return generateWhile(tree);
     case AST::Types::SWITCH:
-        return generateSwitch(tree);
+        return generateSwitch(tree, condLabel);
     case AST::Types::FUNCTION:
         genFunctionPreamble(tree->value);
-        generateFromAst(tree->left, -1, tree->operation);
+        generateFromAst(tree->left, -1, tree->operation, condLabel, endLabel);
         genFunctionPostamble(tree->value);
         return -1;
         
@@ -454,7 +456,7 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
         DEBUG("tree l " << tree->left << " r " << tree->right)
         return genIncrement(tree->left->value, tree->right->value, tree->value);
     case AST::Types::DECREMENT:
-        leftreg = generateFromAst(tree->left, -1, tree->operation);
+        leftreg = generateFromAst(tree->left, -1, tree->operation, condLabel, endLabel);
         return genDecrement(leftreg, tree->right->value, tree->value);
     case AST::Types::ASSIGN:
         return generateAssignment(tree);
@@ -466,20 +468,20 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
     
     case AST::Types::LABEL:
         genLabel(g_symtable.getSymbol(tree->value)->name);
-        return generateFromAst(tree->left, 0, tree->operation);
+        return generateFromAst(tree->left, 0, tree->operation, condLabel, endLabel);
 
     case AST::Types::DEBUGPRINT:
         string comment = m_scanner->getStrFromTo(tree->value, tree->c);
         genDebugComment(comment);
-        return generateFromAst(tree->left, -1, 0);
+        return generateFromAst(tree->left, -1, 0, condLabel, endLabel);
     
     }
 
     if (tree->left)
-        leftreg = generateFromAst(tree->left, -1, tree->operation);
+        leftreg = generateFromAst(tree->left, -1, tree->operation, condLabel, endLabel);
 
     if (tree->right)
-        rightreg = generateFromAst(tree->right, leftreg, tree->operation);
+        rightreg = generateFromAst(tree->right, leftreg, tree->operation, condLabel, endLabel);
 
     switch (tree->operation)
     {
@@ -554,6 +556,20 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
         
     case AST::Types::GOTO:
         generateGoto(tree);
+        return -1;
+    
+    case AST::Types::CONTINUE:
+        if (condLabel == -1)
+            err.fatal("Continue statements are only allowed inside for and while loops", tree->line, tree->c);
+        
+        genJump(condLabel);
+        return -1;
+    
+    case AST::Types::BREAK:
+        if (endLabel == -1)
+            err.fatal("Break statements are only allowed inside switch, for and while loops", tree->line, tree->c);
+        
+        genJump(endLabel);
         return -1;
 
     default:

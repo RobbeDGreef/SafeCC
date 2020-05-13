@@ -37,6 +37,7 @@ namespace AST
         RETURN,
         
         GOTO, LABEL, SWITCH, CASE, DEFAULT,
+        BREAK, CONTINUE,
         
         DEBUGPRINT
     };

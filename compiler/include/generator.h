@@ -17,9 +17,9 @@ protected:
     void write(string instruction);
     void write(string instruction, string destination);
     
-    int generateIf(struct ast_node *tree);
+    int generateIf(struct ast_node *tree, int condLabel, int endLabel);
     int generateWhile(struct ast_node *tree);
-    int generateSwitch(struct ast_node *tree);
+    int generateSwitch(struct ast_node *tree, int condLabel);
     int generateArgumentPush(struct ast_node *tree);
     int generateAssignment(struct ast_node *tree);
     int label();
@@ -88,6 +88,7 @@ public:
 
     Generator(string &outfile);
     void close();
-    int generateFromAst(struct ast_node *tree, int reg, int parentOp);
+    int generateFromAst(struct ast_node *tree, int reg, int parentOp, 
+                        int condLabel=-1, int endLabel=-1);
     void setupInfileHandler(Scanner &scanner);
 };

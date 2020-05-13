@@ -126,7 +126,19 @@ loop:;
         else
             err.fatal("Default labels are only allowed inside switch statements");
         break;
-        
+    
+    case Token::Tokens::CONTINUE:
+        m_scanner.scan();
+        node = mkAstLeaf(AST::Types::CONTINUE, 0, m_scanner.curLine(), 
+                         m_scanner.curChar());
+        break;
+    
+    case Token::Tokens::BREAK:
+        m_scanner.scan();
+        node = mkAstLeaf(AST::Types::BREAK, 0, m_scanner.curLine(), 
+                         m_scanner.curChar());
+        break;
+    
     case Token::Tokens::SIGNED:
     case Token::Tokens::UNSIGNED:
     case Token::Tokens::VOID:
@@ -213,7 +225,8 @@ bool isStatement(int op)
 {
     if (op == AST::Types::FUNCTIONCALL || op == AST::Types::ASSIGN ||
         op == AST::Types::PADDING || op == AST::Types::RETURN ||
-        op == AST::Types::INITIALIZER || op == AST::Types::LABEL)
+        op == AST::Types::INITIALIZER || op == AST::Types::LABEL ||
+        op == AST::Types::BREAK || op == AST::Types::CONTINUE)
         return true;
         
     return false;
@@ -229,10 +242,7 @@ struct ast_node *StatementParser::_parseBlock(int parentOp)
     {
         tree = parseStatement(parentOp);
 
-        if (tree && (tree->operation == AST::Types::FUNCTIONCALL ||
-                     tree->operation == AST::Types::ASSIGN ||
-                     tree->operation == AST::Types::PADDING ||
-                     tree->operation == AST::Types::RETURN))
+        if (tree && isStatement(tree->operation))
         {
             /* Only some statements need a semicolon at the end */
             m_parser.match(Token::Tokens::SEMICOLON);
@@ -294,7 +304,7 @@ struct ast_node *StatementParser::parseBlock(int parentOp)
         if (op == AST::Types::DEBUGPRINT)
             op = tree->left->operation;
         
-        if (!isFlowStatement(op))
+        if (isStatement(op))
             m_parser.match(Token::Tokens::SEMICOLON);
     }
     else

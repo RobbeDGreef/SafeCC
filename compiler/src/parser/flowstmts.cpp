@@ -44,7 +44,7 @@ struct ast_node *StatementParser::whileStatement()
     struct ast_node *cond = comparison();
     m_parser.match(Token::Tokens::R_PAREN);
 
-    struct ast_node *loopbody = parseBlock();
+    struct ast_node *loopbody = parseBlock(Token::Tokens::WHILE);
 
     return mkAstNode(AST::Types::WHILE, cond, NULL, loopbody, 0, cond->line, cond->c);
 }
@@ -63,7 +63,7 @@ struct ast_node *StatementParser::forStatement()
     struct ast_node *forIter = parseStatement();
     m_parser.match(Token::Tokens::R_PAREN);
     
-    struct ast_node *body = parseBlock();
+    struct ast_node *body = parseBlock(Token::Tokens::FOR);
 
     struct ast_node *tree = mkAstNode(AST::Types::GLUE, body, NULL, forIter, 0, forIter->line, forIter->c);
     tree = mkAstNode(AST::Types::WHILE, forCond, NULL, tree, 0, forCond->line, forCond->c);

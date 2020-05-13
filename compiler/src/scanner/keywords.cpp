@@ -12,6 +12,11 @@ int Scanner::identifyKeyword(string keyword)
             return Token::Tokens::AUTO;
         break;
         
+    case 'b':
+        if (!keyword.compare("break"))
+            return Token::Tokens::BREAK;
+        break;
+        
     case 'c':
         if (!keyword.compare("char"))
             return Token::Tokens::CHAR;
@@ -19,6 +24,8 @@ int Scanner::identifyKeyword(string keyword)
             return Token::Tokens::CONST;
         else if (!keyword.compare("case"))
             return Token::Tokens::CASE;
+        else if (!keyword.compare("continue"))
+            return Token::Tokens::CONTINUE;
         break;
     
     case 'd':
