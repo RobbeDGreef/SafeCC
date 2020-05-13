@@ -22,8 +22,8 @@ int main()
         }
     }
     
-    i = 0;
-    while (i < 10)
+    int i = 0;
+    while (i < 11)
     {
         if (i > 3 && i < 8)
         {
