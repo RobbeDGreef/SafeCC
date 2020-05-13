@@ -78,9 +78,12 @@ struct ast_node *StatementParser::gotoStatement()
     m_scanner.scan();
     
     int id;
+    struct Symbol sym;
     if ((id = g_symtable.findSymbol(labelstr)) == -1)
     {
-        id = g_symtable.addSymbol(labelstr, 0, SymbolTable::SymTypes::LABEL, 0);
+        sym = g_symtable.createSymbol(labelstr, 0, SymbolTable::SymTypes::LABEL,
+                                      NULLTYPE, 0);
+        id = g_symtable.addToFunction(sym);
     }
     g_symtable.getSymbol(id)->used = true;
     
@@ -108,6 +111,7 @@ bool isFlowStatement(int op)
 struct ast_node *StatementParser::parseLabel(string label)
 {
     m_scanner.scan();
+    
     struct ast_node *left = parseStatement();
     if (left && !isFlowStatement(left->operation))
         m_parser.match(Token::Tokens::SEMICOLON);
@@ -115,11 +119,24 @@ struct ast_node *StatementParser::parseLabel(string label)
     else if (left && !isLabelStatement(left->operation))
         err.fatal("Label must be placed in front of valid statement\n");
     
-    int id = g_symtable.addSymbol(label, 0, SymbolTable::SymTypes::LABEL, 0);
+    if (left->operation == AST::Types::PADDING)
+        left = NULL;
+    
+    int id;
+    struct Symbol sym;
+    if ((id = g_symtable.findSymbol(label)) == -1)
+    {
+        sym = g_symtable.createSymbol(label, 0, SymbolTable::SymTypes::LABEL,
+                                      NULLTYPE, 0);
+        id = g_symtable.addToFunction(sym);
+    }
+    
     struct Symbol *s = g_symtable.getSymbol(id);
     s->defined = true;
-    
-    struct ast_node *ret = mkAstUnary(AST::Types::LABEL, left, id, left->line, left->c);
+
+    int l = m_scanner.curLine();
+    int c = m_scanner.curChar();
+    struct ast_node *ret = mkAstUnary(AST::Types::LABEL, left, id, l, c);
     return ret;
 }
 

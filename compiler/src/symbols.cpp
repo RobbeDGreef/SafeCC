@@ -130,7 +130,18 @@ int SymbolTable::_addVariable(struct Symbol sym)
     return ((m_scopeList.back()->size() - 1) << 8) | (m_scopeList.size() - 1);
 }
 
-int SymbolTable::addSymbol(string sym, int val, int symType,
+int SymbolTable::addToFunction(struct Symbol s)
+{
+    if (m_currentFunctionIndex != -1)
+    {
+        m_scopeList[1]->push_back(s);
+        return ((m_scopeList[1]->size() - 1) << 8) | 1;
+    }
+    
+    return -1;
+}
+
+struct Symbol SymbolTable::createSymbol(string sym, int val, int symType,
                            struct Type varType, int storageClass)
 {
     struct Symbol newsym;
@@ -147,15 +158,19 @@ int SymbolTable::addSymbol(string sym, int val, int symType,
     newsym.storageClass = storageClass;
     newsym.defined = false;
     newsym.used = false;
+    
+    return newsym;
+}
 
-    return _addVariable(newsym);
+int SymbolTable::addSymbol(string sym, int val, int symType,
+                           struct Type varType, int storageClass)
+{
+    return _addVariable(createSymbol(sym, val, symType, varType, storageClass));
 }
 
 int SymbolTable::addSymbol(string sym, int val, int symType, int varType)
 {
-    struct Type t;
-    memset(&t, 0, sizeof(struct Type));
-    return addSymbol(sym, val, symType, t, StorageClass::AUTO);
+    return addSymbol(sym, val, symType, NULLTYPE, StorageClass::AUTO);
 }
 
 int SymbolTable::addSymbol(string sym, int val, int symType, int varType, int sc)

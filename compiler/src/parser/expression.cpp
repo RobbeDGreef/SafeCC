@@ -79,7 +79,7 @@ bool closingStatement(int tok)
 {
     if (tok == Token::Tokens::SEMICOLON || tok == Token::Tokens::R_PAREN ||
         tok == Token::Tokens::COMMA || tok == Token::Tokens::R_BRACE ||
-        tok == Token::Tokens::R_BRACKET)
+        tok == Token::Tokens::R_BRACKET || tok == Token::Tokens::COLON)
         return true;
     
     return false;
@@ -130,7 +130,7 @@ struct ast_node *ExpressionParser::parsePrimary(struct Type *ltype)
 
     case Token::Tokens::IDENTIFIER:
         id = g_symtable.findSymbol(m_scanner.identifier());
-        if (id == -1)
+        if (id == -1 || g_symtable.getSymbol(id)->symType == SymbolTable::SymTypes::LABEL)
             return NULL;
 
         s = g_symtable.getSymbol(id);

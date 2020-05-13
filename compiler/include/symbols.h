@@ -95,6 +95,9 @@ class SymbolTable
                   int storageClass);
     int pushSymbol(struct Symbol);
     int addString(string val);
+    struct Symbol createSymbol(string sym, int val, int symType,
+                           struct Type varType, int storageClass);
+    int addToFunction(struct Symbol s);
 };
 
 /* Global symtable variable */

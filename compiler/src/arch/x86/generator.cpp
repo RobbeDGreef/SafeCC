@@ -273,8 +273,6 @@ string variableAccess(int symbol, int offset = 0)
 
             else if (s->varType.isArray /*&& !(s->varType.ptrDepth - 1) */)
                 offset += varSize - 4;
-            
-            DEBUGR("offset: " << offset)
 
             return "ebp-" + to_string(s->stackLoc + 4 + offset);
         }
@@ -416,11 +414,15 @@ static string setinstr[] = {"sete", "setne", "setl", "setg", "setle", "setge"};
 /* Inverted jump instructions */
 static string jmpinstr[] = {"je", "jne", "jl", "jg", "jle", "jge"};
 
-int GeneratorX86::genCompare(int op, int reg1, int reg2)
+int GeneratorX86::genCompare(int reg1, int reg2, bool clearReg)
 {
     write("cmp", GETREG(reg2), GETREG(reg1));
-    freeReg(reg1);
     freeReg(reg2);
+    
+    if (!clearReg)
+        return reg1;
+    
+    freeReg(reg1);
     return -1;
 }
 int GeneratorX86::genFlagJump(int op, int label)
