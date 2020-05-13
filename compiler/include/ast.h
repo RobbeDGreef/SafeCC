@@ -36,7 +36,7 @@ namespace AST
         FUNCTIONCALL, FUNCTIONARGUMENT,
         RETURN,
         
-        GOTO, LABEL,
+        GOTO, LABEL, SWITCH, CASE, DEFAULT,
         
         DEBUGPRINT
     };
@@ -70,3 +70,5 @@ struct ast_node *mkAstLeaf(int operation, int value, int line, int c);
 struct ast_node *mkAstNode(int operation, struct ast_node *left, 
                             struct ast_node *mid, struct ast_node *right,
                             int value, int line, int c);
+
+struct ast_node *getRightLeaf(struct ast_node *tree);

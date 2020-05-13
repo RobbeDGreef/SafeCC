@@ -66,7 +66,7 @@ private:
     int genLoadVariable(int symbolidx, struct Type t);
     int genStoreValue(int reg, int memloc, struct Type t);
 
-    int genCompare(int op, int reg1, int reg2);
+    int genCompare(int reg1, int reg2, bool clear=true);
     int genCompareSet(int op, int reg1, int reg2);
     int genFlagJump(int op, int label);
 

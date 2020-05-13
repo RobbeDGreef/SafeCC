@@ -19,6 +19,7 @@ protected:
     
     int generateIf(struct ast_node *tree);
     int generateWhile(struct ast_node *tree);
+    int generateSwitch(struct ast_node *tree);
     int generateArgumentPush(struct ast_node *tree);
     int generateAssignment(struct ast_node *tree);
     int label();
@@ -42,7 +43,7 @@ protected:
     virtual int genLoadVariable(int symbol, struct Type t) {}
     virtual int genStoreValue(int reg, int memloc, struct Type t) {}
     
-    virtual int genCompare(int op, int reg1, int reg2) {}
+    virtual int genCompare(int reg1, int reg2, bool clear=true) {}
     virtual int genCompareSet(int op, int reg1, int reg2) {}
     virtual int genFlagJump(int op, int label) {}
     virtual int genFlagSet(int op, int reg) {}

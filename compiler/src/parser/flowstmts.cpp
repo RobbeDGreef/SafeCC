@@ -122,3 +122,91 @@ struct ast_node *StatementParser::parseLabel(string label)
     struct ast_node *ret = mkAstUnary(AST::Types::LABEL, left, id, left->line, left->c);
     return ret;
 }
+
+static bool isSwitchFlowKeyword(int op)
+{
+    if (op == AST::Types::CASE || op == AST::Types::DEFAULT)
+        return true;
+    
+    return false;
+}
+
+// Warning: this piece of code is somewhat complex, treat it with care
+struct ast_node *StatementParser::switchWalk(struct ast_node *tree)
+{
+    struct ast_node *code = NULL;
+    struct ast_node *cases = NULL;
+    struct ast_node *lastCodeIter = NULL;
+    struct ast_node *codeHead = tree;
+    struct ast_node *prevCode = NULL;
+    
+    while (tree)
+    {
+        if (tree->operation == AST::Types::GLUE)
+            code = tree->right;
+        else
+            code = tree;
+            
+        switch(code->operation)
+        {
+        case AST::Types::DEFAULT:
+        case AST::Types::CASE:
+            if (lastCodeIter)
+                lastCodeIter->left = NULL;
+            
+            code->right = cases;
+            cases = code;
+            
+            cases->left = codeHead;
+            break;
+        
+        default:
+            if (!prevCode || isSwitchFlowKeyword(prevCode->operation))
+                codeHead = tree;
+            
+            lastCodeIter = tree;
+            break;
+        }
+        
+        prevCode = code;
+        tree = tree->left;
+    }
+    
+    return cases;
+}
+
+struct ast_node *StatementParser::switchStatement()
+{
+    struct ast_node *expr;
+    struct ast_node *body;
+    
+    m_scanner.scan();
+    m_parser.match(Token::Tokens::L_PAREN);
+    expr = m_parser.m_exprParser.parseBinaryOperation(0, NULLTYPE);
+    m_parser.match(Token::Tokens::R_PAREN);
+    body = parseBlock(Token::Tokens::SWITCH);
+    body = switchWalk(body);
+    
+    return mkAstNode(AST::Types::SWITCH, expr, NULL, body, 0,
+                     m_scanner.curLine(), m_scanner.curChar());
+}
+
+
+struct ast_node *StatementParser::switchCaseStatement()
+{
+    m_scanner.scan();
+    int constant = m_parser.m_exprParser.parseConstantExpr();
+    m_parser.match(Token::Tokens::COLON);
+    
+    return mkAstLeaf(AST::Types::CASE, constant, m_scanner.curLine(),
+                     m_scanner.curChar());
+}
+
+struct ast_node *StatementParser::switchDefaultStatement()
+{
+    m_scanner.scan();
+    m_parser.match(Token::Tokens::COLON);
+    
+    return mkAstLeaf(AST::Types::DEFAULT, 0, m_scanner.curLine(),
+                     m_scanner.curChar());
+}

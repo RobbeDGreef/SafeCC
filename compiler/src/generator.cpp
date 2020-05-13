@@ -103,6 +103,59 @@ int Generator::generateAssignment(struct ast_node *tree)
     return genStoreValue(rreg, lreg, tree->type);
 }
 
+int Generator::generateSwitch(struct ast_node *tree)
+{
+    struct ast_node *caseIter = tree->right;
+    int exprReg = generateFromAst(tree->left, -1, tree->operation);
+    
+    vector<int> caseLabels;
+    int caseLabel;
+    int endLabel = label();
+    
+    // Generating branchtable   
+    while (caseIter)
+    {
+        if (caseIter->operation == AST::Types::DEFAULT)
+        {
+            caseLabels.push_back(endLabel);
+            caseIter = caseIter->right;
+            continue;
+        }
+        
+        int compReg = genLoad(caseIter->value, tree->left->type.size);
+        caseLabel = label();
+        caseLabels.push_back(caseLabel);
+        
+        genCompare(exprReg, compReg, false);
+        genFlagJump(AST::Types::EQUAL, caseLabel);
+        caseIter = caseIter->right;
+    }
+    
+    genJump(endLabel);
+    
+    // Reloop the caselist to generate the statements
+    caseIter = tree->right;
+    int i = 0;
+    while (caseIter)
+    {
+        if (caseIter->operation == AST::Types::DEFAULT)
+            endLabel = label();
+            
+        genLabel(caseLabels[i]);
+        
+        // This freeReg() call is just a safety mechanism
+        int reg = generateFromAst(caseIter->left, -1, tree->operation);
+        if (reg != -1)
+            freeReg(reg);
+        
+        i++;
+        caseIter = caseIter->right;
+    }
+    
+    genLabel(endLabel);
+    return -1;
+}
+
 static bool isFlowStatement(int tok)
 {
     if (tok == AST::Types::IF || tok == AST::Types::WHILE)
@@ -158,7 +211,7 @@ int Generator::generateComparison(struct ast_node *tree,
     genLabel(condEndLabel);
 }
 
-static ast_node *getRightLeaf(struct ast_node *tree)
+static struct ast_node *getRightCompLeaf(struct ast_node *tree)
 {
     struct ast_node *tmp = tree;
     if (!tmp->right)
@@ -219,7 +272,7 @@ int Generator::generateCondition(struct ast_node *tree, int condEndLabel,
         
         if (isLogOp(tree->left->operation))
         {
-            int op = getRightLeaf(tree->left)->operation;
+            int op = getRightCompLeaf(tree->left)->operation;
             genFlagJump(logicalNot(op), endLabel);
             return -1;
         }
@@ -299,7 +352,7 @@ int Generator::generateBinaryCondition(struct ast_node *tree, int endLabel,
         leftreg = generateBinaryCondition(tree->left, endLabel, parentOp, AST::Types::LOGNOT);
         
         if (isLogOp(tree->left->operation))
-            op = getRightLeaf(tree->left)->operation;
+            op = getRightCompLeaf(tree->left)->operation;
         else
             op = tree->left->operation;
         
@@ -384,6 +437,8 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
         return generateIf(tree);
     case AST::Types::WHILE:
         return generateWhile(tree);
+    case AST::Types::SWITCH:
+        return generateSwitch(tree);
     case AST::Types::FUNCTION:
         genFunctionPreamble(tree->value);
         generateFromAst(tree->left, -1, tree->operation);
@@ -472,7 +527,7 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
         if (!isFlowStatement(parentOp))
             return genCompareSet(tree->operation, leftreg, rightreg);
         
-        return genCompare(tree->operation, leftreg, rightreg);
+        return genCompare(leftreg, rightreg);
 
     case AST::Types::FUNCTIONCALL:
         DEBUG("GENERATING FUNC CALL")
@@ -505,7 +560,7 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp)
         // This is more of a debugging check then a release thing because
         // we should normally never get here unless something is unimplemented
         // or seriously wrong (ei memory bug)
-        err.fatal("Unknown AST operator " + to_string(tree->operation));
+        err.fatal("Unknown AST operator " + to_string(tree->operation), tree->line, tree->c);
     }
 }
 

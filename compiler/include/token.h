@@ -28,7 +28,7 @@ static const string toknames[]
     "typedef", "struct", "union", "enum",
     "auto", "static", "register", "extern",
     "restrict", "attribute", "asm",
-    "goto", "colon"
+    "goto", "colon", "switch", "case", "default"
 };
 
 class Token
@@ -78,7 +78,7 @@ public:
         TYPEDEF, STRUCT, UNION, ENUM,
         AUTO, STATIC, REGISTER, EXTERN,
         RESTRICT, ATTRIBUTE, ASM,
-        GOTO, COLON
+        GOTO, COLON, SWITCH, CASE, DEFAULT
     };
 
     int token();

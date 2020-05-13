@@ -17,8 +17,15 @@ int Scanner::identifyKeyword(string keyword)
             return Token::Tokens::CHAR;
         else if (!keyword.compare("const"))
             return Token::Tokens::CONST;
+        else if (!keyword.compare("case"))
+            return Token::Tokens::CASE;
         break;
-
+    
+    case 'd':
+        if (!keyword.compare("default"))
+            return Token::Tokens::DEFAULT;
+        break;
+        
     case 'e':
         if (!keyword.compare("else"))
             return Token::Tokens::ELSE;
@@ -68,6 +75,8 @@ int Scanner::identifyKeyword(string keyword)
             return Token::Tokens::STATIC;
         else if (!keyword.compare("sizeof"))
             return Token::Tokens::SIZEOF;
+        else if (!keyword.compare("switch"))
+            return Token::Tokens::SWITCH;
         break;
 
     case 't':

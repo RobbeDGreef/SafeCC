@@ -54,7 +54,7 @@ struct ast_node *StatementParser::parseTypedef()
     return mkAstLeaf(AST::PADDING, 0, 0, 0);
 }
 
-struct ast_node *StatementParser::parseStatement()
+struct ast_node *StatementParser::parseStatement(int parentTok)
 {
     int              ptrOcc       = 0;
     int              storageClass = -1;
@@ -91,7 +91,11 @@ loop:;
     case Token::Tokens::FOR:
         node = forStatement();
         break;
-        
+    
+    case Token::Tokens::SWITCH:
+        node = switchStatement();
+        break;
+    
     case Token::Tokens::RETURN:
         node = returnStatement();
         break;
@@ -104,7 +108,21 @@ loop:;
     case Token::Tokens::GOTO:
         node = gotoStatement();
         break;
-
+    
+    case Token::Tokens::CASE:
+        if (parentTok == Token::Tokens::SWITCH)
+            node = switchCaseStatement();
+        else
+            err.fatal("Case labels are only allowed inside switch statements");
+        break;
+    
+    case Token::Tokens::DEFAULT:
+        if (parentTok == Token::Tokens::SWITCH)
+            node = switchDefaultStatement();
+        else
+            err.fatal("Default labels are only allowed inside switch statements");
+        break;
+        
     case Token::Tokens::SIGNED:
     case Token::Tokens::UNSIGNED:
     case Token::Tokens::VOID:
@@ -169,6 +187,7 @@ loop:;
         m_scanner.scan();
         if (m_scanner.token().token() == Token::Tokens::COLON)
         {
+            DEBUGR("parsing label")
             node = parseLabel(ident);
             break;
         }
@@ -179,8 +198,8 @@ loop:;
     if (node && node->operation != AST::Types::PADDING)
     {
         // Place statement strings into the asm files for debugging purposes
-        node = mkAstUnary(AST::Types::DEBUGPRINT, node, m_lastOffset+1, 
-                          m_scanner.curLine(), m_scanner.curOffset()-1);
+        //node = mkAstUnary(AST::Types::DEBUGPRINT, node, m_lastOffset+1, 
+        //                  m_scanner.curLine(), m_scanner.curOffset()-1);
     }
     m_lastOffset = m_scanner.curOffset();
     return node;
@@ -197,14 +216,14 @@ bool isStatement(int op)
 }
 
 /// @brief  The actual parseblock function
-struct ast_node *StatementParser::_parseBlock()
+struct ast_node *StatementParser::_parseBlock(int parentOp)
 {
     struct ast_node *tree = NULL;
     struct ast_node *left = NULL;
 
     while (1)
     {
-        tree = parseStatement();
+        tree = parseStatement(parentOp);
 
         if (tree && (tree->operation == AST::Types::FUNCTIONCALL ||
                      tree->operation == AST::Types::ASSIGN ||
@@ -258,13 +277,13 @@ struct ast_node *StatementParser::parseBlock(vector<struct Symbol> arguments)
     return tree;
 }
 
-struct ast_node *StatementParser::parseBlock()
+struct ast_node *StatementParser::parseBlock(int parentOp)
 {
     g_symtable.newScope();
     struct ast_node *tree;
     if (m_scanner.token().token() != Token::Tokens::L_BRACE)
     {
-        tree = parseStatement();
+        tree = parseStatement(parentOp);
         int op = tree->operation;
         
         // Due to the debugprint ast nodes:
@@ -277,7 +296,7 @@ struct ast_node *StatementParser::parseBlock()
     else
     {
         m_scanner.scan();
-        tree = _parseBlock();
+        tree = _parseBlock(parentOp);
         m_parser.match(Token::Tokens::R_BRACE);
     }
     

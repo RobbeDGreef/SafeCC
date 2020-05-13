@@ -20,7 +20,7 @@ class StatementParser
     int m_lastOffset = 0;
   
   private:
-    struct ast_node *parseBlock();
+    struct ast_node *parseBlock(int parentOp=0);
     struct ast_node *parseBlock(vector<struct Symbol> arguments);
     void             parseVariableArgParam(struct Symbol *s);
 
@@ -36,11 +36,17 @@ class StatementParser
     struct ast_node *ifStatement();
     struct ast_node *whileStatement();
     struct ast_node *forStatement();
+    
+    struct ast_node *switchStatement();
+    struct ast_node *switchCaseStatement();
+    struct ast_node *switchDefaultStatement();
+    struct ast_node *switchWalk(struct ast_node *tree);
+    
     struct ast_node *comparison();
     struct ast_node *gotoStatement();
     struct ast_node *parseLabel(string label);
 
-    struct ast_node *parseStatement();
+    struct ast_node *parseStatement(int parentTok=0);
     struct ast_node *parseDeclaration(struct Type t, int storageClass);
     struct ast_node *parseTypedef();
     struct ast_node *structInit(struct ast_node *tree, struct ast_node *ident,
@@ -52,7 +58,7 @@ class StatementParser
     struct ast_node *declUnion(int storageClass);
     struct ast_node *declEnum();
     struct ast_node *functionCall();
-    struct ast_node *_parseBlock();
+    struct ast_node *_parseBlock(int parentOp=0);
     StatementParser(Scanner &scanner, Parser &parser, Generator &gen,
                     TypeList &typelist);
 };

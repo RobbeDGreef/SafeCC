@@ -69,3 +69,11 @@ int tokenToAst(int token, Scanner &scanner)
     err.unexpectedToken(token);
     exit(1);
 }
+
+struct ast_node *getRightLeaf(struct ast_node *tree)
+{
+    while (tree->right != NULL)
+        tree = tree->right;
+    
+    return tree;
+}
