@@ -68,6 +68,10 @@ loop:;
 
     switch (tok)
     {
+    case Token::Tokens::L_BRACE:
+        node = parseBlock(parentTok);
+        break;
+        
     case Token::Tokens::EXTERN:
     case Token::Tokens::STATIC:
     case Token::Tokens::REGISTER:
