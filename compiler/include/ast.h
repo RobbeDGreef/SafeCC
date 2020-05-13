@@ -39,6 +39,8 @@ namespace AST
         GOTO, LABEL, SWITCH, CASE, DEFAULT,
         BREAK, CONTINUE,
         
+        PUSHSCOPE, POPSCOPE,
+        
         DEBUGPRINT
     };
 };

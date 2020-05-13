@@ -5,6 +5,13 @@
 /* Global symbol table */
 SymbolTable g_symtable = SymbolTable();
 
+Scope *SymbolTable::_createScope()
+{
+    Scope *scope = new Scope(m_allScopes.size());
+    m_allScopes.push_back(scope);
+    return scope;
+}
+
 SymbolTable::SymbolTable()
 {
     /* The global symbol table is the first scope */
@@ -13,25 +20,22 @@ SymbolTable::SymbolTable()
 
 SymbolTable::~SymbolTable()
 {
-    for (vector<struct Symbol> *scope : m_scopeList)
+    for (Scope *scope : m_scopeList)
         delete scope;
 }
 
-void SymbolTable::newScope()
+int SymbolTable::newScope()
 {
-    m_scopeList.push_back(new vector<struct Symbol>);
-}
-
-void SymbolTable::pushScope(vector<struct Symbol> *scope)
-{
+    Scope *scope = _createScope();
     m_scopeList.push_back(scope);
+    return scope->index();
 }
 
-vector<struct Symbol> *SymbolTable::popScope()
+int SymbolTable::popScope()
 {
-    vector<struct Symbol> *scope = m_scopeList.back();
+    Scope *scope = m_scopeList.back();
     m_scopeList.pop_back();
-    return scope;
+    return scope->index();
 }
 
 int SymbolTable::findSymbol(string sym)
@@ -227,4 +231,11 @@ int SymbolTable::addString(string str)
     m_scopeList[0]->push_back(s);
 
     return ((m_scopeList[0]->size() - 1) << 8);
+}
+
+int SymbolTable::pushScopeById(int id)
+{
+    m_scopeList.push_back(m_allScopes[id]);
+    DEBUGR("pushed scope: " << id)
+    return id;
 }

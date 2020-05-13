@@ -20,7 +20,7 @@ class StatementParser
     int m_lastOffset = 0;
   
   private:
-    struct ast_node *parseBlock(int parentOp=0);
+    struct ast_node *parseBlock(int parentOp=0, bool newScope=true);
     struct ast_node *parseBlock(vector<struct Symbol> arguments);
     void             parseVariableArgParam(struct Symbol *s);
 
@@ -58,7 +58,7 @@ class StatementParser
     struct ast_node *declUnion(int storageClass);
     struct ast_node *declEnum();
     struct ast_node *functionCall();
-    struct ast_node *_parseBlock(int parentOp=0);
+    struct ast_node *_parseBlock(int parentOp=0, struct ast_node *left=NULL);
     StatementParser(Scanner &scanner, Parser &parser, Generator &gen,
                     TypeList &typelist);
 };

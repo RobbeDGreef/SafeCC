@@ -117,7 +117,15 @@ int Generator::generateAssignment(struct ast_node *tree)
 int Generator::generateSwitch(struct ast_node *tree, int condLabel)
 {
     struct ast_node *caseIter = tree->right;
+    
+    // Generate the pushscope instruction
+    generateFromAst(tree->left->right, -1, 0);
+    
+    if (tree->left->operation == AST::Types::GLUE)
+        tree->left = tree->left->left;
+        
     int exprReg = generateFromAst(tree->left, -1, tree->operation);
+    
     
     vector<int> caseLabels;
     int caseLabel;
@@ -581,6 +589,15 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp,
             err.fatal("Break statements are only allowed inside switch, for and while loops", tree->line, tree->c);
         
         genJump(endLabel);
+        return -1;
+    
+    case AST::Types::PUSHSCOPE:
+        g_symtable.pushScopeById(tree->value);
+        return -1;
+    
+    case AST::Types::POPSCOPE:
+        DEBUGR("popped scope")
+        g_symtable.popScope();
         return -1;
 
     default:

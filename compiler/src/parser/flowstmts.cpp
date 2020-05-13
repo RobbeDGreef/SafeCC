@@ -26,7 +26,7 @@ struct ast_node *StatementParser::ifStatement()
     m_parser.match(Token::Tokens::R_PAREN);
 
     struct ast_node *true_branch = parseBlock();
-    struct ast_node *false_branch = 0;
+    struct ast_node *false_branch = NULL;
 
     if (m_scanner.token().token() == Token::Tokens::ELSE)
     {
@@ -54,8 +54,12 @@ struct ast_node *StatementParser::forStatement()
     m_scanner.scan();
     m_parser.match(Token::Tokens::L_PAREN);
 
+    int id = g_symtable.newScope();
     struct ast_node *forInit = parseStatement();
     m_parser.match(Token::Tokens::SEMICOLON);
+    
+    struct ast_node *push = mkAstLeaf(AST::Types::PUSHSCOPE, id, 0, 0);
+    forInit = mkAstNode(AST::Types::GLUE, push, NULL, forInit, 0, 0, 0);
     
     struct ast_node *forCond = comparison();
     m_parser.match(Token::Tokens::SEMICOLON);
@@ -63,13 +67,18 @@ struct ast_node *StatementParser::forStatement()
     struct ast_node *forIter = parseStatement();
     m_parser.match(Token::Tokens::R_PAREN);
     
-    struct ast_node *body = parseBlock(Token::Tokens::FOR);
-
+    struct ast_node *body = parseBlock(Token::Tokens::FOR, false);
     struct ast_node *tree = mkAstNode(AST::Types::GLUE, body, NULL, forIter, 0, forIter->line, forIter->c);
 
     // Value is 1, in the generator we interpret this flag as being a FOR loop
     tree = mkAstNode(AST::Types::WHILE, forCond, NULL, tree, 1, forCond->line, forCond->c);
-    return mkAstNode(AST::Types::GLUE, forInit, NULL, tree, 0, forInit->line, forInit->c);
+    tree = mkAstNode(AST::Types::GLUE, forInit, NULL, tree, 0, forInit->line, forInit->c);
+    
+    struct ast_node *pop = mkAstLeaf(AST::Types::POPSCOPE, 0, 0, 0);
+    tree = mkAstNode(AST::Types::GLUE, tree, NULL, pop, 0, 0, 0);
+    g_symtable.popScope();
+
+    return tree;
 }
 
 struct ast_node *StatementParser::gotoStatement()
@@ -196,16 +205,27 @@ struct ast_node *StatementParser::switchStatement()
 {
     struct ast_node *expr;
     struct ast_node *body;
+    struct ast_node *tree;
     
     m_scanner.scan();
     m_parser.match(Token::Tokens::L_PAREN);
     expr = m_parser.m_exprParser.parseBinaryOperation(0, NULLTYPE);
+    
+    int id = g_symtable.newScope();
+    struct ast_node *push = mkAstLeaf(AST::Types::PUSHSCOPE, id, 0, 0);
+    expr = mkAstNode(AST::Types::GLUE, expr, NULL, push, 0, 0, 0);
+    
     m_parser.match(Token::Tokens::R_PAREN);
-    body = parseBlock(Token::Tokens::SWITCH);
+    body = parseBlock(Token::Tokens::SWITCH, false);
     body = switchWalk(body);
     
-    return mkAstNode(AST::Types::SWITCH, expr, NULL, body, 0,
+    
+    tree = mkAstNode(AST::Types::SWITCH, expr, NULL, body, 0,
                      m_scanner.curLine(), m_scanner.curChar());
+    
+    g_symtable.popScope();
+    struct ast_node *pop = mkAstLeaf(AST::Types::POPSCOPE, 0, 0, 0);
+    return mkAstNode(AST::Types::GLUE, tree, NULL, pop, 0, 0, 0);
 }
 
 

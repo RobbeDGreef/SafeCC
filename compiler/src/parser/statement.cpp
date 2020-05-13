@@ -233,16 +233,15 @@ bool isStatement(int op)
 }
 
 /// @brief  The actual parseblock function
-struct ast_node *StatementParser::_parseBlock(int parentOp)
+struct ast_node *StatementParser::_parseBlock(int parentOp, struct ast_node *left)
 {
     struct ast_node *tree = NULL;
-    struct ast_node *left = NULL;
 
     while (1)
     {
         tree = parseStatement(parentOp);
 
-        if (tree && isStatement(tree->operation))
+        if (tree && isStatement(tree->operation) && m_scanner.token().token() != Token::Tokens::R_BRACE)
         {
             /* Only some statements need a semicolon at the end */
             m_parser.match(Token::Tokens::SEMICOLON);
@@ -291,10 +290,11 @@ struct ast_node *StatementParser::parseBlock(vector<struct Symbol> arguments)
     return tree;
 }
 
-struct ast_node *StatementParser::parseBlock(int parentOp)
+struct ast_node *StatementParser::parseBlock(int parentOp, bool newScope)
 {
-    g_symtable.newScope();
-    struct ast_node *tree;
+    struct ast_node *tree = NULL;
+    int id = -1;
+    
     if (m_scanner.token().token() != Token::Tokens::L_BRACE)
     {
         tree = parseStatement(parentOp);
@@ -306,14 +306,28 @@ struct ast_node *StatementParser::parseBlock(int parentOp)
         
         if (isStatement(op))
             m_parser.match(Token::Tokens::SEMICOLON);
-    }
-    else
-    {
-        m_scanner.scan();
-        tree = _parseBlock(parentOp);
-        m_parser.match(Token::Tokens::R_BRACE);
+        
+        return tree;
     }
     
-    g_symtable.popScope();
+    if (newScope)
+    {
+        id = g_symtable.newScope();
+        DEBUGR("pushing scope: " << id)
+        tree = mkAstLeaf(AST::Types::PUSHSCOPE, id, 0, 0);
+    }
+    
+    m_scanner.scan();
+    tree = _parseBlock(parentOp, tree);
+    m_parser.match(Token::Tokens::R_BRACE);
+    
+    if (newScope)
+    {
+        DEBUGR("popping scope")
+        g_symtable.popScope();
+        struct ast_node *pop = mkAstLeaf(AST::Types::POPSCOPE, 0, 0, 0);
+        tree = mkAstNode(AST::Types::GLUE, tree, NULL, pop, 0, 0, 0);
+    }
+    
     return tree;
 }

@@ -76,8 +76,8 @@ int main(int argc, char *const *argv)
         /* Flags */
         {"Wconversion", no_argument, &err.f_conversionWarn, 1},
         {"Werror", no_argument, &err.f_warningAsError, 1},
-        {"/* code */CompileAssemble", no_argument, &f_onlyCompile, 'S'},
-        {"OnlyCompile", no_argument, &f_noLink, 'c'},
+        {"Compile", no_argument, &f_onlyCompile, 'S'},
+        {"NoLink", no_argument, &f_noLink, 'c'},
         {"Preprocessor", no_argument, &f_onlyPreProcess, 'E'},
         
         /* Arguments */
