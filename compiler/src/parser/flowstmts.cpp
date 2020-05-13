@@ -66,7 +66,9 @@ struct ast_node *StatementParser::forStatement()
     struct ast_node *body = parseBlock(Token::Tokens::FOR);
 
     struct ast_node *tree = mkAstNode(AST::Types::GLUE, body, NULL, forIter, 0, forIter->line, forIter->c);
-    tree = mkAstNode(AST::Types::WHILE, forCond, NULL, tree, 0, forCond->line, forCond->c);
+
+    // Value is 1, in the generator we interpret this flag as being a FOR loop
+    tree = mkAstNode(AST::Types::WHILE, forCond, NULL, tree, 1, forCond->line, forCond->c);
     return mkAstNode(AST::Types::GLUE, forInit, NULL, tree, 0, forInit->line, forInit->c);
 }
 

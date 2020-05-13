@@ -44,7 +44,18 @@ int Generator::generateWhile(struct ast_node *tree)
     genLabel(startLabel);
     generateComparison(tree->left, endLabel, tree->operation);
     freeAllReg();
-    generateFromAst(tree->right, -1, tree->operation, startLabel, endLabel);
+    
+    // tree->value will equal 1 when this is actually a for loop
+    if (tree->value)
+    {
+        int breakLabel = label();
+        generateFromAst(tree->right->right, -1, tree->operation, startLabel, breakLabel);
+        genLabel(breakLabel);
+        generateFromAst(tree->right->left, -1, tree->operation, startLabel, breakLabel);
+    }
+    else
+        generateFromAst(tree->right, -1, tree->operation, startLabel, endLabel);
+        
     freeAllReg();
     genJump(startLabel);
     genLabel(endLabel);
