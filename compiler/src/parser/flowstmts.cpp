@@ -113,14 +113,12 @@ struct ast_node *StatementParser::parseLabel(string label)
     m_scanner.scan();
     
     struct ast_node *left = parseStatement();
-    if (left && !isFlowStatement(left->operation))
-        m_parser.match(Token::Tokens::SEMICOLON);
-    
-    else if (left && !isLabelStatement(left->operation))
-        err.fatal("Label must be placed in front of valid statement\n");
     
     if (left->operation == AST::Types::PADDING)
         left = NULL;
+    
+    if (left && !isLabelStatement(left->operation))
+        err.fatal("Label must be placed in front of valid statement\n");
     
     int id;
     struct Symbol sym;
