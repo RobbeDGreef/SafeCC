@@ -11,8 +11,11 @@ int main()
                 printf("2\n");
                 printf("Test\n");
                 goto endLabel;
-            case 4: printf("4\n");
-                    goto endLabel;
+            case 4: 
+            {
+                printf("4\n");
+                goto endLabel;
+            }
             
             
             default: printf("Default %i\n", i);
