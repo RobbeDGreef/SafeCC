@@ -75,7 +75,7 @@ protected:
     virtual int genLogOr(int reg1, int reg2) {}
     
     virtual int genIsZero(int reg) {}
-    virtual int genIsZeroSet(int reg) {}
+    virtual int genIsZeroSet(int reg, bool setOnZero) {}
     
     virtual void freeReg(int reg) {}
 

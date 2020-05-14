@@ -61,6 +61,19 @@ GeneratorX86::GeneratorX86(string outfile) : Generator(outfile)
     fprintf(m_outfile, "section .text\nglobal main\n");
 }
 
+string GeneratorX86::getReg(int r)
+{
+    if (!m_usedRegisters[r])
+    {
+        err.warningNL("Register: " + m_dwordRegisters[r] + " is unused");
+        return m_dwordRegisters[r];
+    }
+    else
+    {
+        return m_registers[m_usedRegisters[r] - 1][r];
+    }
+}
+
 void GeneratorX86::freeAllReg()
 {
     m_spilledRegisters = 0;
@@ -70,12 +83,12 @@ void GeneratorX86::freeAllReg()
 
 void GeneratorX86::spillReg(int reg)
 {
-    write("push", GETREG(reg));
+    write("push", getReg(reg));
 }
 
 void GeneratorX86::loadReg(int reg)
 {
-    write("pop", GETREG(reg));
+    write("pop", getReg(reg));
 }
 
 void GeneratorX86::freeReg(int reg)
@@ -90,7 +103,7 @@ void GeneratorX86::freeReg(int reg)
     if (m_usedRegisters[reg] == 0)
     {
         err.warningNL("Trying to free a register that is already free: " +
-                      GETREG(reg));
+                      m_dwordRegisters[reg]);
     }
     m_usedRegisters[reg] = 0;
 }
@@ -131,7 +144,7 @@ int GeneratorX86::allocReg(int r)
     }
 
     int r2 = allocReg();
-    write("mov", GETREG(r), GETREG(r2));
+    write("mov", getReg(r), getReg(r2));
     return r2;
 }
 
@@ -180,27 +193,27 @@ int GeneratorX86::genLoad(int value, int size)
     DEBUG("Load " << value)
     int reg              = allocReg();
     m_usedRegisters[reg] = _regFromSize(size);
-    write("mov", value, GETREG(reg));
+    write("mov", value, getReg(reg));
     return reg;
 }
 
 int GeneratorX86::genAdd(int r1, int r2)
 {
-    write("add", GETREG(r2), GETREG(r1));
+    write("add", getReg(r2), getReg(r1));
     freeReg(r2);
     return r1;
 }
 
 int GeneratorX86::genSub(int r1, int r2)
 {
-    write("sub", GETREG(r2), GETREG(r1));
+    write("sub", getReg(r2), getReg(r1));
     freeReg(r2);
     return r1;
 }
 
 int GeneratorX86::genMul(int r1, int r2)
 {
-    write("imul", GETREG(r2), GETREG(r1));
+    write("imul", getReg(r2), getReg(r1));
     freeReg(r2);
     return r1;
 }
@@ -215,7 +228,7 @@ int GeneratorX86::_genIDiv(int r1, int r2, bool quotient)
     {
         r3 = true;
         write("push", "eax");
-        write("mov", GETREG(r1), "eax");
+        write("mov", getReg(r1), "eax");
     }
     
     if (m_usedRegisters[EDX])
@@ -224,18 +237,18 @@ int GeneratorX86::_genIDiv(int r1, int r2, bool quotient)
         write("push", "edx");
     }
 
-    write("push", GETREG(r2));
+    write("push", getReg(r2));
     freeReg(r2);
 
     write("xor", "edx", "edx");
-    move("mov", GETREG(r1), "eax");
+    move("mov", getReg(r1), "eax");
     write("cdq");
     write("idiv", "dword [esp]");
     
     string ret = "edx";
     if (quotient)
         ret = "eax";
-    move("mov", ret, GETREG(r1));
+    move("mov", ret, getReg(r1));
     write("add", 4, "esp");
 
     if (r4)
@@ -296,17 +309,17 @@ int GeneratorX86::genLoadVariable(int symbol, struct Type t)
     if (s->varType.isArray)
     {
         m_usedRegisters[reg] = 1;
-        write("lea", MEMACCESS(variableAccess(symbol)), GETREG(reg));
+        write("lea", MEMACCESS(variableAccess(symbol)), getReg(reg));
     }
     else if (t.typeType == TypeTypes::STRUCT && !t.ptrDepth)
     {
-        write("lea", MEMACCESS(variableAccess(symbol)), GETREG(reg));
+        write("lea", MEMACCESS(variableAccess(symbol)), getReg(reg));
     }
     else
     {
         int regs             = _regFromSize(t.size);
         m_usedRegisters[reg] = regs;
-        write("mov", MEMACCESS(variableAccess(symbol)), GETREG(reg));
+        write("mov", MEMACCESS(variableAccess(symbol)), getReg(reg));
     }
 
     return reg;
@@ -326,10 +339,9 @@ int GeneratorX86::genStoreValue(int reg1, int memloc, struct Type t)
         }
     }
     else
-        write("mov", GETREG(reg1), MEMACCESS(GETREG(memloc)));
-    freeReg(reg1);
+        write("mov", getReg(reg1), MEMACCESS(getReg(memloc)));
     freeReg(memloc);
-    return -1;
+    return reg1;
 }
 
 int GeneratorX86::genExternSection()
@@ -416,7 +428,7 @@ static string jmpinstr[] = {"je", "jne", "jl", "jg", "jle", "jge"};
 
 int GeneratorX86::genCompare(int reg1, int reg2, bool clearReg)
 {
-    write("cmp", GETREG(reg2), GETREG(reg1));
+    write("cmp", getReg(reg2), getReg(reg1));
     freeReg(reg2);
     
     if (!clearReg)
@@ -433,9 +445,10 @@ int GeneratorX86::genFlagJump(int op, int label)
 
 int GeneratorX86::genCompareSet(int op, int reg1, int reg2)
 {
-    write("cmp", GETREG(reg2), GETREG(reg1));
+    write("cmp", getReg(reg2), getReg(reg1));
+    write("xor", getReg(reg2), getReg(reg2));
     write(setinstr[op - AST::Types::EQUAL], m_loByteRegisters[reg2]);
-    write("movzx", m_loByteRegisters[reg2], GETREG(reg2));
+    write("movzx", m_loByteRegisters[reg2], getReg(reg2));
     freeReg(reg1);
     return reg2;
 }
@@ -472,10 +485,10 @@ int GeneratorX86::genWidenRegister(int reg, int oldsize, int newsize,
     }
 
     if (isSigned)
-        write("movsx", GETREG(reg), m_registers[newreg][reg]);
+        write("movsx", getReg(reg), m_registers[newreg][reg]);
 
     else
-        write("movzx", GETREG(reg), m_registers[newreg][reg]);
+        write("movzx", getReg(reg), m_registers[newreg][reg]);
 
     m_usedRegisters[reg] = newreg + 1;
 
@@ -518,8 +531,8 @@ int GeneratorX86::genFunctionCall(int symbolidx, int parameters)
     {
         write("sub", s->varType.size, "esp");
         int reg = allocReg();
-        write("lea", "[esp]", GETREG(reg));
-        write("push", GETREG(reg));
+        write("lea", "[esp]", getReg(reg));
+        write("push", getReg(reg));
         freeReg(reg);
     }
 
@@ -553,22 +566,22 @@ int GeneratorX86::genReturnJump(int reg, int funcIdx)
     {
         int ptrReg = allocReg();
         int tmpReg = allocReg();
-        write("mov", "dword [ebp + 8]", GETREG(ptrReg));
+        write("mov", "dword [ebp + 8]", getReg(ptrReg));
         for (struct StructItem s : s->varType.contents)
         {
             string size = SPECIFYSIZE(_regFromSize(s.itemType.size));
             write("mov",
-                  size + MEMACCESS(GETREG(reg) + "+" + to_string(s.offset)),
-                  GETREG(tmpReg));
-            write("mov", GETREG(tmpReg),
-                  size + MEMACCESS(GETREG(ptrReg) + "+" + to_string(s.offset)));
+                  size + MEMACCESS(getReg(reg) + "+" + to_string(s.offset)),
+                  getReg(tmpReg));
+            write("mov", getReg(tmpReg),
+                  size + MEMACCESS(getReg(ptrReg) + "+" + to_string(s.offset)));
         }
-        move("mov", GETREG(ptrReg), "eax");
+        move("mov", getReg(ptrReg), "eax");
         freeReg(tmpReg);
     }
     else
     {
-        move("mov", GETREG(reg), "eax");
+        move(string("mov"), string(getReg(reg)), string("eax"));
     }
     freeReg(reg);
     allocReg(EAX);
@@ -581,7 +594,7 @@ int GeneratorX86::genLoadLocation(int symbolidx)
     struct Symbol *s   = g_symtable.getSymbol(symbolidx);
     int            reg = allocReg();
 
-    write("lea", MEMACCESS(variableAccess(symbolidx)), GETREG(reg));
+    write("lea", MEMACCESS(variableAccess(symbolidx)), getReg(reg));
 
     return reg;
 }
@@ -594,7 +607,7 @@ int GeneratorX86::genPtrAccess(int memreg, int size)
 
     write("mov",
           SPECIFYSIZE(m_usedRegisters[reg]) + MEMACCESS(m_dwordRegisters[memreg]),
-          GETREG(reg));
+          getReg(reg));
     freeReg(memreg);
     return reg;
 }
@@ -613,7 +626,7 @@ int GeneratorX86::genDirectMemLoad(int offset, int symbol, int reg, int size)
     {
         str = s->name + "+" + to_string(offset);
     }
-    write("mov", GETREG(reg), SPECIFYSIZE(_regFromSize(size)) + MEMACCESS(str));
+    write("mov", getReg(reg), SPECIFYSIZE(_regFromSize(size)) + MEMACCESS(str));
 
     freeReg(reg);
 
@@ -622,7 +635,7 @@ int GeneratorX86::genDirectMemLoad(int offset, int symbol, int reg, int size)
 
 int GeneratorX86::genNegate(int reg)
 {
-    write("neg", GETREG(reg));
+    write("neg", getReg(reg));
     return reg;
 }
 
@@ -638,7 +651,7 @@ int GeneratorX86::genAccessStruct(int symbol, int idx)
     write("mov",
           SPECIFYSIZE(_regFromSize(size)) + MEMACCESS(variableAccess(symbol,
                                                                      -offset)),
-          GETREG(reg));
+          getReg(reg));
 
     return reg;
 }
@@ -652,16 +665,16 @@ int GeneratorX86::genIncrement(int symbol, int amount, int after)
     {
         saveReg = allocReg();
         m_usedRegisters[saveReg] = m_usedRegisters[reg];
-        write("mov", GETREG(reg), GETREG(saveReg));
+        write("mov", getReg(reg), getReg(saveReg));
     }
     
     if (amount == 1)
-        write("inc", GETREG(reg));
+        write("inc", getReg(reg));
     else
-        write("add", amount, GETREG(reg));
+        write("add", amount, getReg(reg));
     
     int s = m_usedRegisters[reg];
-    write("mov", GETREG(reg), SPECIFYSIZE(s)+MEMACCESS(variableAccess(symbol)));
+    write("mov", getReg(reg), SPECIFYSIZE(s)+MEMACCESS(variableAccess(symbol)));
         
     if (after)
     {
@@ -678,19 +691,19 @@ int GeneratorX86::genDecrement(int symbol, int amount, int after)
     int saveReg = -1;
     
     if (amount == 1)
-        write("dec", GETREG(reg));
+        write("dec", getReg(reg));
     else
-        write("sub", amount, GETREG(reg));
+        write("sub", amount, getReg(reg));
         
     
     if (after)
     {
         saveReg = allocReg();
         m_usedRegisters[saveReg] = m_usedRegisters[reg];
-        write("mov", GETREG(reg), GETREG(saveReg));
+        write("mov", getReg(reg), getReg(saveReg));
     }
     
-    write("mov", GETREG(reg), SPECIFYSIZE(reg)+MEMACCESS(variableAccess(symbol)));
+    write("mov", getReg(reg), SPECIFYSIZE(reg)+MEMACCESS(variableAccess(symbol)));
         
     if (after)
     {
@@ -703,18 +716,18 @@ int GeneratorX86::genDecrement(int symbol, int amount, int after)
 int GeneratorX86::genLeftShift(int reg, int amount)
 {
     allocReg(ECX);
-    move("mov", GETREG(amount), "ecx");
+    move("mov", getReg(amount), "ecx");
     freeReg(amount);
-    write("shl", "cl", GETREG(reg));
+    write("shl", "cl", getReg(reg));
     return reg;
 }
 
 int GeneratorX86::genRightShift(int reg, int amount)
 {
     allocReg(ECX);
-    move("mov", GETREG(amount), "ecx");
+    move("mov", getReg(amount), "ecx");
     freeReg(amount);
-    write("shr", "cl", GETREG(reg));
+    write("shr", "cl", getReg(reg));
     return reg;
 }
 
@@ -741,57 +754,60 @@ void GeneratorX86::genDebugComment(string comment)
 
 int GeneratorX86::genAnd(int reg1, int reg2)
 {
-    write("and", GETREG(reg2), GETREG(reg1));
+    write("and", getReg(reg2), getReg(reg1));
     freeReg(reg2);
     return reg1;
 }
 
 int GeneratorX86::genOr(int reg1, int reg2)
 {
-    write("or", GETREG(reg2), GETREG(reg1));
+    write("or", getReg(reg2), getReg(reg1));
     freeReg(reg2);
     return reg1;
 }
 
 int GeneratorX86::genXor(int reg1, int reg2)
 {
-    write("xor", GETREG(reg2), GETREG(reg1));
+    write("xor", getReg(reg2), getReg(reg1));
     freeReg(reg2);
     return reg1;
 }
 
 int GeneratorX86::genBinNegate(int reg1)
 {
-    write("not", GETREG(reg1));
+    write("not", getReg(reg1));
     return reg1;
 }
 
 int GeneratorX86::genIsZero(int reg)
 {
-    write("test", GETREG(reg), GETREG(reg));
+    write("test", getReg(reg), getReg(reg));
     freeReg(reg);
     return -1;
 }
 
 int GeneratorX86::genLogAnd(int reg1, int reg2)
 {
-    write("and", GETREG(reg2), GETREG(reg1));
+    write("and", getReg(reg2), getReg(reg1));
     freeReg(reg2);
     return reg1;
 }
 int GeneratorX86::genLogOr(int reg1, int reg2)
 {
-    write("or", GETREG(reg2), GETREG(reg1));
+    write("or", getReg(reg2), getReg(reg1));
     freeReg(reg2);
     return reg1;
 }
 
-int GeneratorX86::genIsZeroSet(int reg1)
+int GeneratorX86::genIsZeroSet(int reg1, bool setOnZero)
 {
     int reg2 = allocReg();
-    write("test", GETREG(reg1), GETREG(reg1));
-    write(setinstr[0], m_loByteRegisters[reg2]);
-    write("movzx", m_loByteRegisters[reg2], GETREG(reg2));
+    write("test", getReg(reg1), getReg(reg1));
+    write("xor", getReg(reg2), getReg(reg2));
+
+    write(setinstr[!setOnZero], m_loByteRegisters[reg2]);
+    
+    write("movzx", m_loByteRegisters[reg2], getReg(reg2));
     freeReg(reg1);
     return reg2;
 }

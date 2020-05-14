@@ -85,7 +85,7 @@ private:
     int genAccessStruct(int symbol, int idx);
     int genBinNegate(int reg);
     int genIsZero(int reg);
-    int genIsZeroSet(int reg);
+    int genIsZeroSet(int reg, bool setOnZero);
     int genLogAnd(int reg1, int reg2);
     int genLogOr(int reg1, int reg2);
     void freeReg(int reg);
