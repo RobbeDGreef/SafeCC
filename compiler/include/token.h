@@ -85,6 +85,8 @@ public:
         BREAK, CONTINUE
     };
 
+    Token() {}
+    Token(int tok) { m_intValue = tok; }
     int token();
     int intValue();
     Token *previousToken();

@@ -579,6 +579,8 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prev_prec,
                                                        struct Type *type)
 {
     struct ast_node *left;
+    struct ast_node *complexAssignment = NULL;
+    int opToken = 0;
     
     left = parseLeft(type);
     
@@ -586,11 +588,31 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prev_prec,
         return left;
 
     int tok = m_scanner.token().token();
+    
+    if (tok > Token::Tokens::T_EOF && tok < Token::Tokens::EQUAL)
+    {
+        Token prev = m_scanner.token();
+        m_scanner.scan();
+        Token next = m_scanner.token();
+        if (next.token() == Token::Tokens::EQUALSIGN)
+        {
+            int l = m_scanner.curLine();
+            int c = m_scanner.curChar();
+            complexAssignment = mkAstNode(AST::Types::ASSIGN, left, NULL, NULL, 0, l, c);
+            type = &left->type;
+        }
+        else
+        {
+            m_scanner.putbackToken(next);
+            m_scanner.token() = prev;
+        }
+    }
+    
 
     if (closingStatement(tok))
         return left;
         
-    if (tok == AST::Types::ASSIGN)
+    if (tok == Token::Tokens::EQUALSIGN)
         type = &left->type;
 
     while (getOperatorPrecedence(tok) > prev_prec)
@@ -616,7 +638,7 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prev_prec,
         else
         {
             bool onlyright = false;
-            if (tok == AST::Types::ASSIGN)
+            if (tok == Token::Tokens::EQUALSIGN || complexAssignment)
                 onlyright = true;
             
             // Will automatically widen registers if needed
@@ -637,7 +659,13 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prev_prec,
         tok = m_scanner.token().token();
 
         if (closingStatement(tok))
-            return left;
+            break;
+    }
+    
+    if (complexAssignment)
+    {
+        complexAssignment->right = left;
+        left = complexAssignment;
     }
 
     return left;
