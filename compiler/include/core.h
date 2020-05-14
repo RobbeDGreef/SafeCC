@@ -27,8 +27,6 @@ using namespace std;
 int getFullbits(int x);
 void debughandler(int sig);
 
-#define MODE_DEBUG 
-
 #ifdef MODE_DEBUG
 #define DEBUG(x)  std::cout << "\u001b[33;1mDEBUG\u001b[0m: " << x << "\n";
 #define DEBUGB(x) std::cout << "\u001b[36;1mDEBUG\u001b[0m: " << x << "\n";
