@@ -97,7 +97,6 @@ loop:;
         break;
     
     case Token::Tokens::DO:
-        DEBUGR("it never ran this right?")
         node = doWhileStatement();
         break;
     
@@ -208,7 +207,6 @@ loop:;
         m_scanner.scan();
         if (m_scanner.token().token() == Token::Tokens::COLON)
         {
-            DEBUGR("parsing label")
             node = parseLabel(ident);
             break;
         }
@@ -246,7 +244,7 @@ struct ast_node *StatementParser::_parseBlock(int parentOp, struct ast_node *lef
     {
         tree = parseStatement(parentOp);
 
-        if (tree && isStatement(tree->operation) && m_scanner.token().token() != Token::Tokens::R_BRACE)
+        if (tree && isStatement(tree->operation))
         {
             /* Only some statements need a semicolon at the end */
             m_parser.match(Token::Tokens::SEMICOLON);
@@ -318,7 +316,6 @@ struct ast_node *StatementParser::parseBlock(int parentOp, bool newScope)
     if (newScope)
     {
         id = g_symtable.newScope();
-        DEBUGR("pushing scope: " << id)
         tree = mkAstLeaf(AST::Types::PUSHSCOPE, id, 0, 0);
     }
     
@@ -328,7 +325,6 @@ struct ast_node *StatementParser::parseBlock(int parentOp, bool newScope)
     
     if (newScope)
     {
-        DEBUGR("popping scope")
         g_symtable.popScope();
         struct ast_node *pop = mkAstLeaf(AST::Types::POPSCOPE, 0, 0, 0);
         tree = mkAstNode(AST::Types::GLUE, tree, NULL, pop, 0, 0, 0);
