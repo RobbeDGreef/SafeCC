@@ -236,6 +236,5 @@ int SymbolTable::addString(string str)
 int SymbolTable::pushScopeById(int id)
 {
     m_scopeList.push_back(m_allScopes[id]);
-    DEBUGR("pushed scope: " << id)
     return id;
 }
