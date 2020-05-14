@@ -36,6 +36,7 @@ class StatementParser
     struct ast_node *ifStatement();
     struct ast_node *whileStatement();
     struct ast_node *forStatement();
+    struct ast_node *doWhileStatement();
     
     struct ast_node *switchStatement();
     struct ast_node *switchCaseStatement();

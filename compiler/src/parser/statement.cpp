@@ -96,6 +96,11 @@ loop:;
         node = forStatement();
         break;
     
+    case Token::Tokens::DO:
+        DEBUGR("it never ran this right?")
+        node = doWhileStatement();
+        break;
+    
     case Token::Tokens::SWITCH:
         node = switchStatement();
         break;

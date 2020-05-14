@@ -19,6 +19,7 @@ protected:
     
     int generateIf(struct ast_node *tree, int condLabel, int endLabel);
     int generateWhile(struct ast_node *tree);
+    int generateDoWhile(struct ast_node *tree);
     int generateSwitch(struct ast_node *tree, int condLabel);
     int generateArgumentPush(struct ast_node *tree);
     int generateAssignment(struct ast_node *tree);

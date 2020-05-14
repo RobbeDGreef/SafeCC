@@ -32,7 +32,7 @@ namespace AST
         LEFTVALIDENT,
         IF,
         GLUE, FUNCTION,
-        WHILE,
+        WHILE, DOWHILE,
         FUNCTIONCALL, FUNCTIONARGUMENT,
         RETURN,
         

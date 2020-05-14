@@ -31,6 +31,8 @@ int Scanner::identifyKeyword(string keyword)
     case 'd':
         if (!keyword.compare("default"))
             return Token::Tokens::DEFAULT;
+        else if (!keyword.compare("do"))
+            return Token::Tokens::DO;
         break;
         
     case 'e':

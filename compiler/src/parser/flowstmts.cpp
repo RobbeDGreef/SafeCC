@@ -247,3 +247,16 @@ struct ast_node *StatementParser::switchDefaultStatement()
     return mkAstLeaf(AST::Types::DEFAULT, 0, m_scanner.curLine(),
                      m_scanner.curChar());
 }
+
+struct ast_node *StatementParser::doWhileStatement()
+{
+    m_scanner.scan();
+    struct ast_node *body = parseBlock(AST::Types::WHILE);
+    m_parser.match(Token::Tokens::WHILE);
+    m_parser.match(Token::Tokens::L_PAREN);
+    struct ast_node *cond = comparison();
+    m_parser.match(Token::Tokens::R_PAREN);
+    m_parser.match(Token::Tokens::SEMICOLON);
+    
+    return mkAstNode(AST::Types::DOWHILE, cond, NULL, body, 0, cond->line, cond->c);
+}

@@ -13,17 +13,19 @@ static const string toknames[]
     "<= (less than or equal to)", ">= (greater than or equal to)",
     "&& (logical and)", "|| (logical or)",
     "! (logical not)", 
-
+    
+    "= (equalsign)", 
+    
     "++ (increment)", "-- (decrement)", "~ (bitwise negate)",
 
     "integer literal", "string literal",
     "identifier",
-    "= (equalsign)", "; (semicolon)", "{ (left brace)", "} (right brace)", 
+    "; (semicolon)", "{ (left brace)", "} (right brace)", 
     "( (left parenthesis)", ") (right parenthesis)", ", (comma)",
     "[ (left bracket)", "] (right bracket)", ". (dot)",
     
     "void", "char", "short", "int", "long", "unsigned", "signed", "const",
-    "if", "else", "while", "for", "return", 
+    "if", "else", "while", "for", "do", "return", 
     "sizeof",
     "typedef", "struct", "union", "enum",
     "auto", "static", "register", "extern",
@@ -73,7 +75,7 @@ public:
 
         /* Keywords */
         VOID, CHAR, SHORT, INT, LONG, UNSIGNED, SIGNED, CONST,
-        IF, ELSE, WHILE, FOR,
+        IF, ELSE, WHILE, FOR, DO,
         RETURN, 
         SIZEOF,
         TYPEDEF, STRUCT, UNION, ENUM,

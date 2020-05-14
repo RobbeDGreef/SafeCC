@@ -63,6 +63,26 @@ int Generator::generateWhile(struct ast_node *tree)
     return -1;
 }
 
+int Generator::generateDoWhile(struct ast_node *tree)
+{
+    int startLabel = label();
+    int condLabel = label();
+    int endLabel = label();
+    
+    genLabel(startLabel);
+    generateFromAst(tree->right, endLabel, tree->operation, condLabel, endLabel);
+    freeAllReg();
+    
+    genLabel(condLabel);
+    generateComparison(tree->left, endLabel, tree->operation);
+    genJump(startLabel);
+    
+    freeAllReg();
+    genLabel(endLabel);
+    
+    return -1;
+}
+
 int Generator::generateArgumentPush(struct ast_node *tree)
 {
     if (tree->right->operation == AST::Types::IDENTIFIER && 
@@ -458,6 +478,8 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp,
         return generateIf(tree, condLabel, endLabel);
     case AST::Types::WHILE:
         return generateWhile(tree);
+    case AST::Types::DOWHILE:
+        return generateDoWhile(tree);
     case AST::Types::SWITCH:
         return generateSwitch(tree, condLabel);
     case AST::Types::FUNCTION:
