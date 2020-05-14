@@ -373,7 +373,6 @@ int Generator::generateBinaryComparison(struct ast_node *tree, int parentOp)
         genFlagSet(logicalNot(tree->operation), reg);
     
     genLabel(condEndLabel);
-    
     return reg;
 }
 
@@ -434,10 +433,15 @@ int Generator::generateBinaryCondition(struct ast_node *tree, int endLabel,
     if (!isCompareOp(tree->operation))
     {
         if (condOp == AST::Types::LOGNOT)
+        {
             tree->operation = AST::Types::EQUAL;
+            ret = genIsZeroSet(ret, true);
+        }
         else
+        {
             tree->operation = AST::Types::NOTEQUAL;
-        genIsZeroSet(ret);
+            ret = genIsZeroSet(ret, false);
+        }
     }
     
     return ret;
@@ -500,7 +504,11 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp,
         leftreg = generateFromAst(tree->left, -1, tree->operation, condLabel, endLabel);
         return genDecrement(leftreg, tree->right->value, tree->value);
     case AST::Types::ASSIGN:
-        return generateAssignment(tree);
+        leftreg = generateAssignment(tree);
+        if (parentOp == 0)
+            freeReg(leftreg);
+        
+        return leftreg;
         
     case AST::Types::LOGAND:
     case AST::Types::LOGNOT:
@@ -618,7 +626,6 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp,
         return -1;
     
     case AST::Types::POPSCOPE:
-        DEBUGR("popped scope")
         g_symtable.popScope();
         return -1;
 

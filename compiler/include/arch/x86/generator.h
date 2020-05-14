@@ -11,7 +11,6 @@
 
 #define MEMACCESS(symbol) "[" + symbol + "]"
 #define LABEL(label)      ".L" + to_string(label)
-#define GETREG(r)         m_registers[m_usedRegisters[r] - 1][r]
 #define SPECIFYSIZE(r)    m_sizeSpecifiers[r - 1]
 class GeneratorX86 : public Generator
 {
@@ -39,6 +38,7 @@ private:
     int  allocReg(int r);
     void spillReg(int r);
     void loadReg(int r);
+    string getReg(int r);
 
     int move(string instr, string source_reg, string dest_reg);
     int checkRegisters();
