@@ -13,8 +13,8 @@ int main()
     
     struct hello *x = &y;
     
+    printf("contents of x: %i %i %i\n", x->x, x->y, x->z);
+    printf("Content: %i %i %i\n", y.x, y.y, y.z);
     printf("%x %x\n", x, (&y)->x);
-    //printf("contents of x: %i %i %i\n", x->x, x->y, x->z);
-    //printf("Content: %i %i %i\n", y.x, y.y, y.z);
     return 0; 
 }

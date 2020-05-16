@@ -20,5 +20,5 @@ int main()
     //x = func();
     //x.x = func().y;
     //x = func();
-    printf("x: %x\n", x.x);
+    printf("x: %i %i\n", x.x, x.y);
 }
