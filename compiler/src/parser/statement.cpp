@@ -216,8 +216,8 @@ loop:;
     if (node && node->operation != AST::Types::PADDING)
     {
         // Place statement strings into the asm files for debugging purposes
-        node = mkAstUnary(AST::Types::DEBUGPRINT, node, m_lastOffset+1, 
-                          m_scanner.curLine(), m_scanner.curOffset()-1);
+        //node = mkAstUnary(AST::Types::DEBUGPRINT, node, m_lastOffset+1, 
+        //                  m_scanner.curLine(), m_scanner.curOffset()-1)
     }
     m_lastOffset = m_scanner.curOffset();
     return node;
