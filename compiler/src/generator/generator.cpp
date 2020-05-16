@@ -42,16 +42,17 @@ int Generator::generateWhile(struct ast_node *tree)
     int endLabel   = label();
 
     genLabel(startLabel);
-    generateComparison(tree->left, endLabel, tree->operation);
+    if (tree->left)
+        generateComparison(tree->left, endLabel, tree->operation);
     freeAllReg();
     
     // tree->value will equal 1 when this is actually a for loop
     if (tree->value)
     {
-        int breakLabel = label();
-        generateFromAst(tree->right->right, -1, tree->operation, startLabel, breakLabel);
-        genLabel(breakLabel);
-        generateFromAst(tree->right->left, -1, tree->operation, startLabel, breakLabel);
+        int contLabel = label();
+        generateFromAst(tree->right->left, -1, tree->operation, contLabel, endLabel);
+        genLabel(contLabel);
+        generateFromAst(tree->right->right, -1, tree->operation, contLabel, endLabel);
     }
     else
         generateFromAst(tree->right, -1, tree->operation, startLabel, endLabel);
@@ -196,257 +197,6 @@ int Generator::generateSwitch(struct ast_node *tree, int condLabel)
     return -1;
 }
 
-static bool isFlowStatement(int tok)
-{
-    if (tok == AST::Types::IF || tok == AST::Types::WHILE)
-        return true;
-    
-    return false;
-}
-
-static int logicalNot(int op)
-{
-    switch(op)
-    {
-    case AST::Types::EQUAL: return AST::Types::NOTEQUAL;
-    case AST::Types::NOTEQUAL: return AST::Types::EQUAL;
-    case AST::Types::LESSTHAN: return AST::Types::GREATERTHANEQUAL;
-    case AST::Types::GREATERTHANEQUAL: return AST::Types::LESSTHAN;
-    case AST::Types::GREATERTHAN: return AST::Types::LESSTHANEQUAL;
-    case AST::Types::LESSTHANEQUAL: return AST::Types::GREATERTHAN;
-    }
-    
-    return 0;
-}
-
-static bool isLogOp(int tok)
-{
-    switch (tok)
-    {
-    case AST::Types::LOGAND:
-    case AST::Types::LOGOR:
-    case AST::Types::LOGNOT:
-        return true;
-    }
-    
-    return false;
-}
-
-static bool isCompareOp(int tok)
-{
-    if (tok <= AST::Types::GREATERTHANEQUAL && tok >= AST::Types::EQUAL)
-        return true;
-    
-    return false;
-}
-
-int Generator::generateComparison(struct ast_node *tree, 
-                                  int endLabel, int parentOp)
-{
-    int condEndLabel = label();
-    generateCondition(tree, condEndLabel, endLabel, parentOp);
-    if (!isLogOp(tree->operation))
-        genFlagJump(logicalNot(tree->operation), endLabel);
-    
-    genLabel(condEndLabel);
-}
-
-static struct ast_node *getRightCompLeaf(struct ast_node *tree)
-{
-    struct ast_node *tmp = tree;
-    if (!tmp->right)
-        return 0;
-        
-    while (isCompareOp(tmp->right->operation))
-        tmp = tmp->right;
-    
-    return tmp;
-}
-
-static void morgansLawNegation(struct ast_node *tree)
-{
-    // Here we use De Morgans law of boolean negation
-    // in a recursive manner, ei
-    // and's become or's and vice versa. and the sub trees get negated as well
-    switch(tree->operation)
-    {
-    case AST::Types::LOGAND:
-        tree->operation = AST::Types::LOGOR;
-        morgansLawNegation(tree->left);
-        morgansLawNegation(tree->right);
-        return;
-        
-    case AST::Types::LOGOR:
-        tree->operation = AST::Types::LOGAND;
-        morgansLawNegation(tree->left);
-        morgansLawNegation(tree->right);
-        return;
-
-    case AST::Types::LOGNOT:
-        // We can skip over these since we will automatically
-        // 'correct' them when the next iteration in the ast tree happens
-        morgansLawNegation(tree->left);
-        return;
-    }
-    
-    if (isCompareOp(tree->operation))
-        tree->operation = logicalNot(tree->operation);
-    
-
-}
-
-int Generator::generateCondition(struct ast_node *tree, int condEndLabel,
-                                 int endLabel, int parentOp, int condOp)
-{
-    int leftreg = 0, rightreg = 0;
-    int op;
-    int curCondLabel = -1;
-    
-    switch(tree->operation)
-    {
-    case AST::Types::LOGNOT:
-        // Thank you Augustus De Morgan :)
-        morgansLawNegation(tree->left);
-        generateCondition(tree->left, condEndLabel, endLabel, parentOp,
-                          AST::Types::LOGNOT);
-        
-        if (isLogOp(tree->left->operation))
-        {
-            int op = getRightCompLeaf(tree->left)->operation;
-            genFlagJump(logicalNot(op), endLabel);
-            return -1;
-        }
-        
-        genFlagJump(logicalNot(tree->left->operation), endLabel);
-        return -1;
-        
-    case AST::Types::LOGOR:
-        curCondLabel = label();
-        leftreg = generateCondition(tree->left, condEndLabel, curCondLabel, parentOp);
-        
-        if (isLogOp(tree->left->operation))
-            genJump(condEndLabel);
-        else
-            genFlagJump(tree->left->operation, endLabel);
-        
-        genLabel(curCondLabel);
-        
-        generateCondition(tree->right, condEndLabel, endLabel, parentOp);
-        if (isCompareOp(tree->right->operation))
-            genFlagJump(logicalNot(tree->right->operation), endLabel);
-        
-        return -1;
-        
-    case AST::Types::LOGAND:
-        leftreg = generateCondition(tree->left, condEndLabel, endLabel, parentOp);
-        
-        op = logicalNot(tree->left->operation);
-        if (op)
-            genFlagJump(op, endLabel);
-            
-        generateCondition(tree->right, condEndLabel, endLabel, parentOp);
-        if (!isLogOp(tree->left->operation))
-            genFlagJump(logicalNot(tree->right->operation), endLabel);
-        
-        return -1;
-    }
-    
-    int ret = generateFromAst(tree, 0, parentOp);
-    if (!isCompareOp(tree->operation))
-    {
-        if (condOp == AST::Types::LOGNOT)
-            tree->operation = AST::Types::EQUAL;
-        else
-            tree->operation = AST::Types::NOTEQUAL;
-        genIsZero(ret);
-    }
-    
-    return -1;
-}
-
-int Generator::generateBinaryComparison(struct ast_node *tree, int parentOp)
-{
-    int condEndLabel = label();
-    int reg = generateBinaryCondition(tree, condEndLabel, parentOp);
-    
-    if (!isLogOp(tree->operation))
-        genFlagSet(logicalNot(tree->operation), reg);
-    
-    genLabel(condEndLabel);
-    return reg;
-}
-
-int Generator::generateBinaryCondition(struct ast_node *tree, int endLabel,
-                                 int parentOp, int condOp)
-{
-    int leftreg = 0, rightreg = 0;
-    int op;
-    int curCondLabel = -1;
-    
-    switch(tree->operation)
-    {
-    case AST::Types::LOGNOT:
-        // Thank you Augustus De Morgan :)
-        morgansLawNegation(tree->left);
-        leftreg = generateBinaryCondition(tree->left, endLabel, parentOp, AST::Types::LOGNOT);
-        
-        if (isLogOp(tree->left->operation))
-            op = getRightCompLeaf(tree->left)->operation;
-        else
-            op = tree->left->operation;
-        
-        genFlagSet(logicalNot(tree->left->operation), leftreg);
-        return leftreg;
-        
-    case AST::Types::LOGOR:
-        curCondLabel = label();
-        leftreg = generateBinaryCondition(tree->left, curCondLabel, parentOp);
-        
-        if (isLogOp(tree->left->operation))
-            genJump(endLabel);
-        else
-            genFlagJump(tree->left->operation, endLabel);
-        
-        freeReg(leftreg);
-        genLabel(curCondLabel);
-        
-        return generateBinaryCondition(tree->right, endLabel, parentOp);
-        
-    case AST::Types::LOGAND:
-        leftreg = generateBinaryCondition(tree->left, endLabel, parentOp);
-        
-        op = logicalNot(tree->left->operation);
-        if (op)
-            genFlagJump(op, endLabel);
-        
-        freeReg(leftreg);
-            
-        rightreg = generateBinaryCondition(tree->right, endLabel, parentOp);
-        op = logicalNot(tree->right->operation);
-        if (op)
-            genFlagJump(op, endLabel);
-        
-        return rightreg;
-    }
-    
-    int ret = generateFromAst(tree, 0, parentOp);
-    if (!isCompareOp(tree->operation))
-    {
-        if (condOp == AST::Types::LOGNOT)
-        {
-            tree->operation = AST::Types::EQUAL;
-            ret = genIsZeroSet(ret, true);
-        }
-        else
-        {
-            tree->operation = AST::Types::NOTEQUAL;
-            ret = genIsZeroSet(ret, false);
-        }
-    }
-    
-    return ret;
-}
-
 int Generator::generateGoto(struct ast_node *tree)
 {
     struct Symbol *s = g_symtable.getSymbol(tree->value);
@@ -455,6 +205,43 @@ int Generator::generateGoto(struct ast_node *tree)
         err.fatal("Label " + HL(s->name) + " undefined", tree->line, tree->c);
     
     genGoto(s->name);
+}
+
+int Generator::generateTernary(struct ast_node *tree)
+{
+    DEBUGR("generating ternary")
+    int falseLabel = label();
+    int endLabel = label();
+    int reg = -1;
+    int out = -1;
+    
+    generateComparison(tree->left, falseLabel, AST::Types::IF);
+    
+    DEBUGR("leftop: " << tree->right->operation)
+    DEBUGR("leftopop: " << tree->right->left->operation)
+    
+    reg = generateFromAst(tree->right->left, -1, AST::Types::IF, -1, -1);
+    if (reg != -1)
+        out = genMoveReg(reg, -1);
+
+    genJump(endLabel);
+    genLabel(falseLabel);
+
+    reg = generateFromAst(tree->right->right, -1, AST::Types::IF, -1, -1);
+    if (reg != -1)
+        out = genMoveReg(reg, out);
+        
+    genLabel(endLabel);
+    return out;
+}
+
+static bool isFlowStatement(int op)
+{
+    if (op == AST::Types::IF || op == AST::Types::WHILE ||
+        op == AST::Types::DOWHILE || op == AST::Types::SWITCH)
+        return true;
+    
+    return false;
 }
 
 int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp, 
@@ -518,7 +305,18 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp,
     case AST::Types::LABEL:
         genLabel(g_symtable.getSymbol(tree->value)->name);
         return generateFromAst(tree->left, 0, tree->operation, condLabel, endLabel);
+    
+    case AST::Types::TERNARY:
+        return generateTernary(tree);
 
+    case AST::Types::FUNCTIONCALL:
+        DEBUG("GENERATING FUNC CALL")
+        {
+            vector <int> data = genSaveRegisters();
+            generateFromAst(tree->left, -1, tree->operation);
+            return genFunctionCall(tree->value, countDepth(tree), data);    
+        }
+    
     case AST::Types::DEBUGPRINT:
         string comment = m_scanner->getStrFromTo(tree->value, tree->c);
         genDebugComment(comment);
@@ -580,9 +378,6 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp,
         
         return genCompare(leftreg, rightreg);
 
-    case AST::Types::FUNCTIONCALL:
-        DEBUG("GENERATING FUNC CALL")
-        return genFunctionCall(tree->value, countDepth(tree));
     case AST::Types::RETURN:
         return genReturnJump(leftreg, tree->value);
 
@@ -627,6 +422,10 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp,
     
     case AST::Types::POPSCOPE:
         g_symtable.popScope();
+        return -1;
+    
+    case AST::Types::PADDING:
+        err.warning("yea you should probably not be seeing this");
         return -1;
 
     default:
@@ -676,4 +475,11 @@ void Generator::write(string instruction, int source, string destination)
 void Generator::setupInfileHandler(Scanner &scanner)
 {
     m_scanner = &scanner;
+}
+
+void Generator::move(string instr, string source_reg, string dest_reg)
+{
+    /* Little optimization, do not move same reg in same reg */
+    if (source_reg.compare(dest_reg))
+        write(instr, source_reg, dest_reg);
 }
