@@ -11,7 +11,6 @@ StatementParser::StatementParser(Scanner &scanner, Parser &parser,
 
 struct ast_node *StatementParser::parseDeclaration(struct Type type, int sc)
 {
-
     m_parser.match(Token::Tokens::IDENTIFIER);
 
     if (m_scanner.token().token() == Token::Tokens::L_PAREN)

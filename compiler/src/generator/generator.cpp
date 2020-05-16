@@ -185,7 +185,6 @@ int Generator::generateSwitch(struct ast_node *tree, int condLabel)
     {    
         genLabel(caseLabels[i]);
         
-        DEBUGR("generate case")
         // This freeReg() call is just a safety mechanism
         int reg = generateFromAst(caseIter->left, -1, tree->operation, condLabel, endLabel);
         if (reg != -1)
@@ -195,7 +194,6 @@ int Generator::generateSwitch(struct ast_node *tree, int condLabel)
         caseIter = caseIter->right;
     }
     
-    DEBUGR("END")
     genLabel(endLabel);
     return -1;
 }
@@ -212,16 +210,12 @@ int Generator::generateGoto(struct ast_node *tree)
 
 int Generator::generateTernary(struct ast_node *tree)
 {
-    DEBUGR("generating ternary")
     int falseLabel = label();
     int endLabel = label();
     int reg = -1;
     int out = -1;
     
     generateComparison(tree->left, falseLabel, AST::Types::IF);
-    
-    DEBUGR("leftop: " << tree->right->operation)
-    DEBUGR("leftopop: " << tree->right->left->operation)
     
     reg = generateFromAst(tree->right->left, -1, AST::Types::IF, -1, -1);
     if (reg != -1)
@@ -426,7 +420,7 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp,
         return -1;
     
     case AST::Types::POPSCOPE:
-        g_symtable.popScope();
+        g_symtable.popScope(false);
         return -1;
     
     case AST::Types::PADDING:

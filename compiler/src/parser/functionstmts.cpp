@@ -21,6 +21,13 @@ struct ast_node *StatementParser::returnStatement()
     m_scanner.scan();
     struct ast_node *tree = m_parser.m_exprParser.parseBinaryOperation(0,
                                                                        fsym->varType);
+    
+    if (tree->type.memSpot)
+    {
+        fsym->varType.memSpot = new MemorySpot(tree->type.memSpot);
+        fsym->varType.memSpot->setName("the return value of " + fsym->name);
+    }
+    
     return mkAstUnary(AST::Types::RETURN, tree, g_symtable.currentFuncIdx(),
                       m_scanner.curLine(), m_scanner.curChar());
 }

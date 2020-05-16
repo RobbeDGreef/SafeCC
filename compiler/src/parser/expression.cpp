@@ -652,7 +652,6 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prevPrec,
 
     while (getOperatorPrecedence(tok) > prevPrec)
     {
-        DEBUGB("prev prec: " << prevPrec << " cur " << getOperatorPrecedence(tok) << " prev tok " << prevTok << " curtok " << tok)
         m_scanner.scan();
         
         if (tok == Token::Tokens::QUESTIONMARK)
@@ -663,6 +662,13 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prevPrec,
         if (!right)
             err.unknownSymbol(m_scanner.identifier());
         
+        if (tok == Token::Tokens::EQUALSIGN)
+        {
+            if (right->type.memSpot)
+            {
+                type->memSpot->addReferencingTo(right->type.memSpot);
+            }
+        }
 
         struct ast_node *tmp = checkArithmetic(left, right, tok);
         if (tmp)

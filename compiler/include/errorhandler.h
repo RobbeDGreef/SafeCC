@@ -38,6 +38,7 @@ class ErrorHandler
     int  f_warningAsError    = false;
     int  f_conversionWarn    = false;
     bool f_ptrConversionWarn = true;
+    int f_noMemChecking = false;
 
   private:
     void write(string str);
@@ -84,6 +85,8 @@ class ErrorHandler
     void unknownStructItem(string s, struct Type t);
     void incorrectAccessor(bool ptr);
     void pedanticWarning(string warn);
+    
+    void memWarn(string s);
 };
 
 extern ErrorHandler err;

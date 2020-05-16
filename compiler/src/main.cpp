@@ -79,6 +79,7 @@ int main(int argc, char *const *argv)
         {"Compile", no_argument, &f_onlyCompile, 'S'},
         {"NoLink", no_argument, &f_noLink, 'c'},
         {"Preprocessor", no_argument, &f_onlyPreProcess, 'E'},
+        {"No-Memory-Check", no_argument, &err.f_noMemChecking, 1},
         
         /* Arguments */
         {"output", required_argument, 0, 'o'},

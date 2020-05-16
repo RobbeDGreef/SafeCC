@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memtable.h>
+
 /* forward declare ast_node to keep this header standalone */
 struct ast_node;
 
@@ -29,6 +31,7 @@ struct Type
     vector<struct StructItem> contents; // The contents of a type
 
     bool incomplete; // Is the type incomplete (forward declare etc)
+    MemorySpot *memSpot;
 };
 
 struct StructItem

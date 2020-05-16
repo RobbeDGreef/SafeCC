@@ -239,7 +239,6 @@ int Generator::generateBinaryCondition(struct ast_node *tree, int endLabel,
         if (condOp == AST::Types::LOGNOT)
         {
             tree->operation = AST::Types::EQUAL;
-            DEBUGR("EQUAL TO ZERO")
             ret = genIsZeroSet(ret, true);
         }
         else

@@ -41,18 +41,9 @@ class Scope : public vector<struct Symbol>
     int m_index;
 
   public:
-    Scope()
-    {
-        m_index = 0;
-    }
-    Scope(int index)
-    {
-        m_index = index;
-    }
-    int index()
-    {
-        return m_index;
-    }
+    Scope() { m_index = 0; }
+    Scope(int index) { m_index = index; }
+    int index() { return m_index; }
 };
 
 class SymbolTable
@@ -100,7 +91,7 @@ class SymbolTable
     /* These will be called everytime a new scope is entered of left */
     int  newScope();
     bool isCurrentScopeGlobal();
-    int  popScope();
+    int  popScope(bool semantics=true);
 
     vector<struct Symbol> getGlobalTable();
     vector<struct Symbol> getStaticTable();

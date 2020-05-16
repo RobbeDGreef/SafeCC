@@ -31,9 +31,26 @@ int SymbolTable::newScope()
     return scope->index();
 }
 
-int SymbolTable::popScope()
+int SymbolTable::popScope(bool semantics)
 {
     Scope *scope = m_scopeList.back();
+    if (semantics)
+    {
+        for (struct Symbol s : *scope)
+            if (s.varType.memSpot)
+                s.varType.memSpot->setName(s.name);
+        
+        for (struct Symbol s : *scope)
+        {
+            if (s.varType.memSpot)
+            {
+                s.varType.memSpot->destroy(s.name);
+            }
+            delete s.varType.memSpot;
+            s.varType.memSpot = NULL;
+        }
+    }
+
     m_scopeList.pop_back();
     return scope->index();
 }
@@ -85,9 +102,9 @@ int SymbolTable::_addVariable(struct Symbol sym)
         m_scopeList[0]->push_back(sym);
         return ((m_scopeList[0]->size() - 1) << 8) | 0;
     }
-    
+
     int varSize = getTypeSize(sym);
-    
+
     if (sym.storageClass == StorageClass::STATIC)
     {
         sym.stackLoc = m_staticVariableOffset;
@@ -110,7 +127,7 @@ int SymbolTable::_addVariable(struct Symbol sym)
         if (sym.varType.isArray)
         {
             func->localVarAmount += varSize;
-            
+
             // Making sure the bytealignment stays correct
             if (func->localVarAmount % INT_SIZE)
                 func->localVarAmount += INT_SIZE -
@@ -129,7 +146,6 @@ int SymbolTable::_addVariable(struct Symbol sym)
             func->localVarAmount += INT_SIZE;
     }
 
-
     m_scopeList.back()->push_back(sym);
     return ((m_scopeList.back()->size() - 1) << 8) | (m_scopeList.size() - 1);
 }
@@ -141,12 +157,12 @@ int SymbolTable::addToFunction(struct Symbol s)
         m_scopeList[1]->push_back(s);
         return ((m_scopeList[1]->size() - 1) << 8) | 1;
     }
-    
+
     return -1;
 }
 
 struct Symbol SymbolTable::createSymbol(string sym, int val, int symType,
-                           struct Type varType, int storageClass)
+                                        struct Type varType, int storageClass)
 {
     struct Symbol newsym;
     memset(&newsym, 0, sizeof(struct Symbol));
@@ -159,10 +175,10 @@ struct Symbol SymbolTable::createSymbol(string sym, int val, int symType,
     newsym.stackLoc       = 0;
     newsym.returnLabelId  = -1;
     newsym.variableArg    = 0;
-    newsym.storageClass = storageClass;
-    newsym.defined = false;
-    newsym.used = false;
-    
+    newsym.storageClass   = storageClass;
+    newsym.defined        = false;
+    newsym.used           = false;
+
     return newsym;
 }
 
@@ -177,7 +193,8 @@ int SymbolTable::addSymbol(string sym, int val, int symType, int varType)
     return addSymbol(sym, val, symType, NULLTYPE, StorageClass::AUTO);
 }
 
-int SymbolTable::addSymbol(string sym, int val, int symType, int varType, int sc)
+int SymbolTable::addSymbol(string sym, int val, int symType, int varType,
+                           int sc)
 {
     struct Type t;
     memset(&t, 0, sizeof(struct Type));

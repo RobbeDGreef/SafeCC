@@ -3,6 +3,7 @@
 #include <parser/parser.h>
 #include <symbols.h>
 #include <token.h>
+#include <memtable.h>
 
 struct ast_node *StatementParser::parseArrayInit(struct Type   type,
                                                  struct Symbol sym)
@@ -161,6 +162,9 @@ struct ast_node *StatementParser::variableDecl(struct Type type, int sc)
      * int x[5] = {y, ...};
      *
      */
+    
+    type.memSpot = new MemorySpot();
+    type.memSpot->setName(m_scanner.identifier());
 
     struct Symbol s;
     s.name         = m_scanner.identifier();

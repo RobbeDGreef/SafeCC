@@ -257,3 +257,8 @@ struct ErrorInfo ErrorHandler::getLoadedErrorInfo()
 {
     return m_errInfo;
 }
+
+void ErrorHandler::memWarn(string s)
+{
+    err.warning("Memory warnign: " + s);
+}

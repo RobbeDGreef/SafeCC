@@ -20,7 +20,7 @@ class GeneratorX86 : public Generator
     string m_wordRegisters[4]   = {"ax", "bx", "cx", "dx"};
     string m_loByteRegisters[4] = {"al", "bl", "cl", "dl"};
     string m_hiByteRegisters[4] = {"ah", "bh", "ch", "dh"};
-
+    
     string  m_sizeSpecifiers[4] = {"dword", "word", "byte", "byte"};
     string *m_registers[4]      = {m_dwordRegisters, m_wordRegisters,
                                     m_hiByteRegisters, m_loByteRegisters};
