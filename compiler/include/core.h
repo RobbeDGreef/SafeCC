@@ -32,11 +32,23 @@ void debughandler(int sig);
 #define DEBUGB(x) std::cout << "\u001b[36;1mDEBUG\u001b[0m: " << x << "\n";
 #define DEBUGR(x) std::cout << "\u001b[31;1mDEBUG\u001b[0m: " << x << "\n";
 #define DEBUGW(x) std::cout << "\u001b[37;1mDEBUG\u001b[0m: " << x << "\n";
+
+#include <execinfo.h>
+#include <signal.h>
+inline void __attribute__((always_inline)) print_caller()
+{
+    void *arr[2];
+    backtrace_symbols_fd(arr, backtrace(arr, 2), 2);
+}
+
+#define PRINT_CALLER() print_caller()
+
 #else
 #define DEBUG(x)
 #define DEBUGB(x)
 #define DEBUGR(x)
 #define DEBUGW(x)
+#define PRINT_CALLER()
 #endif
 
 #define RELEASE_PRINT(x) std::cout << x << "\n";
