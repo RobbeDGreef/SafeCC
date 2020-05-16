@@ -74,12 +74,11 @@ struct ast_node *ExpressionParser::parseTypeCast(struct Type *ltype)
     }
 }
 
-bool closingStatement(int tok, int colonLeave)
+bool closingStatement(int tok)
 {
     if (tok == Token::Tokens::SEMICOLON || tok == Token::Tokens::R_PAREN ||
         tok == Token::Tokens::COMMA || tok == Token::Tokens::R_BRACE ||
-        tok == Token::Tokens::R_BRACKET || 
-        (colonLeave && tok == AST::Types::COLONSEP))
+        tok == Token::Tokens::R_BRACKET || tok == AST::Types::COLONSEP)
         return true;
 
     return false;
@@ -89,7 +88,7 @@ bool closingStatement(int tok, int colonLeave)
 //
 // Takes a type parameter to check the literal against but this can be a
 // NULLTYPE
-struct ast_node *ExpressionParser::parsePrimary(struct Type *ltype, int prevTok)
+struct ast_node *ExpressionParser::parsePrimary(struct Type *ltype)
 {
     struct ast_node *node;
     struct Symbol *  s;
@@ -185,7 +184,7 @@ struct ast_node *ExpressionParser::parsePrimary(struct Type *ltype, int prevTok)
         break;
 
     default:
-        if (closingStatement(tok, (prevTok != AST::Types::TERNARY)))
+        if (closingStatement(tok))
         {
             node = mkAstLeaf(AST::Types::PADDING, 0, m_scanner.curLine(),
                              m_scanner.curChar());
@@ -200,7 +199,7 @@ struct ast_node *ExpressionParser::parsePrimary(struct Type *ltype, int prevTok)
 // Parses prefix operators like * and &
 //
 // Takes one type parameter but this can be NULLTYPE
-struct ast_node *ExpressionParser::parsePrefixOperator(struct Type *ltype, int prevTok)
+struct ast_node *ExpressionParser::parsePrefixOperator(struct Type *ltype)
 {
     struct ast_node *node = NULL;
     int              id;
@@ -336,7 +335,7 @@ struct ast_node *ExpressionParser::parsePrefixOperator(struct Type *ltype, int p
         break;
 
     default:
-        node = parsePrimary(ltype, prevTok);
+        node = parsePrimary(ltype);
     }
 
     return node;
@@ -568,9 +567,9 @@ struct ast_node *ExpressionParser::parsePostfixOperator(struct ast_node *tree,
 // Simply parses one side of a binary operation
 //
 // Takes type parameter to parse the operators with
-struct ast_node *ExpressionParser::parseLeft(struct Type *type, int prevTok)
+struct ast_node *ExpressionParser::parseLeft(struct Type *type)
 {
-    struct ast_node *left = parsePrefixOperator(type, prevTok);
+    struct ast_node *left = parsePrefixOperator(type);
     return parsePostfixOperator(left, true);
 }
 
@@ -633,7 +632,7 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prevPrec,
     struct ast_node *right;
     struct ast_node *complexAssignment = NULL;
 
-    left = parseLeft(type, prevTok);
+    left = parseLeft(type);
 
     if (!left || left->operation == AST::Types::PADDING)
         return left;
@@ -641,7 +640,7 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prevPrec,
     int tok           = m_scanner.token().token();
     complexAssignment = parseComplexAssign(left, tok);
 
-    if (closingStatement(tok, true))
+    if (closingStatement(tok))
         return left;
 
     if (tok == Token::Tokens::EQUALSIGN || complexAssignment)
@@ -711,7 +710,7 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prevPrec,
 
         tok = m_scanner.token().token();
 
-        if (closingStatement(tok, true))
+        if (closingStatement(tok))
             break;
     }
 
