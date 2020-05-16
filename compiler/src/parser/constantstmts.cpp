@@ -25,9 +25,9 @@ struct ast_node *StatementParser::declEnum()
         enumType.incomplete = true;
     }
     
-    m_typeList.addType(enumType);
+    g_typeList.addType(enumType);
     
-    if (m_typeList.getType(*enumType.name).typeType != 0)
+    if (g_typeList.getType(*enumType.name).typeType != 0)
         redecl = true;
     
     m_parser.match(Token::Tokens::L_BRACE);

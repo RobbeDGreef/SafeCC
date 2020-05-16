@@ -14,7 +14,6 @@ class ExpressionParser
     Scanner &  m_scanner;
     Parser &   m_parser;
     Generator &m_generator;
-    TypeList & m_typeList;
 
   private:
     struct ast_node *parseComplexAssign(struct ast_node *left, int tok);
@@ -37,6 +36,5 @@ class ExpressionParser
     int              parseConstantExpr();
     struct ast_node *parsePostfixOperator(struct ast_node *tree, bool access);
     struct ast_node *parseBinaryOperation(int prev_prec, struct Type type);
-    ExpressionParser(Scanner &scanner, Parser &parser, Generator &gen,
-                     TypeList &typelist);
+    ExpressionParser(Scanner &scanner, Parser &parser, Generator &gen);
 };

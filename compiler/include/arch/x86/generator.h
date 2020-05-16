@@ -83,7 +83,7 @@ private:
     int genPtrAccess(int reg, int size);
     int genDirectMemLoad(int offset, int symbol, int reg, int size);
     int genNegate(int reg);
-    int genAccessStruct(int symbol, int idx);
+    int genAccessStruct(int memreg, int idx, int size);
     int genBinNegate(int reg);
     int genIsZero(int reg);
     int genIsZeroSet(int reg, bool setOnZero);

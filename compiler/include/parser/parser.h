@@ -28,7 +28,6 @@ class Parser
 private:
     Scanner             &m_scanner;
     Generator           &m_generator;
-    TypeList            m_typeList;
     StatementParser     m_statementParser;
     ExpressionParser    m_exprParser;
 

@@ -5,6 +5,8 @@
 #include <types.h>
 #include <symbols.h>
 
+TypeList g_typeList = TypeList();
+
 struct Type g_emptyType = {.primType = 0,
                            .isSigned = false,
                            .size     = 0,
@@ -346,7 +348,12 @@ void dereference(struct Type *ptr)
         {
             // Reset size of operand to correct size
             // @todo: struct sizes
-            ptr->size = typeToSize(ptr->primType);
+            if (ptr->typeType == TypeTypes::STRUCT)
+            {
+                ptr->size = g_typeList.getType(*ptr->name).size;
+            }
+            else
+                ptr->size = typeToSize(ptr->primType);
         }
     }
 }

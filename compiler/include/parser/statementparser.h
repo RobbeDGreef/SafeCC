@@ -16,7 +16,6 @@ class StatementParser
     Scanner   &m_scanner;
     Parser    &m_parser;
     Generator &m_generator;
-    TypeList  &m_typeList;
     int m_lastOffset = 0;
   
   private:
@@ -60,6 +59,5 @@ class StatementParser
     struct ast_node *declEnum();
     struct ast_node *functionCall();
     struct ast_node *_parseBlock(int parentOp=0, struct ast_node *left=NULL);
-    StatementParser(Scanner &scanner, Parser &parser, Generator &gen,
-                    TypeList &typelist);
+    StatementParser(Scanner &scanner, Parser &parser, Generator &gen);
 };

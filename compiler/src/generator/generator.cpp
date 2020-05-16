@@ -86,16 +86,18 @@ int Generator::generateDoWhile(struct ast_node *tree)
 
 int Generator::generateArgumentPush(struct ast_node *tree)
 {
-    if (tree->right->operation == AST::Types::IDENTIFIER && 
-        tree->right->type.typeType == TypeTypes::STRUCT &&
-        !tree->right->type.ptrDepth)
+    if (tree->right->type.typeType == TypeTypes::STRUCT && !tree->right->type.ptrDepth)
     {
+        int reg = generateFromAst(tree->right, -1, tree->operation);
+        
         vector<struct StructItem> sitems = tree->right->type.contents;
         for (int i = sitems.size() - 1; i >= 0; i--)
         {
-            int right = genAccessStruct(tree->right->value, i);
+            int right = genAccessStruct(reg, sitems[i].offset, sitems[i].itemType.size);
             genPushArgument(right, tree->value);
         }
+        
+        freeReg(reg);
     }
     else
     {
@@ -312,7 +314,9 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp,
     case AST::Types::FUNCTIONCALL:
         DEBUG("GENERATING FUNC CALL")
         {
-            vector <int> data = genSaveRegisters();
+            vector <int> data;
+            if (!(tree->type.typeType == TypeTypes::STRUCT && !tree->type.ptrDepth))
+                data = genSaveRegisters();
             generateFromAst(tree->left, -1, tree->operation);
             return genFunctionCall(tree->value, countDepth(tree), data);    
         }

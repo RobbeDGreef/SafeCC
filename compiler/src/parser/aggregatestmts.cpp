@@ -13,7 +13,7 @@ struct ast_node *StatementParser::structInit(struct ast_node *tree,
                                              struct Symbol *sym, int idx)
 {
     int offset = sym->varType.size - sym->varType.contents[idx].offset -
-                 sym->varType.contents[idx].itemType.size / 8;
+                 sym->varType.contents[idx].itemType.size;
 
     if (g_symtable.isCurrentScopeGlobal())
     {
@@ -52,10 +52,7 @@ struct ast_node *StatementParser::parseStructInit(struct Type   structType,
     if (m_scanner.token().token() != Token::Tokens::L_BRACE)
     {
         left = m_parser.m_exprParser.parseBinaryOperation(0, structType);
-
-        if (left->operation == AST::Types::STRUCTDEREFERENCE)
-            left = left->left;
-
+    
         if (left->type.typeType != STRUCT ||
             left->type.name->compare(*structType.name))
             err.expectedType(&structType, &left->type);
@@ -63,7 +60,7 @@ struct ast_node *StatementParser::parseStructInit(struct Type   structType,
         int l = m_scanner.curLine();
         int c = m_scanner.curChar();
 
-        tree = mkAstNode(AST::Types::ASSIGN, left, NULL, ident, 0, structType, l, c);
+        left = mkAstNode(AST::Types::ASSIGN, ident, NULL, left, 0, structType, l, c);
     }
     else
     {
@@ -154,12 +151,12 @@ struct ast_node *StatementParser::declStruct(int storageClass)
     structType.name = new string(s);
 
     if (s.compare("anonymous" + to_string(anonStructCount-1)) &&
-        m_typeList.getType(*structType.name).typeType != 0)
+        g_typeList.getType(*structType.name).typeType != 0)
     {
         DEBUG("redecl of: " << s)
         redecl = true;
 
-        if (!m_typeList.getType(*structType.name).incomplete)
+        if (!g_typeList.getType(*structType.name).incomplete)
             err.fatal("trying to initialise an already initialized struct");
     }
 
@@ -170,13 +167,13 @@ struct ast_node *StatementParser::declStruct(int storageClass)
 
         // Double forward declare ??
         if (!redecl)
-            m_typeList.addType(structType);
+            g_typeList.addType(structType);
 
         return mkAstLeaf(AST::Types::PADDING, 0, 0, 0);
     }
     
     if (!redecl)
-        m_typeList.addType(structType);
+        g_typeList.addType(structType);
 
     m_parser.match(Token::Tokens::L_BRACE);
 
@@ -253,7 +250,7 @@ noItems:;
 
     m_scanner.scan();
 
-    m_typeList.replace(*structType.name, structType);
+    g_typeList.replace(*structType.name, structType);
     
     return mkAstLeaf(AST::PADDING, 0, structType, 0, 0);
 }
@@ -278,11 +275,11 @@ struct ast_node *StatementParser::declUnion(int sc)
     unionType.name = new string(s);
 
     if (s.compare("<anonymous>") &&
-        m_typeList.getType(*unionType.name).typeType != 0)
+        g_typeList.getType(*unionType.name).typeType != 0)
     {
         redecl = true;
 
-        if (!m_typeList.getType(*unionType.name).incomplete)
+        if (!g_typeList.getType(*unionType.name).incomplete)
             err.fatal("trying to initialise an already initialized struct");
     }
 
@@ -293,7 +290,7 @@ struct ast_node *StatementParser::declUnion(int sc)
 
         // Double forward declare ??
         if (!redecl)
-            m_typeList.addType(unionType);
+            g_typeList.addType(unionType);
 
         return mkAstLeaf(AST::Types::PADDING, 0, 0, 0);
     }
@@ -347,9 +344,9 @@ noItems:;
     m_scanner.scan();
 
     if (redecl)
-        m_typeList.replace(*unionType.name, unionType);
+        g_typeList.replace(*unionType.name, unionType);
     else
-        m_typeList.addType(unionType);
+        g_typeList.addType(unionType);
 
     return mkAstLeaf(AST::PADDING, 0, unionType, 0, 0);
     

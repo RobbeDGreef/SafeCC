@@ -92,10 +92,12 @@ class TypeList
     void        replace(string ident, struct Type t);
 };
 
+extern TypeList g_typeList;
+
 int              equalType(struct Type l, struct Type r);
 string           typeString(struct Type *t);
 struct Type      tokenToType(vector<int> &tokens);
-struct Type      guessType(int val, bool issigned);
+struct Type      guessType(int val, bool isSigned);
 struct ast_node *typeCompatible(struct ast_node *left, struct ast_node *right,
                                 bool onlyright);
 int              typeFits(struct Type *type, int value);

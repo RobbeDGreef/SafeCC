@@ -4,9 +4,8 @@
 #include <types.h>
 
 ExpressionParser::ExpressionParser(Scanner &scanner, Parser &parser,
-                                   Generator &gen, TypeList &typelist)
-    : m_scanner(scanner), m_parser(parser), m_generator(gen),
-      m_typeList(typelist)
+                                   Generator &gen)
+    : m_scanner(scanner), m_parser(parser), m_generator(gen)
 {
 }
 
@@ -250,7 +249,7 @@ struct ast_node *ExpressionParser::parsePrefixOperator(struct Type *ltype, int p
 
         if (type.typeType == TypeTypes::STRUCT && !type.ptrDepth)
             node->type = type;
-        else
+        //else
             node = mkAstUnary(AST::Types::PTRACCESS, node, 0, type, node->line,
                               node->c);
 

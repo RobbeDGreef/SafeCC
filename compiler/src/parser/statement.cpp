@@ -4,9 +4,8 @@
 #include <types.h>
 
 StatementParser::StatementParser(Scanner &scanner, Parser &parser,
-                                 Generator &gen, TypeList &typelist)
-    : m_scanner(scanner), m_parser(parser), m_generator(gen),
-      m_typeList(typelist)
+                                 Generator &gen)
+    : m_scanner(scanner), m_parser(parser), m_generator(gen)
 {
 }
 
@@ -37,7 +36,7 @@ struct ast_node *StatementParser::parseTypedef()
         err.unknownType(m_scanner.identifier());
 
     t.name = new string(m_scanner.identifier());
-    m_typeList.addType(t);
+    g_typeList.addType(t);
 
     m_scanner.scan();
 
@@ -217,8 +216,8 @@ loop:;
     if (node && node->operation != AST::Types::PADDING)
     {
         // Place statement strings into the asm files for debugging purposes
-        //node = mkAstUnary(AST::Types::DEBUGPRINT, node, m_lastOffset+1, 
-        //                  m_scanner.curLine(), m_scanner.curOffset()-1);
+        node = mkAstUnary(AST::Types::DEBUGPRINT, node, m_lastOffset+1, 
+                          m_scanner.curLine(), m_scanner.curOffset()-1);
     }
     m_lastOffset = m_scanner.curOffset();
     return node;

@@ -64,7 +64,7 @@ protected:
     virtual int genPtrAccess(int reg, int size) {}
     virtual int genDirectMemLoad(int offset, int symbol, int reg, int size) {}
     virtual int genNegate(int reg) {}
-    virtual int genAccessStruct(int symbol, int idx) {}
+    virtual int genAccessStruct(int memreg, int idx, int size) {}
     virtual int genIncrement(int symbol, int amount, int after) {}
     virtual int genDecrement(int symbol, int amount, int after) {}
     virtual int genLeftShift(int reg1, int reg2) {}

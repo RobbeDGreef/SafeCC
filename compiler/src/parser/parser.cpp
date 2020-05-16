@@ -6,8 +6,8 @@
 
 Parser::Parser(Scanner &scanner, Generator &gen)
     : m_scanner(scanner), m_generator(gen),
-      m_statementParser(scanner, *this, gen, m_typeList),
-      m_exprParser(scanner, *this, gen, m_typeList)
+      m_statementParser(scanner, *this, gen),
+      m_exprParser(scanner, *this, gen)
 {
     m_scanner = scanner;
 }
@@ -37,7 +37,7 @@ struct Type Parser::parseType()
         }
         
     case Token::Tokens::IDENTIFIER:
-        t = m_typeList.getType(m_scanner.identifier());
+        t = g_typeList.getType(m_scanner.identifier());
         if (t.typeType == 0)
             return t;
         

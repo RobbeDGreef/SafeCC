@@ -34,6 +34,8 @@ int _regFromSize(int size)
     default:
         err.warning("Could not translate operant size to register size (" +
                     to_string(size) + ")");
+        
+        debughandler(0);
         return 1;
     }
 }
@@ -275,7 +277,7 @@ string variableAccess(int symbol, int offset = 0)
             int varSize = getTypeSize(*s);
             if (s->varType.typeType == TypeTypes::STRUCT &&
                 !s->varType.ptrDepth)
-                offset += s->varType.size;
+                offset += s->varType.size - 4;
 
             else if (s->varType.isArray /*&& !(s->varType.ptrDepth - 1) */)
                 offset += varSize - 4;
@@ -329,6 +331,10 @@ int GeneratorX86::genStoreValue(int reg1, int memloc, struct Type t)
             // mov [reg1 + offset] -> tmp
             // mov tmp -> [memloc + offset]symType ==
             // SymbolTable::SymTypes::ARRAY
+            int tmp = allocReg();
+            write("mov", "[" + getReg(reg1) + "+" + to_string(s.offset) +"]", getReg(tmp));
+            write("mov", getReg(tmp), "[" + getReg(memloc) + "+" + to_string(s.offset) +"]");
+            freeReg(tmp);
         }
     }
     else
@@ -561,10 +567,8 @@ int GeneratorX86::genFunctionCall(int symbolidx, int parameters, vector<int> dat
     if (s->varType.typeType == TypeTypes::STRUCT && !s->varType.ptrDepth)
     {
         write("sub", s->varType.size, "esp");
-        int reg = allocReg();
-        write("lea", "[esp]", getReg(reg));
-        write("push", getReg(reg));
-        freeReg(reg);
+        write("push", "esp");
+        data = genSaveRegisters();
     }
 
 
@@ -675,7 +679,10 @@ int GeneratorX86::genLoadLocation(int symbolidx)
 int GeneratorX86::genPtrAccess(int memreg, int size)
 {
     int reg = allocReg();
-    /* Set the allocated registers size */
+    
+    // If we have something like a struct, set the size to PTR size
+    if (size > PTR_SIZE)
+        size = PTR_SIZE;
     m_usedRegisters[reg] = _regFromSize(size);
 
     write("mov",
@@ -712,20 +719,10 @@ int GeneratorX86::genNegate(int reg)
     return reg;
 }
 
-int GeneratorX86::genAccessStruct(int symbol, int idx)
+int GeneratorX86::genAccessStruct(int memreg, int offset, int size)
 {
-    DEBUG("sym: " << symbol << " " << idx)
-    struct Symbol *s     = g_symtable.getSymbol(symbol);
-    int            reg   = allocReg();
-    int            size  = s->varType.contents[idx].itemType.size;
-    m_usedRegisters[reg] = _regFromSize(size);
-
-    int offset = s->varType.contents[idx].offset;
-    write("mov",
-          SPECIFYSIZE(_regFromSize(size)) + MEMACCESS(variableAccess(symbol,
-                                                                     -offset)),
-          getReg(reg));
-
+    int reg = allocReg();
+    write("mov", SPECIFYSIZE(_regFromSize(size)) + MEMACCESS(getReg(memreg) + "+" + to_string(offset)), getReg(reg));
     return reg;
 }
 
