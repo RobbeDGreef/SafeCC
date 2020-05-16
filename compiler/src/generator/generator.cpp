@@ -149,7 +149,6 @@ int Generator::generateSwitch(struct ast_node *tree, int condLabel)
         
     int exprReg = generateFromAst(tree->left, -1, tree->operation);
     
-    
     vector<int> caseLabels;
     int caseLabel;
     int endLabel = label();
@@ -186,6 +185,7 @@ int Generator::generateSwitch(struct ast_node *tree, int condLabel)
     {    
         genLabel(caseLabels[i]);
         
+        DEBUGR("generate case")
         // This freeReg() call is just a safety mechanism
         int reg = generateFromAst(caseIter->left, -1, tree->operation, condLabel, endLabel);
         if (reg != -1)
@@ -195,6 +195,7 @@ int Generator::generateSwitch(struct ast_node *tree, int condLabel)
         caseIter = caseIter->right;
     }
     
+    DEBUGR("END")
     genLabel(endLabel);
     return -1;
 }
