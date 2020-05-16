@@ -24,4 +24,8 @@ int main()
     p = test();
     
     printf("Dangling pointer holds: %i\n", *p);
+    
+    int *noinit;
+    
+    printf("Dangerous stuff: %x\n", noinit);
 }
