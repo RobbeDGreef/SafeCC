@@ -63,5 +63,3 @@ class StatementParser
     StatementParser(Scanner &scanner, Parser &parser, Generator &gen,
                     TypeList &typelist);
 };
-
-bool isFlowStatement(int op);

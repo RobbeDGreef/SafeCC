@@ -39,6 +39,8 @@ void debughandler(int sig);
 #define DEBUGW(x)
 #endif
 
+#define RELEASE_PRINT(x) std::cout << x << "\n";
+
 template <class T> int hasItem(vector<T> &items, T item)
 {
     if (std::find(items.begin(), items.end(), item) != items.end())

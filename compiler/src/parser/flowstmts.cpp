@@ -49,30 +49,47 @@ struct ast_node *StatementParser::whileStatement()
     return mkAstNode(AST::Types::WHILE, cond, NULL, loopbody, 0, cond->line, cond->c);
 }
 
+static struct ast_node *checkPadding(struct ast_node *tree)
+{
+    if (tree->operation == AST::Types::PADDING)
+    {
+        delete tree;
+        return NULL;
+    }
+    
+    return tree;
+}
+
 struct ast_node *StatementParser::forStatement()
 {
     m_scanner.scan();
     m_parser.match(Token::Tokens::L_PAREN);
+    
+    int l = m_scanner.curLine();
+    int c = m_scanner.curChar();
 
     int id = g_symtable.newScope();
     struct ast_node *forInit = parseStatement();
+    forInit = checkPadding(forInit);
     m_parser.match(Token::Tokens::SEMICOLON);
     
     struct ast_node *push = mkAstLeaf(AST::Types::PUSHSCOPE, id, 0, 0);
     forInit = mkAstNode(AST::Types::GLUE, push, NULL, forInit, 0, 0, 0);
     
     struct ast_node *forCond = comparison();
+    forCond = checkPadding(forCond);
     m_parser.match(Token::Tokens::SEMICOLON);
     
     struct ast_node *forIter = parseStatement();
+    forIter = checkPadding(forIter);
     m_parser.match(Token::Tokens::R_PAREN);
     
     struct ast_node *body = parseBlock(Token::Tokens::FOR, false);
-    struct ast_node *tree = mkAstNode(AST::Types::GLUE, body, NULL, forIter, 0, forIter->line, forIter->c);
+    struct ast_node *tree = mkAstNode(AST::Types::GLUE, body, NULL, forIter, 0, l, c);
 
     // Value is 1, in the generator we interpret this flag as being a FOR loop
-    tree = mkAstNode(AST::Types::WHILE, forCond, NULL, tree, 1, forCond->line, forCond->c);
-    tree = mkAstNode(AST::Types::GLUE, forInit, NULL, tree, 0, forInit->line, forInit->c);
+    tree = mkAstNode(AST::Types::WHILE, forCond, NULL, tree, 1, l, c);
+    tree = mkAstNode(AST::Types::GLUE, forInit, NULL, tree, 0, l, c);
     
     struct ast_node *pop = mkAstLeaf(AST::Types::POPSCOPE, 0, 0, 0);
     tree = mkAstNode(AST::Types::GLUE, tree, NULL, pop, 0, 0, 0);
@@ -109,14 +126,6 @@ bool isLabelStatement(int op)
         return false;
     
     return true;
-}
-
-bool isFlowStatement(int op)
-{
-    if (op == AST::Types::IF || op == AST::Types::WHILE)
-        return true;
-    
-    return false;
 }
 
 struct ast_node *StatementParser::parseLabel(string label)

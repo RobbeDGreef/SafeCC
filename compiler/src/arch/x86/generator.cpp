@@ -181,13 +181,6 @@ int GeneratorX86::genFunctionPostamble(int funcIdx)
     return -1;
 }
 
-int GeneratorX86::move(string instr, string source_reg, string dest_reg)
-{
-    /* Little optimization, do not move same reg in same reg */
-    if (source_reg.compare(dest_reg))
-        write(instr, source_reg, dest_reg);
-}
-
 int GeneratorX86::genLoad(int value, int size)
 {
     DEBUG("Load " << value)
@@ -446,8 +439,13 @@ int GeneratorX86::genFlagJump(int op, int label)
 int GeneratorX86::genCompareSet(int op, int reg1, int reg2)
 {
     write("cmp", getReg(reg2), getReg(reg1));
-    write("xor", getReg(reg2), getReg(reg2));
+    
+    // mov reg2, 0 is used here instead of xor reg2, reg2 because
+    // xor trashes the ZF flag in eflags and thus the result of the cmp 
+    write("mov", 0, getReg(reg2));
+    
     write(setinstr[op - AST::Types::EQUAL], m_loByteRegisters[reg2]);
+    
     write("movzx", m_loByteRegisters[reg2], getReg(reg2));
     freeReg(reg1);
     return reg2;
@@ -520,11 +518,44 @@ int GeneratorX86::checkRegisters()
         }
     }
 }
-
-int GeneratorX86::genFunctionCall(int symbolidx, int parameters)
+vector <int> GeneratorX86::genSaveRegisters()
 {
-    /* normally now all registers are clean */
-    checkRegisters();
+    vector <int> pushedRegisters;
+    for (int i = 0; i < SIZE(m_usedRegisters); i++)
+    {
+        if (m_usedRegisters[i])
+            spillReg(i);
+        
+        pushedRegisters.push_back(m_usedRegisters[i]);
+        m_usedRegisters[i] = 0;
+    }
+    
+    return pushedRegisters;
+}
+
+int GeneratorX86::genLoadRegisters(vector<int> data)
+{
+    for (int i = data.size() - 1; i >= 0; i--)
+    {
+        if (data[i])
+            loadReg(i);
+        m_usedRegisters[i] = data[i];
+    }
+    
+    return -1;
+}
+bool GeneratorX86::hasFreeReg()
+{
+    for (int i = 0; i < SIZE(m_usedRegisters); i++)
+        if (!m_usedRegisters[i])
+            return true;
+    
+    return false;
+}
+
+int GeneratorX86::genFunctionCall(int symbolidx, int parameters, vector<int> data)
+{
+
     struct Symbol *s = g_symtable.getSymbol(symbolidx);
 
     if (s->varType.typeType == TypeTypes::STRUCT && !s->varType.ptrDepth)
@@ -536,29 +567,71 @@ int GeneratorX86::genFunctionCall(int symbolidx, int parameters)
         freeReg(reg);
     }
 
+
     write("call", s->name);
     /**
      * cdecl states that the caller should clean the stack so let's be nice
      * and do so
      */
     write("add", parameters * 4, "esp");
-
+    for (int i = 0; i < data.size(); i++)
+        m_usedRegisters[i] = data[i];
+    
+    int out = EAX;
+    int offset = 0;
+    
     if (s->varType.primType != PrimitiveTypes::VOID)
     {
-        if (s->varType.typeType == TypeTypes::STRUCT)
-            m_usedRegisters[EAX] = 1;
+        if(m_usedRegisters[EAX])
+        {
+            if (!hasFreeReg())
+            {
+                write("push", "eax");
+                offset = 4;
+            }
+            else
+            {
+                out = allocReg();
+                write("mov", "eax", getReg(out));
+            }
+        }
         else
-            m_usedRegisters[EAX] = _regFromSize(s->varType.size);
+        {
+            if (s->varType.typeType == TypeTypes::STRUCT)
+                m_usedRegisters[out] = 1;
+            else
+                m_usedRegisters[out] = _regFromSize(s->varType.size);
+        }
+        
     }
-
-    /* EAX is return value, and thus we return it */
-    return EAX;
+    
+    int pushAmount = 0;
+    for (int i = 0; i < data.size(); i++) 
+        if (data[i]) 
+            pushAmount++;
+    
+    for (int i = data.size() -1; i >= 0; i--)
+    {
+        if (data[i])
+        {
+            write("mov", "[esp+" + to_string(offset + ((pushAmount - i) * 4) - 4) + "]",
+                  getReg(i));
+        }
+    }
+    
+    if (offset)
+    {
+        out = allocReg();
+        write("mov", "[esp+" + to_string(offset + 4) + "]", getReg(out));
+    }
+        
+    return out;
 }
 
 int GeneratorX86::genReturnJump(int reg, int funcIdx)
 {
     if (g_symtable.getSymbol(funcIdx)->returnLabelId == -1)
-        g_symtable.getSymbol(funcIdx)->returnLabelId = m_labelCount++;
+        g_symtable.getSymbol(funcIdx)->returnLabelId = label();
 
     struct Symbol *s = g_symtable.getSymbol(funcIdx);
 
@@ -581,12 +654,12 @@ int GeneratorX86::genReturnJump(int reg, int funcIdx)
     }
     else
     {
-        move(string("mov"), string(getReg(reg)), string("eax"));
+        move("mov", getReg(reg), "eax");
     }
     freeReg(reg);
     allocReg(EAX);
 
-    genJump(m_labelCount - 1);
+    genJump(g_symtable.getSymbol(funcIdx)->returnLabelId);
 }
 
 int GeneratorX86::genLoadLocation(int symbolidx)
@@ -802,11 +875,9 @@ int GeneratorX86::genLogOr(int reg1, int reg2)
 int GeneratorX86::genIsZeroSet(int reg1, bool setOnZero)
 {
     int reg2 = allocReg();
-    write("test", getReg(reg1), getReg(reg1));
     write("xor", getReg(reg2), getReg(reg2));
-
+    write("test", getReg(reg1), getReg(reg1));
     write(setinstr[!setOnZero], m_loByteRegisters[reg2]);
-    
     write("movzx", m_loByteRegisters[reg2], getReg(reg2));
     freeReg(reg1);
     return reg2;
@@ -822,4 +893,18 @@ int GeneratorX86::genGoto(string label)
 {
     write("jmp", "." + label);
     return -1;
+}
+
+int GeneratorX86::genMoveReg(int reg, int toReg)
+{
+    // We don't need to move the register in to a new one if it isn't specified
+    if (toReg == -1)
+        return reg;
+        
+    if (toReg == reg)
+        return toReg;
+        
+    write("mov", getReg(reg), getReg(toReg));
+    freeReg(reg);
+    return toReg;
 }

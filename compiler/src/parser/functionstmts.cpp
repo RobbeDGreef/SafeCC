@@ -211,8 +211,8 @@ struct ast_node *StatementParser::functionCall()
         }
         else
 #endif
-            tree = mkAstNode(AST::Types::FUNCTIONARGUMENT, tree, NULL, arg, i,
-                             m_scanner.curLine(), m_scanner.curChar());
+        tree = mkAstNode(AST::Types::FUNCTIONARGUMENT, tree, NULL, arg, i,
+                         m_scanner.curLine(), m_scanner.curChar());
 
         if (m_scanner.token().token() == Token::Tokens::R_PAREN)
         {

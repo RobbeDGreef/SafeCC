@@ -18,6 +18,11 @@ class ExpressionParser
 
   private:
     struct ast_node *parseComplexAssign(struct ast_node *left, int tok);
+    struct ast_node *parsePrimary(struct Type *type, int prevTok = -1);
+    struct ast_node *parsePrefixOperator(struct Type *type, int prevTok = -1);
+    struct ast_node *parseBinaryOperator(int prevPrec, struct Type *type,
+                                         int prevTok = -1);
+    struct ast_node *parseLeft(struct Type *t, int prevTok = -1);
     struct ast_node *parseTypeCast(struct Type *t);
     int              getOperatorPrecedence(int token);
     struct ast_node *checkArithmetic(struct ast_node *l, struct ast_node *r,

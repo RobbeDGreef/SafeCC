@@ -39,10 +39,11 @@ private:
     void spillReg(int r);
     void loadReg(int r);
     string getReg(int r);
+    bool hasFreeReg();
 
-    int move(string instr, string source_reg, string dest_reg);
     int checkRegisters();
     int spillAmount();
+    int genLoadRegisters(vector <int> data);
 
   protected:
     int genLoad(int val, int size);
@@ -76,7 +77,7 @@ private:
     int genGoto(string label);
     int genWidenRegister(int reg, int oldsize, int newsize, bool isSigned);
     int genPushArgument(int reg, int argindex);
-    int genFunctionCall(int symbolidx, int parameters);
+    int genFunctionCall(int symbolidx, int parameters, vector<int> data);
     int genReturnJump(int reg, int funcIdx);
     int genLoadLocation(int symbolidx);
     int genPtrAccess(int reg, int size);
@@ -89,6 +90,8 @@ private:
     int genLogAnd(int reg1, int reg2);
     int genLogOr(int reg1, int reg2);
     void freeReg(int reg);
+    int genMoveReg(int reg, int toReg=-1);
+    vector<int> genSaveRegisters();
     
   public:
     GeneratorX86(string);

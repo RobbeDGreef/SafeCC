@@ -16,6 +16,7 @@ protected:
     void write(string instruction, int source, string destination);
     void write(string instruction);
     void write(string instruction, string destination);
+    void move(string instruction, string source, string destination);
     
     int generateIf(struct ast_node *tree, int condLabel, int endLabel);
     int generateWhile(struct ast_node *tree);
@@ -36,6 +37,7 @@ protected:
     int generateGoto(struct ast_node *tree);
 
     /* Arch dependant functions, get overwritten in arch/ARCH folder */
+    virtual void freeReg(int reg) {}
     virtual void freeAllReg() {}
     virtual int genLoad(int val, int size) {}
     virtual int genAdd(int reg1, int reg2) {}
@@ -56,7 +58,7 @@ protected:
     virtual int genJump(int label) {}
     virtual int genWidenRegister(int reg, int oldsize, int newsize, bool isSigned) {}
     virtual int genPushArgument(int reg, int argindex) {}
-    virtual int genFunctionCall(int symbolidx, int parameters) {}
+    virtual int genFunctionCall(int symbolidx, int parameters, vector<int> data) {}
     virtual int genReturnJump(int reg, int func) {}
     virtual int genLoadLocation(int symbolidx) {}
     virtual int genPtrAccess(int reg, int size) {}
@@ -77,8 +79,9 @@ protected:
     
     virtual int genIsZero(int reg) {}
     virtual int genIsZeroSet(int reg, bool setOnZero) {}
+    virtual int genMoveReg(int reg, int toReg=-1) {}
+    virtual vector<int> genSaveRegisters() {}
     
-    virtual void freeReg(int reg) {}
 
 /*debugging */
 public:
