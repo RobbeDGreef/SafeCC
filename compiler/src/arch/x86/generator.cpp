@@ -34,8 +34,7 @@ int _regFromSize(int size)
     default:
         err.warning("Could not translate operant size to register size (" +
                     to_string(size) + ")");
-        
-        debughandler(0);
+    
         return 1;
     }
 }
