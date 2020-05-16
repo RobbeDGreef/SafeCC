@@ -86,7 +86,7 @@ int evaluateConstant(struct ast_node *tree)
         return tree->value;
     }
     
-    err.fatal("unknown ast");
+    err.fatal("Cannot parse constant");
     return 0;
 }
 
