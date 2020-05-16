@@ -48,6 +48,20 @@ void Scanner::putback(int c)
     m_putback = c;
 }
 
+int Scanner::peek()
+{
+    if (m_putbackToken.intValue() != -1)
+    {
+        return m_nextToken.intValue();
+    }
+    Token tok = m_token;
+    scan();
+    int peek = m_token.token();
+    putbackToken(tok);
+    m_token = tok;
+    return peek;
+}
+
 /// @brief  Returns next (usefull) character from the input stream
 int Scanner::next()
 {
@@ -165,6 +179,7 @@ int Scanner::charParser(int c)
 
 void Scanner::putbackToken(Token t)
 {
+    m_nextToken = m_token;
     m_putbackToken = t;
 }
 

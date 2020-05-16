@@ -23,6 +23,7 @@ private:
 
     Token       m_token;
     Token       m_putbackToken;
+    Token       m_nextToken;
 
     int         m_putback = 0;
     
@@ -65,6 +66,7 @@ public:
     int getTokenStart();
 
     int scan();
+    int peek();
     void putbackToken(Token t);
     vector<int> scanUntil(int tok);
     vector<int> scanUntil(int tok, int tok2, int tok3);

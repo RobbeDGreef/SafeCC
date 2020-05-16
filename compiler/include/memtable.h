@@ -27,6 +27,7 @@ public:
     int memId() { return m_memId; }
     int isInit() { return m_isInit; }
     int setMemId(int memId) { m_memId = memId; }
+    int setIsInit(bool isInit) { m_isInit = isInit; }
 };
 
 class MemoryTable

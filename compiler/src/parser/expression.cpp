@@ -163,7 +163,17 @@ struct ast_node *ExpressionParser::parsePrimary(struct Type *ltype)
 
         node = mkAstLeaf(AST::Types::IDENTIFIER, id, s->varType,
                          m_scanner.curLine(), m_scanner.curChar());
-
+        
+        {
+        int x = m_scanner.peek();
+        DEBUGR("tok: " << x)
+        if (x != Token::Tokens::EQUALSIGN)
+            if (node->type.memSpot && !node->type.memSpot->isInit())
+            {
+                DEBUGR(node->type.memSpot->isInit());
+                err.memWarn("Trying to use an uninitialized variable");
+            }
+        }
         break;
 
     case Token::Tokens::STRINGLIT:
@@ -244,6 +254,9 @@ struct ast_node *ExpressionParser::parsePrefixOperator(struct Type *ltype)
                       typeString((&node->type)) + " (expected pointer type)");
 
         type = node->type;
+        if (type.memSpot && !type.memSpot->isInit())
+            err.memWarn("Trying to dereference uninitialized memory\n");
+        
         dereference(&type);
 
         if (type.typeType == TypeTypes::STRUCT && !type.ptrDepth)
@@ -665,9 +678,7 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prevPrec,
         if (tok == Token::Tokens::EQUALSIGN)
         {
             if (right->type.memSpot)
-            {
                 type->memSpot->addReferencingTo(right->type.memSpot);
-            }
         }
 
         struct ast_node *tmp = checkArithmetic(left, right, tok);

@@ -213,7 +213,9 @@ struct ast_node *StatementParser::variableDecl(struct Type type, int sc)
     else
     {
         m_parser.match(Token::Tokens::EQUALSIGN);
-
+        
+        DEBUGR("set init true");
+        type.memSpot->setIsInit(true);
         s.defined = true;
 
         if (sc == SymbolTable::StorageClass::EXTERN &&
