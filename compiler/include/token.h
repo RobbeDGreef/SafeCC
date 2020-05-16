@@ -15,6 +15,7 @@ static const string toknames[]
     "! (logical not)", 
     
     "= (equalsign)", 
+    ": (colon)", "? (questionmark)",
     
     "++ (increment)", "-- (decrement)", "~ (bitwise negate)",
 
@@ -30,7 +31,7 @@ static const string toknames[]
     "typedef", "struct", "union", "enum",
     "auto", "static", "register", "extern",
     "restrict", "attribute", "asm",
-    "goto", "colon", "switch", "case", "default",
+    "goto", "switch", "case", "default",
     "break", "continue"
 };
 
@@ -64,6 +65,9 @@ public:
         /* assignment */
         EQUALSIGN,
         
+        /* Ternairy statement */
+        COLON, QUESTIONMARK,
+        
         INC, DEC, TIDDLE,
 
         INTLIT, STRINGLIT,
@@ -81,7 +85,7 @@ public:
         TYPEDEF, STRUCT, UNION, ENUM,
         AUTO, STATIC, REGISTER, EXTERN,
         RESTRICT, ATTRIBUTE, ASM,
-        GOTO, COLON, SWITCH, CASE, DEFAULT,
+        GOTO, SWITCH, CASE, DEFAULT,
         BREAK, CONTINUE
     };
 

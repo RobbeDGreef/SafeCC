@@ -23,6 +23,7 @@ protected:
     int generateSwitch(struct ast_node *tree, int condLabel);
     int generateArgumentPush(struct ast_node *tree);
     int generateAssignment(struct ast_node *tree);
+    int generateTernary(struct ast_node *tree);
     int label();
     int generateCondition(struct ast_node *tree, int condEndLabel, int endLabel, int parentOp,
                           int condOp=0);

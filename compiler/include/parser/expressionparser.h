@@ -28,6 +28,7 @@ class ExpressionParser
     struct ast_node *parseParentheses(struct Type *ltype);
     struct ast_node *parseArrayAccess(struct ast_node *prim, bool access);
     struct ast_node *parseStructAccess(struct ast_node *prim, bool access);
+    struct ast_node *parseTernaryCondition(struct Type *type);
 
   public:
     struct ast_node *parseSizeof();

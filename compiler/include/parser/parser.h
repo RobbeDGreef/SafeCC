@@ -9,15 +9,17 @@
 
 static const int OperatorPrecedence[] = {
     0,          // EOF
-    10, 10,     // + -
-    11, 11, 11, // * / %
-    4, 5, 6,    // | ^ &
-    9, 9,       // << >>
-    7, 7,       // == !=
-    8, 8, 8, 8, // < > <= >=
-    3, 2,       // && ||
+    12, 12,     // + -
+    13, 13, 13, // * / %
+    6, 7, 8,    // | ^ &
+    11, 11,     // << >>
+    9, 9,       // == !=
+    10, 10, 10, 10, // < > <= >=
+    5, 4,       // && ||
     0,
-    1           // =
+    1,          // =
+    3, 2        // : ?  (note that ':' in c isn't really an operator but 
+                //       our parser will correctly parse the ternary this way)
 };
 
 class Parser

@@ -14,6 +14,7 @@ namespace AST
         LOGAND, LOGOR, LOGNOT,
         
         ASSIGN, 
+        COLONSEP, TERNARY,
         
         INCREMENT, DECREMENT, NOT,
     
