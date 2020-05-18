@@ -64,6 +64,7 @@ public:
     string getStrFromTo(int from, int to);
     string &identifier();
     int getTokenStart();
+    void setIdentifier(string s);
 
     int scan();
     int peek();

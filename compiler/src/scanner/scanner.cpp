@@ -270,3 +270,9 @@ string Scanner::getStrFromTo(int from, int to)
     
     return str;
 }
+
+
+void Scanner::setIdentifier(string s)
+{
+    m_identBuf = s;
+}
