@@ -134,7 +134,7 @@ struct ast_node *ExpressionParser::parsePrimary(struct Type *ltype)
         if (id == -1 ||
             g_symtable.getSymbol(id)->symType == SymbolTable::SymTypes::LABEL)
             return NULL;
-
+        
         s = g_symtable.getSymbol(id);
 
         if (s->varType.typeType == TypeTypes::CONSTANT)
@@ -166,16 +166,7 @@ struct ast_node *ExpressionParser::parsePrimary(struct Type *ltype)
         node = mkAstLeaf(AST::Types::IDENTIFIER, id, s->varType,
                          m_scanner.curLine(), m_scanner.curChar());
         
-        {
-        int x = m_scanner.peek();
-        DEBUGR("tok: " << x)
-        if (x != Token::Tokens::EQUALSIGN)
-            if (node->type.memSpot && !node->type.memSpot->isInit())
-            {
-                DEBUGR(node->type.memSpot->isInit());
-                err.memWarn("Trying to use an uninitialized variable");
-            }
-        }
+        
         break;
 
     case Token::Tokens::STRINGLIT:
@@ -256,8 +247,8 @@ struct ast_node *ExpressionParser::parsePrefixOperator(struct Type *ltype)
                       typeString((&node->type)) + " (expected pointer type)");
 
         type = node->type;
-        if (type.memSpot && !type.memSpot->isInit())
-            err.memWarn("Trying to dereference uninitialized memory\n");
+        if (type.memSpot)
+            type.memSpot->tryToUse(AST::Types::PTRACCESS);
         
         dereference(&type);
 
@@ -524,10 +515,14 @@ struct ast_node *ExpressionParser::parsePostfixOperator(struct ast_node *tree,
     switch (m_scanner.token().token())
     {
     case Token::Tokens::L_BRACKET:
+        if (tree->type.memSpot)
+            tree->type.memSpot->tryToUse(AST::Types::PTRACCESS);
         return parseArrayAccess(tree, access);
 
     case Token::Tokens::MINUS:
     case Token::Tokens::DOT:
+        if (tree->type.memSpot)
+            tree->type.memSpot->tryToUse(AST::Types::PTRACCESS);
         return parseStructAccess(tree, access);
 
     case Token::Tokens::INC:
@@ -680,7 +675,10 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prevPrec,
         if (tok == Token::Tokens::EQUALSIGN)
         {
             if (right->type.memSpot)
-                type->memSpot->addReferencingTo(right->type.memSpot);
+            {
+                type->memSpot->setIsInit(true);
+                type->memSpot->addReferencingTo(right->type.memSpot, right->operation);
+            }
         }
 
         struct ast_node *tmp = checkArithmetic(left, right, tok);

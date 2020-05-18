@@ -319,7 +319,6 @@ struct ast_node *StatementParser::parseBlock(int parentOp, bool newScope)
     
     m_scanner.scan();
     tree = _parseBlock(parentOp, tree);
-    m_parser.match(Token::Tokens::R_BRACE);
     
     if (newScope)
     {
@@ -327,6 +326,8 @@ struct ast_node *StatementParser::parseBlock(int parentOp, bool newScope)
         struct ast_node *pop = mkAstLeaf(AST::Types::POPSCOPE, 0, 0, 0);
         tree = mkAstNode(AST::Types::GLUE, tree, NULL, pop, 0, 0, 0);
     }
+    
+    m_parser.match(Token::Tokens::R_BRACE);
     
     return tree;
 }

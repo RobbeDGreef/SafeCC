@@ -142,6 +142,11 @@ struct ast_node *StatementParser::parseVarInit(struct Type   type,
         }
     }
 
+    if (right->type.memSpot)
+    {
+        sym.varType.memSpot->addReferencingTo(right->type.memSpot, right->operation);   
+    }
+
     id   = g_symtable.pushSymbol(sym);
     tree = mkAstLeaf(AST::Types::IDENTIFIER, id, type, right->line, right->c);
 
@@ -213,8 +218,6 @@ struct ast_node *StatementParser::variableDecl(struct Type type, int sc)
     else
     {
         m_parser.match(Token::Tokens::EQUALSIGN);
-        
-        DEBUGR("set init true");
         type.memSpot->setIsInit(true);
         s.defined = true;
 

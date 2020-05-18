@@ -22,9 +22,15 @@ struct ast_node *StatementParser::returnStatement()
     struct ast_node *tree = m_parser.m_exprParser.parseBinaryOperation(0,
                                                                        fsym->varType);
     
+    if (!tree)
+        err.unknownSymbol(m_scanner.identifier());
+    
     if (tree->type.memSpot)
     {
-        fsym->varType.memSpot = new MemorySpot(tree->type.memSpot);
+        DEBUGR("return statement")
+        if (!fsym->varType.memSpot)
+            fsym->varType.memSpot = new MemorySpot(tree->type.memSpot);
+        
         fsym->varType.memSpot->setName("the return value of " + fsym->name);
     }
     
@@ -106,6 +112,17 @@ struct ast_node *StatementParser::functionDecl(struct Type type, int sc)
         {
             argsym.name = m_scanner.identifier();
             m_scanner.scan();
+            
+            if (m_scanner.token().token() == Token::Tokens::L_BRACKET)
+            {
+                m_scanner.scan();
+                int amount = m_parser.m_exprParser.parseConstantExpr();
+                m_parser.match(Token::Tokens::R_BRACKET);
+                
+                argsym.varType.isArray = true;
+                argsym.varType.size *= amount;
+                argsym.value = amount;
+            }
         }
 
         if (m_scanner.token().token() == Token::Tokens::R_PAREN)
@@ -140,8 +157,10 @@ noargs:;
         function->arguments = extractTypes(arguments);
     }
 
-    if (m_scanner.token().token() == Token::Tokens::ATTRIBUTE ||
-        m_scanner.token().token() == Token::Tokens::ASM)
+    if (m_scanner.token().token() == Token::Tokens::ATTRIBUTE)
+        function->attributes = m_parser.parseAttr();
+
+    if (m_scanner.token().token() == Token::Tokens::ASM)
         m_scanner.scanUntil(Token::Tokens::SEMICOLON);
 
     if (m_scanner.token().token() == Token::Tokens::SEMICOLON)
@@ -164,7 +183,7 @@ noargs:;
                                            m_scanner.curLine(),
                                            m_scanner.curChar()),
                                 -1, 0);
-    g_symtable.popScope();
+    g_symtable.popScope(true, true);
     return NULL;
 }
 
@@ -179,6 +198,7 @@ struct ast_node *StatementParser::functionCall()
     struct ast_node *off  = NULL;
     struct Type      type;
     int              i = -1;
+    vector<int> removeMem;
 
     if ((id = g_symtable.findSymbol(m_scanner.identifier())) == -1)
     {
@@ -187,7 +207,25 @@ struct ast_node *StatementParser::functionCall()
     }
     
     s = g_symtable.getSymbol(id);
+    struct Type returnType = s->varType;
     s->used = true;
+    //returnType.memSpot = new MemorySpot(*s->varType.memSpot);
+    
+    if (s->attributes.size())
+    {
+        if (hasAttr(s->attributes, Attributes::RETURNS_HEAPVAL))
+        {
+            MemorySpot *ms = new MemorySpot();
+            ms->copy(s->varType.memSpot);
+            ms->setMemLoc(MemorySpot::MemLoc::HEAP);
+            returnType.memSpot = new MemorySpot(ms);
+        }
+        
+        if (hasAttr(s->attributes, Attributes::CLEARS_HEAPVAL))
+        {
+            removeMem = getAttr(s->attributes, Attributes::CLEARS_HEAPVAL).values;
+        }
+    }
 
     m_parser.match(Token::Tokens::L_PAREN);
 
@@ -197,7 +235,19 @@ struct ast_node *StatementParser::functionCall()
     for (i = 0; i < g_symtable.getSymbol(id)->arguments.size(); i++)
     {
         arg = m_parser.m_exprParser.parseBinaryOperation(0, g_symtable.getSymbol(id)->arguments[i]);
-
+        if (!arg)
+            err.unknownSymbol(m_scanner.identifier());
+        
+        if (count(removeMem.begin(), removeMem.end(), i))
+        {
+            if (arg->type.memSpot)
+            {
+                int id = arg->type.memSpot->references();
+                g_memTable.findMemorySpot(id)->destroy("");
+            }
+            else
+                err.memWarn("Trying to remove non-heap allocated object from heap?");
+        }
 #if 0
         if (arg->type.typeType == TypeTypes::STRUCT && !arg->type.ptrDepth)
         {
@@ -238,6 +288,8 @@ struct ast_node *StatementParser::functionCall()
         for (; i < MAX_ARGUMENTS_TO_FUNCTION; i++)
         {
             arg = m_parser.m_exprParser.parseBinaryOperation(0, NULLTYPE);
+            if (!arg)
+                err.unknownSymbol(m_scanner.identifier());
             if (arg->type.typeType == TypeTypes::STRUCT && !arg->type.ptrDepth)
             {
                 for (int j = 0; j < arg->type.contents.size(); j++)
@@ -276,7 +328,6 @@ noarg:;
                   g_symtable.getSymbol(id)->name + "'");
 
     m_scanner.scan();
-    return mkAstUnary(AST::Types::FUNCTIONCALL, tree, id,
-                      g_symtable.getSymbol(id)->varType, m_scanner.curLine(),
-                      m_scanner.curChar());
+    return mkAstUnary(AST::Types::FUNCTIONCALL, tree, id, returnType,
+                      m_scanner.curLine(), m_scanner.curChar());
 }
