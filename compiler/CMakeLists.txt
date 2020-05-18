@@ -1,8 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 
-project(Compiler)
+project(safecc)
 
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Os")
@@ -16,5 +16,5 @@ endif ()
 include_directories(include)
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
-add_executable(Compiler ${SOURCES})
+add_executable(safecc ${SOURCES})
 
