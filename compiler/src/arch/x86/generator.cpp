@@ -184,7 +184,6 @@ int GeneratorX86::genFunctionPostamble(int funcIdx)
 
 int GeneratorX86::genLoad(int value, int size)
 {
-    DEBUG("Load " << value)
     int reg              = allocReg();
     m_usedRegisters[reg] = _regFromSize(size);
     write("mov", value, getReg(reg));
@@ -321,8 +320,6 @@ int GeneratorX86::genLoadVariable(int symbol, struct Type t)
 
 int GeneratorX86::genStoreValue(int reg1, int memloc, struct Type t)
 {
-    DEBUG("reg1: " << reg1 << " mem " << memloc)
-
     if (t.typeType == TypeTypes::STRUCT && !t.ptrDepth)
     {
         for (struct StructItem s : t.contents)
@@ -637,6 +634,9 @@ int GeneratorX86::genReturnJump(int reg, int funcIdx)
         g_symtable.getSymbol(funcIdx)->returnLabelId = label();
 
     struct Symbol *s = g_symtable.getSymbol(funcIdx);
+
+    if (reg == -1)
+        return genJump(g_symtable.getSymbol(funcIdx)->returnLabelId);
 
     if (s->varType.typeType == TypeTypes::STRUCT && !s->varType.ptrDepth)
     {

@@ -251,7 +251,7 @@ int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp,
     if (!tree)
         return -1;
     
-    DEBUG("op: " << tree->operation)
+    //DEBUG("op: " << tree->operation)
 
     switch (tree->operation)
     {
