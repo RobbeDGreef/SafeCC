@@ -1,11 +1,13 @@
+#include <ast.h>
 #include <errorhandler.h>
 #include <memtable.h>
+#include <types.h>
 
 MemoryTable g_memTable = MemoryTable();
 
 MemorySpot::MemorySpot()
 {
-    g_memTable.addMemorySpot(*this);
+    g_memTable.addMemorySpot(this);
 }
 
 MemorySpot::MemorySpot(int memId)
@@ -13,16 +15,58 @@ MemorySpot::MemorySpot(int memId)
     m_memId = memId;
 }
 
+MemorySpot::MemorySpot(string s)
+{
+    g_memTable.addMemorySpot(this);
+    m_lastName = s;
+}
+
 MemorySpot::MemorySpot(MemorySpot *ms)
 {
-    g_memTable.addMemorySpot(*this);
-    addReferencingTo(g_memTable.findMemorySpot(ms->references()));
+    g_memTable.addMemorySpot(this);
+    addReferencingTo(ms, 0);
 }
 
 void MemorySpot::addReferencingTo(MemorySpot *ms)
 {
+    #if 0
+    if (ms->m_memLoc == MemLoc::HEAP)
+    {
+        m_referencing = ms->memId();
+        ms->addReferencedBy(m_memId);
+    }
+    if (ms->m_memLoc == MemLoc::STATIC)
+    {
+        if (ms->references() != -1)
+        {
+        }
+    }
+    #endif
+    
     m_referencing = ms->memId();
-    ms->addReferencedBy(m_memId);
+    ms->addReferencedBy(m_memId);    
+}
+
+void MemorySpot::addReferencingTo(MemorySpot *ms, int op)
+{
+    int ref = -1;
+    switch (op)
+    {
+    case AST::Types::LOADLOCATION:
+        ref = ms->memId();
+        break;
+    case AST::Types::PTRACCESS:
+        ref = -1;
+        break;
+    default:
+        if (ms->m_memLoc == MemLoc::HEAP)
+            ref = ms->memId();
+        else
+            ref = ms->references();
+    }
+    
+    if (ref != -1)
+        addReferencingTo(g_memTable.findMemorySpot(ref));
 }
 
 void MemorySpot::setName(string name)
@@ -38,55 +82,117 @@ void MemorySpot::addReferencedBy(int id)
 void MemorySpot::stopBeingReferencedBy(int id)
 {
     m_referencedBy.remove(id);
+
+    string lastref = g_memTable.findMemorySpot(id)->name();
+    if (!m_referencedBy.size() && m_memLoc == MemLoc::HEAP)
+        err.memWarn("Memory leak, memory is allocated at the heap but never "
+                    "freed\n"
+                    "The last reference (" +
+                    lastref + ") just went out of scope");
 }
 
-void MemorySpot::stopReferencing(int id)
+void MemorySpot::stopReferencing()
 {
     m_referencing = -1;
 }
 
-void MemorySpot::destroy(string s)
+void MemorySpot::copy(MemorySpot *ms)
 {
-    if (m_referencing != -1)
+    if (ms)
+        *this = *ms;
+}
+
+bool MemorySpot::_destroyHeap(string s)
+{
+    m_destroyedMessage = "Variable " + HL("'" + s + "'") +
+                         " was destroyed by a memory deallocator";
+    for (int id : m_referencedBy)
+    {
+        g_memTable.findMemorySpot(id)->m_accessGarbage = true;
+    }
+    // g_memTable.removeMemorySpot(m_memId);
+    return false;
+}
+
+void MemorySpot::destroyedMessage()
+{
+    err.loadErrorInfo(m_destroyedErrInfo);
+    err.memNotice(m_destroyedMessage);
+}
+
+bool MemorySpot::tryToUse(int op)
+{
+    switch (op)
+    {
+    case AST::Types::PTRACCESS:
+        if (!m_isInit)
+            err.memWarn("Trying to access memory that is not initialised");
+        if (m_accessGarbage)
+        {
+            if (m_referencing != -1)
+            {
+                MemorySpot *ms = g_memTable.findMemorySpot(m_referencing);
+                ms->destroyedMessage();
+            }
+            err.memWarn("Trying to access memory that points to garbage");
+        }
+        break;
+    }
+
+    return false;
+}
+
+bool MemorySpot::destroy(string s, bool printMessage)
+{
+    bool ret           = false;
+    m_destroyedErrInfo = err.createErrorInfo();
+
+    if (m_memLoc == MemLoc::HEAP)
+        return _destroyHeap(s);
+
+    if (m_referencing != -1 && !m_accessGarbage)
     {
         g_memTable.findMemorySpot(m_referencing)->stopBeingReferencedBy(m_memId);
     }
 
     if (m_referencedBy.size())
     {
-        // Trying to destory memory object that is still referenced
-
-        string names = "";
+        m_destroyedMessage = "Variable " + HL("'" + s + "'") +
+                             " went out of scope but was still referenced by:\n";
+        
         int i = 0;
         for (int id : m_referencedBy)
         {
-            names += HL(g_memTable.findMemorySpot(id)->name());
+            m_destroyedMessage += HL(g_memTable.findMemorySpot(id)->name());
             if (i != m_referencedBy.size() - 1)
-                names += ", ";
+                m_destroyedMessage += ", ";
+            i++;
         }
-
-        // @todo warn specific cases
-        err.memWarn("'" + s + "' goes out of scope but is still referenced " +
-                    to_string(m_referencedBy.size()) + " time(s)\nby: " +
-                    names);
+        
+        // Trying to destory memory object that is still referenced
+        if (printMessage)
+            err.memWarn(m_destroyedMessage);
         
         // Since this is just a warning lets deref those too
         for (int id : m_referencedBy)
         {
-            g_memTable.findMemorySpot(id)->stopReferencing(m_memId);
+            g_memTable.findMemorySpot(id)->setAccessGarbage(true);
         }
         m_referencedBy.clear();
     }
+
+    // g_memTable.removeMemorySpot(m_memId);
+    return ret;
 }
 
 MemoryTable::MemoryTable()
 {
 }
 
-int MemoryTable::addMemorySpot(MemorySpot &ms)
+int MemoryTable::addMemorySpot(MemorySpot *ms)
 {
-    m_table.push_back(&ms);
-    ms.setMemId(m_memIDCounter++);
+    m_table.push_back(ms);
+    ms->setMemId(m_memIDCounter++);
 }
 
 int MemoryTable::removeMemorySpot(int memId)
@@ -112,5 +218,5 @@ MemorySpot *MemoryTable::findMemorySpot(int memId)
         }
     }
 
-    err.fatal("Could not find memory spot in table");
+    err.fatal("Could not find memory spot in table " + to_string(memId));
 }
