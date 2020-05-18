@@ -54,6 +54,8 @@ struct ast_node *ExpressionParser::parseTypeCast(struct Type *ltype)
     case Token::Tokens::VOID:
     case Token::Tokens::CHAR:
     case Token::Tokens::SHORT:
+    case Token::Tokens::FLOAT:
+    case Token::Tokens::DOUBLE:
     case Token::Tokens::INT:
     case Token::Tokens::LONG:
     case Token::Tokens::STRUCT:
