@@ -11,7 +11,8 @@ struct ast_node;
 #define QWORD 64
 
 static string typeNames[] = {"nulltype", "void", "char",
-                             "short",    "int",  "long"};
+                             "short",    "int",  "long",
+                             "float", "double"};
 
 struct StructItem;
 
@@ -47,6 +48,8 @@ struct StructItem
 #define LONG_SIZE  (DWORD / 8)
 #define PTR_SIZE (DWORD / 8)
 #define LONGLONG_SIZE (QWORD / 8)
+#define FLOAT_SIZE (DWORD / 8)
+#define DOUBLE_SIZE (DWORD / 8)
 
 #define REGISTERSIZE g_regSize
 #define DEFAULTSIZE  g_defaultSize
@@ -71,7 +74,9 @@ enum PrimitiveTypes
     CHAR,
     SHORT,
     INT,
-    LONG
+    LONG,
+    FLOAT,
+    DOUBLE
 };
 
 enum TypeTypes

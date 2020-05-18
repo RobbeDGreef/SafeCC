@@ -81,9 +81,14 @@ int typeToSize(int type)
         return LONG_SIZE;
     case PrimitiveTypes::VOID:
         return INT_SIZE;
+    case PrimitiveTypes::FLOAT:
+        return FLOAT_SIZE;
+    case PrimitiveTypes::DOUBLE:
+        return DOUBLE_SIZE;
     }
     
-    err.warning("YO WTH?\n");
+    err.warning("YO WTH? " + to_string(type));
+    debughandler(0);
     
     return -1;
 }
@@ -109,6 +114,10 @@ int findType(vector<int> &tokens)
             return PrimitiveTypes::INT;
         case Token::Tokens::LONG:
             return PrimitiveTypes::LONG;
+        case Token::Tokens::FLOAT:
+            return PrimitiveTypes::FLOAT;
+        case Token::Tokens::DOUBLE:
+            return PrimitiveTypes::DOUBLE;
         default:
             err.fatal("Compiler only supports a type at the end of a type state"
                       "ment (for example 'int signed' should be 'signed int )");
@@ -138,6 +147,7 @@ struct Type tokenToType(vector<int> &tokens)
     t.isSigned = sign;
     t.typeType = TypeTypes::VARIABLE;
     t.isArray = false;
+    t.memSpot = NULL;
     if (t.ptrDepth)
         t.size = PTR_SIZE;
     else
