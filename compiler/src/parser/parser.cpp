@@ -12,7 +12,7 @@ Parser::Parser(Scanner &scanner, Generator &gen)
     m_scanner = scanner;
 }
 
-struct ast_node *Parser::_declAggregateType(int tok, string s)
+ast_node *Parser::_declAggregateType(int tok, string s)
 {
     if (tok == Token::Tokens::UNION)
         return m_statementParser.declUnion(0, s);
@@ -22,9 +22,9 @@ struct ast_node *Parser::_declAggregateType(int tok, string s)
         return m_statementParser.declStruct(0, s);
 }
 
-struct Type Parser::parseType()
+Type Parser::parseType()
 {
-    struct Type t;
+    Type t;
     t.memSpot = NULL;
     string ident = "";
     int token;
@@ -74,7 +74,7 @@ struct Type Parser::parseType()
     }
 }
 
-struct ast_node *Parser::parserMain()
+ast_node *Parser::parserMain()
 {
     ast_node *tree = m_statementParser._parseBlock();
     match(Token::Tokens::T_EOF);

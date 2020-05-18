@@ -7,10 +7,10 @@
 
 int anonEnumCount = 0;
 
-struct ast_node *StatementParser::declEnum(string _s)
+ast_node *StatementParser::declEnum(string _s)
 {
-    struct Type enumType = INTTYPE;
-    struct Symbol enumItem;
+    Type enumType = INTTYPE;
+    Symbol enumItem;
     enumItem.varType = INTTYPE;
     enumItem.varType.typeType = TypeTypes::CONSTANT;
     bool redecl = false;
@@ -71,7 +71,7 @@ noItems:;
     return mkAstLeaf(AST::Types::PADDING, 0, 0, 0);
 }
 
-int evaluateConstant(struct ast_node *tree)
+int evaluateConstant(ast_node *tree)
 {
     int leftreg = 0;
     int rightreg = 0;
@@ -102,7 +102,7 @@ int evaluateConstant(struct ast_node *tree)
 
 int ExpressionParser::parseConstantExpr()
 {
-    struct ast_node *opp = parseBinaryOperation(0, INTTYPE);
+    ast_node *opp = parseBinaryOperation(0, INTTYPE);
     int val = evaluateConstant(opp);
     return val;
 }

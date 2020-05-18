@@ -152,7 +152,7 @@ int main(int argc, char *const *argv)
 
         scanner.scan();
 
-        struct ast_node *t = parser.parserMain();
+        ast_node *t = parser.parserMain();
         generator.generateFromAst(t, -1, 0);
     }
 

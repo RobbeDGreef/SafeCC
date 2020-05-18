@@ -154,7 +154,7 @@ int GeneratorX86::genFunctionPreamble(int funcIdx)
     // Clean all the registers
     freeAllReg();
 
-    struct Symbol *s = g_symtable.getSymbol(funcIdx);
+    Symbol *s = g_symtable.getSymbol(funcIdx);
 
     if (s->storageClass == SymbolTable::StorageClass::EXTERN)
         fprintf(m_outfile, "global %s\n", s->name.c_str());
@@ -169,7 +169,7 @@ int GeneratorX86::genFunctionPreamble(int funcIdx)
 int GeneratorX86::genFunctionPostamble(int funcIdx)
 {
     int            l;
-    struct Symbol *s = g_symtable.getSymbol(funcIdx);
+    Symbol *s = g_symtable.getSymbol(funcIdx);
     if ((l = s->returnLabelId) != -1)
         genLabel(l);
 
@@ -260,7 +260,7 @@ int GeneratorX86::genDiv(int r1, int r2)
 
 string variableAccess(int symbol, int offset = 0)
 {
-    struct Symbol *s = g_symtable.getSymbol(symbol);
+    Symbol *s = g_symtable.getSymbol(symbol);
 
     // The variable is a local variable if the lower 8 bits of symbol contain a
     // value
@@ -289,7 +289,7 @@ string variableAccess(int symbol, int offset = 0)
     }
 }
 
-int GeneratorX86::genLoadVariable(int symbol, struct Type t)
+int GeneratorX86::genLoadVariable(int symbol, Type t)
 {
     int reg = allocReg();
 
@@ -297,7 +297,7 @@ int GeneratorX86::genLoadVariable(int symbol, struct Type t)
     // if (regs != 1)
     //    write("xor", m_dwordRegisters[reg], m_dwordRegisters[reg]);
     
-    struct Symbol *s = g_symtable.getSymbol(symbol);
+    Symbol *s = g_symtable.getSymbol(symbol);
 
     if (s->varType.isArray)
     {
@@ -318,7 +318,7 @@ int GeneratorX86::genLoadVariable(int symbol, struct Type t)
     return reg;
 }
 
-int GeneratorX86::genStoreValue(int reg1, int memloc, struct Type t)
+int GeneratorX86::genStoreValue(int reg1, int memloc, Type t)
 {
     if (t.typeType == TypeTypes::STRUCT && !t.ptrDepth)
     {
@@ -342,7 +342,7 @@ int GeneratorX86::genStoreValue(int reg1, int memloc, struct Type t)
 int GeneratorX86::genExternSection()
 {
     fprintf(m_outfile, "\n");
-    for (struct Symbol s : g_symtable.getGlobalTable())
+    for (Symbol s : g_symtable.getGlobalTable())
     {
         if (s.storageClass == SymbolTable::StorageClass::EXTERN)
         {
@@ -363,7 +363,7 @@ int GeneratorX86::genDataSection()
     genExternSection();
     
     fprintf(m_outfile, "\n\nsection\t.data\n");
-    for (struct Symbol s : g_symtable.getGlobalTable())
+    for (Symbol s : g_symtable.getGlobalTable())
     {
         if (s.symType == SymbolTable::SymTypes::VARIABLE &&
             s.varType.typeType != TypeTypes::STRUCT && !s.varType.isArray && 
@@ -376,7 +376,7 @@ int GeneratorX86::genDataSection()
                  s.symType == SymbolTable::SymTypes::VARIABLE &&
                  s.storageClass != SymbolTable::StorageClass::EXTERN)
         {
-            struct Type t = s.varType;
+            Type t = s.varType;
             dereference(&t);
 
             fprintf(m_outfile, "\t%s\t%s ", s.name.c_str(),
@@ -558,7 +558,7 @@ bool GeneratorX86::hasFreeReg()
 int GeneratorX86::genFunctionCall(int symbolidx, int parameters, vector<int> data)
 {
 
-    struct Symbol *s = g_symtable.getSymbol(symbolidx);
+    Symbol *s = g_symtable.getSymbol(symbolidx);
 
     if (s->varType.typeType == TypeTypes::STRUCT && !s->varType.ptrDepth)
     {
@@ -633,7 +633,7 @@ int GeneratorX86::genReturnJump(int reg, int funcIdx)
     if (g_symtable.getSymbol(funcIdx)->returnLabelId == -1)
         g_symtable.getSymbol(funcIdx)->returnLabelId = label();
 
-    struct Symbol *s = g_symtable.getSymbol(funcIdx);
+    Symbol *s = g_symtable.getSymbol(funcIdx);
 
     if (reg == -1)
         return genJump(g_symtable.getSymbol(funcIdx)->returnLabelId);
@@ -667,7 +667,7 @@ int GeneratorX86::genReturnJump(int reg, int funcIdx)
 
 int GeneratorX86::genLoadLocation(int symbolidx)
 {
-    struct Symbol *s   = g_symtable.getSymbol(symbolidx);
+    Symbol *s   = g_symtable.getSymbol(symbolidx);
     int            reg = allocReg();
 
     write("lea", MEMACCESS(variableAccess(symbolidx)), getReg(reg));
@@ -693,7 +693,7 @@ int GeneratorX86::genPtrAccess(int memreg, int size)
 
 int GeneratorX86::genDirectMemLoad(int offset, int symbol, int reg, int size)
 {
-    struct Symbol *s = g_symtable.getSymbol(symbol);
+    Symbol *s = g_symtable.getSymbol(symbol);
     string         str;
 
     // Check whether a variable is local or not

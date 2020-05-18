@@ -3,9 +3,9 @@
 #include <token.h>
 #include <errorhandler.h>
 
-struct ast_node *StatementParser::comparison()
+ast_node *StatementParser::comparison()
 {
-    struct ast_node *cond = m_parser.m_exprParser.parseBinaryOperation(0, NULLTYPE);
+    ast_node *cond = m_parser.m_exprParser.parseBinaryOperation(0, NULLTYPE);
 
 #if 0
     if (cond->operation < AST::Types::EQUAL ||
@@ -18,15 +18,15 @@ struct ast_node *StatementParser::comparison()
     return cond;
 }
 
-struct ast_node *StatementParser::ifStatement()
+ast_node *StatementParser::ifStatement()
 {
     m_scanner.scan();
     m_parser.match(Token::Tokens::L_PAREN);
-    struct ast_node *cond = comparison();
+    ast_node *cond = comparison();
     m_parser.match(Token::Tokens::R_PAREN);
 
-    struct ast_node *true_branch = parseBlock();
-    struct ast_node *false_branch = NULL;
+    ast_node *true_branch = parseBlock();
+    ast_node *false_branch = NULL;
 
     if (m_scanner.token().token() == Token::Tokens::ELSE)
     {
@@ -37,19 +37,19 @@ struct ast_node *StatementParser::ifStatement()
     return mkAstNode(AST::Types::IF, cond, true_branch, false_branch, 0, cond->line, cond->c);
 }
 
-struct ast_node *StatementParser::whileStatement()
+ast_node *StatementParser::whileStatement()
 {
     m_scanner.scan();
     m_parser.match(Token::Tokens::L_PAREN);
-    struct ast_node *cond = comparison();
+    ast_node *cond = comparison();
     m_parser.match(Token::Tokens::R_PAREN);
 
-    struct ast_node *loopbody = parseBlock(Token::Tokens::WHILE);
+    ast_node *loopbody = parseBlock(Token::Tokens::WHILE);
 
     return mkAstNode(AST::Types::WHILE, cond, NULL, loopbody, 0, cond->line, cond->c);
 }
 
-static struct ast_node *checkPadding(struct ast_node *tree)
+static ast_node *checkPadding(ast_node *tree)
 {
     if (tree->operation == AST::Types::PADDING)
     {
@@ -60,7 +60,7 @@ static struct ast_node *checkPadding(struct ast_node *tree)
     return tree;
 }
 
-struct ast_node *StatementParser::forStatement()
+ast_node *StatementParser::forStatement()
 {
     m_scanner.scan();
     m_parser.match(Token::Tokens::L_PAREN);
@@ -69,36 +69,36 @@ struct ast_node *StatementParser::forStatement()
     int c = m_scanner.curChar();
 
     int id = g_symtable.newScope();
-    struct ast_node *forInit = parseStatement();
+    ast_node *forInit = parseStatement();
     forInit = checkPadding(forInit);
     m_parser.match(Token::Tokens::SEMICOLON);
     
-    struct ast_node *push = mkAstLeaf(AST::Types::PUSHSCOPE, id, 0, 0);
+    ast_node *push = mkAstLeaf(AST::Types::PUSHSCOPE, id, 0, 0);
     forInit = mkAstNode(AST::Types::GLUE, push, NULL, forInit, 0, 0, 0);
     
-    struct ast_node *forCond = comparison();
+    ast_node *forCond = comparison();
     forCond = checkPadding(forCond);
     m_parser.match(Token::Tokens::SEMICOLON);
     
-    struct ast_node *forIter = parseStatement();
+    ast_node *forIter = parseStatement();
     forIter = checkPadding(forIter);
     m_parser.match(Token::Tokens::R_PAREN);
     
-    struct ast_node *body = parseBlock(Token::Tokens::FOR, false);
-    struct ast_node *tree = mkAstNode(AST::Types::GLUE, body, NULL, forIter, 0, l, c);
+    ast_node *body = parseBlock(Token::Tokens::FOR, false);
+    ast_node *tree = mkAstNode(AST::Types::GLUE, body, NULL, forIter, 0, l, c);
 
     // Value is 1, in the generator we interpret this flag as being a FOR loop
     tree = mkAstNode(AST::Types::WHILE, forCond, NULL, tree, 1, l, c);
     tree = mkAstNode(AST::Types::GLUE, forInit, NULL, tree, 0, l, c);
     
-    struct ast_node *pop = mkAstLeaf(AST::Types::POPSCOPE, 0, 0, 0);
+    ast_node *pop = mkAstLeaf(AST::Types::POPSCOPE, 0, 0, 0);
     tree = mkAstNode(AST::Types::GLUE, tree, NULL, pop, 0, 0, 0);
     g_symtable.popScope();
 
     return tree;
 }
 
-struct ast_node *StatementParser::gotoStatement()
+ast_node *StatementParser::gotoStatement()
 {
     m_scanner.scan();
     m_parser.matchNoScan(Token::Tokens::IDENTIFIER);
@@ -106,7 +106,7 @@ struct ast_node *StatementParser::gotoStatement()
     m_scanner.scan();
     
     int id;
-    struct Symbol sym;
+    Symbol sym;
     if ((id = g_symtable.findSymbol(labelstr)) == -1)
     {
         sym = g_symtable.createSymbol(labelstr, 0, SymbolTable::SymTypes::LABEL,
@@ -115,7 +115,7 @@ struct ast_node *StatementParser::gotoStatement()
     }
     g_symtable.getSymbol(id)->used = true;
     
-    struct ast_node *go = mkAstLeaf(AST::Types::GOTO, id, m_scanner.curLine(), 
+    ast_node *go = mkAstLeaf(AST::Types::GOTO, id, m_scanner.curLine(), 
                                        m_scanner.curChar());
     return go;
 }
@@ -128,11 +128,11 @@ bool isLabelStatement(int op)
     return true;
 }
 
-struct ast_node *StatementParser::parseLabel(string label)
+ast_node *StatementParser::parseLabel(string label)
 {
     m_scanner.scan();
     
-    struct ast_node *left = parseStatement();
+    ast_node *left = parseStatement();
     
     if (left->operation == AST::Types::PADDING)
         left = NULL;
@@ -141,7 +141,7 @@ struct ast_node *StatementParser::parseLabel(string label)
         err.fatal("Label must be placed in front of valid statement\n");
     
     int id;
-    struct Symbol sym;
+    Symbol sym;
     if ((id = g_symtable.findSymbol(label)) == -1)
     {
         sym = g_symtable.createSymbol(label, 0, SymbolTable::SymTypes::LABEL,
@@ -149,12 +149,12 @@ struct ast_node *StatementParser::parseLabel(string label)
         id = g_symtable.addToFunction(sym);
     }
     
-    struct Symbol *s = g_symtable.getSymbol(id);
+    Symbol *s = g_symtable.getSymbol(id);
     s->defined = true;
 
     int l = m_scanner.curLine();
     int c = m_scanner.curChar();
-    struct ast_node *ret = mkAstUnary(AST::Types::LABEL, left, id, l, c);
+    ast_node *ret = mkAstUnary(AST::Types::LABEL, left, id, l, c);
     return ret;
 }
 
@@ -167,13 +167,13 @@ static bool isSwitchFlowKeyword(int op)
 }
 
 // Warning: this piece of code is somewhat complex, treat it with care
-struct ast_node *StatementParser::switchWalk(struct ast_node *tree)
+ast_node *StatementParser::switchWalk(ast_node *tree)
 {
-    struct ast_node *code = NULL;
-    struct ast_node *cases = NULL;
-    struct ast_node *lastCodeIter = NULL;
-    struct ast_node *codeHead = tree;
-    struct ast_node *prevCode = NULL;
+    ast_node *code = NULL;
+    ast_node *cases = NULL;
+    ast_node *lastCodeIter = NULL;
+    ast_node *codeHead = tree;
+    ast_node *prevCode = NULL;
     
     while (tree)
     {
@@ -210,18 +210,18 @@ struct ast_node *StatementParser::switchWalk(struct ast_node *tree)
     return cases;
 }
 
-struct ast_node *StatementParser::switchStatement()
+ast_node *StatementParser::switchStatement()
 {
-    struct ast_node *expr;
-    struct ast_node *body;
-    struct ast_node *tree;
+    ast_node *expr;
+    ast_node *body;
+    ast_node *tree;
     
     m_scanner.scan();
     m_parser.match(Token::Tokens::L_PAREN);
     expr = m_parser.m_exprParser.parseBinaryOperation(0, NULLTYPE);
     
     int id = g_symtable.newScope();
-    struct ast_node *push = mkAstLeaf(AST::Types::PUSHSCOPE, id, 0, 0);
+    ast_node *push = mkAstLeaf(AST::Types::PUSHSCOPE, id, 0, 0);
     expr = mkAstNode(AST::Types::GLUE, expr, NULL, push, 0, 0, 0);
     
     m_parser.match(Token::Tokens::R_PAREN);
@@ -233,12 +233,12 @@ struct ast_node *StatementParser::switchStatement()
                      m_scanner.curLine(), m_scanner.curChar());
     
     g_symtable.popScope();
-    struct ast_node *pop = mkAstLeaf(AST::Types::POPSCOPE, 0, 0, 0);
+    ast_node *pop = mkAstLeaf(AST::Types::POPSCOPE, 0, 0, 0);
     return mkAstNode(AST::Types::GLUE, tree, NULL, pop, 0, 0, 0);
 }
 
 
-struct ast_node *StatementParser::switchCaseStatement()
+ast_node *StatementParser::switchCaseStatement()
 {
     m_scanner.scan();
     int constant = m_parser.m_exprParser.parseConstantExpr();
@@ -248,7 +248,7 @@ struct ast_node *StatementParser::switchCaseStatement()
                      m_scanner.curChar());
 }
 
-struct ast_node *StatementParser::switchDefaultStatement()
+ast_node *StatementParser::switchDefaultStatement()
 {
     m_scanner.scan();
     m_parser.match(Token::Tokens::COLON);
@@ -257,13 +257,13 @@ struct ast_node *StatementParser::switchDefaultStatement()
                      m_scanner.curChar());
 }
 
-struct ast_node *StatementParser::doWhileStatement()
+ast_node *StatementParser::doWhileStatement()
 {
     m_scanner.scan();
-    struct ast_node *body = parseBlock(AST::Types::WHILE);
+    ast_node *body = parseBlock(AST::Types::WHILE);
     m_parser.match(Token::Tokens::WHILE);
     m_parser.match(Token::Tokens::L_PAREN);
-    struct ast_node *cond = comparison();
+    ast_node *cond = comparison();
     m_parser.match(Token::Tokens::R_PAREN);
     m_parser.match(Token::Tokens::SEMICOLON);
     

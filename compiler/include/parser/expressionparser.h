@@ -16,25 +16,25 @@ class ExpressionParser
     Generator &m_generator;
 
   private:
-    struct ast_node *parseComplexAssign(struct ast_node *left, int tok);
-    struct ast_node *parsePrimary(struct Type *type);
-    struct ast_node *parsePrefixOperator(struct Type *type);
-    struct ast_node *parseBinaryOperator(int prevPrec, struct Type *type,
+    ast_node *parseComplexAssign(ast_node *left, int tok);
+    ast_node *parsePrimary(Type *type);
+    ast_node *parsePrefixOperator(Type *type);
+    ast_node *parseBinaryOperator(int prevPrec, Type *type,
                                          int prevTok = -1);
-    struct ast_node *parseLeft(struct Type *t);
-    struct ast_node *parseTypeCast(struct Type *t);
+    ast_node *parseLeft(Type *t);
+    ast_node *parseTypeCast(Type *t);
     int              getOperatorPrecedence(int token);
-    struct ast_node *checkArithmetic(struct ast_node *l, struct ast_node *r,
+    ast_node *checkArithmetic(ast_node *l, ast_node *r,
                                      int tok);
-    struct ast_node *parseParentheses(struct Type *ltype);
-    struct ast_node *parseArrayAccess(struct ast_node *prim, bool access);
-    struct ast_node *parseStructAccess(struct ast_node *prim, bool access);
-    struct ast_node *parseTernaryCondition(struct Type *type);
+    ast_node *parseParentheses(Type *ltype);
+    ast_node *parseArrayAccess(ast_node *prim, bool access);
+    ast_node *parseStructAccess(ast_node *prim, bool access);
+    ast_node *parseTernaryCondition(Type *type);
 
   public:
-    struct ast_node *parseSizeof();
+    ast_node *parseSizeof();
     int              parseConstantExpr();
-    struct ast_node *parsePostfixOperator(struct ast_node *tree, bool access);
-    struct ast_node *parseBinaryOperation(int prev_prec, struct Type type);
+    ast_node *parsePostfixOperator(ast_node *tree, bool access);
+    ast_node *parseBinaryOperation(int prev_prec, Type type);
     ExpressionParser(Scanner &scanner, Parser &parser, Generator &gen);
 };

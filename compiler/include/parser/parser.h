@@ -37,15 +37,15 @@ private:
     void match(int t1, int t2);
     void match(int t1, int t2, string error);
     void matchNoScan(int t);
-    struct Type parseType();
-    struct ast_node *_declAggregateType(int tok, string s = "");
+    Type parseType();
+    ast_node *_declAggregateType(int tok, string s = "");
     vector<Attribute> parseAttr();
     vector<Attribute> _parseAttr();
     vector<Attribute> _parseParen(vector <Attribute> attributes);
 
 public:
     Parser(Scanner &scanner, Generator &generator);
-    struct ast_node *parserMain();
+    ast_node *parserMain();
 
     friend class StatementParser;
     friend class ExpressionParser;

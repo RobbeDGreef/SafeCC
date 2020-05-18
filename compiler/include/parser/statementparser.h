@@ -19,46 +19,46 @@ class StatementParser
     int m_lastOffset = 0;
   
   private:
-    struct ast_node *parseBlock(int parentOp=0, bool newScope=true);
-    struct ast_node *parseBlock(vector<struct Symbol> arguments);
-    void             parseVariableArgParam(struct Symbol *s);
+    ast_node *parseBlock(int parentOp=0, bool newScope=true);
+    ast_node *parseBlock(vector<Symbol> arguments);
+    void             parseVariableArgParam(Symbol *s);
 
-    struct ast_node *parseArrayInit(struct Type type, struct Symbol sym);
-    struct ast_node *parseVarInit(struct Type type, struct Symbol sym);
-    struct ast_node *parseStructInit(struct Type type, struct Symbol sym);
+    ast_node *parseArrayInit(Type type, Symbol sym);
+    ast_node *parseVarInit(Type type, Symbol sym);
+    ast_node *parseStructInit(Type type, Symbol sym);
 
-    struct ast_node *variableDecl(struct Type type, int storageClass);
-    struct ast_node *variableAssignment(struct ast_node *lvalue);
-    struct ast_node *functionDecl(struct Type type, int storageClass);
-    struct ast_node *returnStatement();
-    void parseFuncAttrs(struct Type *t);
+    ast_node *variableDecl(Type type, int storageClass);
+    ast_node *variableAssignment(ast_node *lvalue);
+    ast_node *functionDecl(Type type, int storageClass);
+    ast_node *returnStatement();
+    void parseFuncAttrs(Type *t);
 
-    struct ast_node *ifStatement();
-    struct ast_node *whileStatement();
-    struct ast_node *forStatement();
-    struct ast_node *doWhileStatement();
+    ast_node *ifStatement();
+    ast_node *whileStatement();
+    ast_node *forStatement();
+    ast_node *doWhileStatement();
     
-    struct ast_node *switchStatement();
-    struct ast_node *switchCaseStatement();
-    struct ast_node *switchDefaultStatement();
-    struct ast_node *switchWalk(struct ast_node *tree);
+    ast_node *switchStatement();
+    ast_node *switchCaseStatement();
+    ast_node *switchDefaultStatement();
+    ast_node *switchWalk(ast_node *tree);
     
-    struct ast_node *comparison();
-    struct ast_node *gotoStatement();
-    struct ast_node *parseLabel(string label);
+    ast_node *comparison();
+    ast_node *gotoStatement();
+    ast_node *parseLabel(string label);
 
-    struct ast_node *parseStatement(int parentTok=0);
-    struct ast_node *parseDeclaration(struct Type t, int storageClass);
-    struct ast_node *parseTypedef();
-    struct ast_node *structInit(struct ast_node *tree, struct ast_node *ident,
-                                struct ast_node *right, struct Symbol *sym,
+    ast_node *parseStatement(int parentTok=0);
+    ast_node *parseDeclaration(Type t, int storageClass);
+    ast_node *parseTypedef();
+    ast_node *structInit(ast_node *tree, ast_node *ident,
+                                ast_node *right, Symbol *sym,
                                 int idx);
 
   public:
-    struct ast_node *declStruct(int storageClass, string s = "");
-    struct ast_node *declUnion(int storageClass, string s = "");
-    struct ast_node *declEnum(string s = "");
-    struct ast_node *functionCall();
-    struct ast_node *_parseBlock(int parentOp=0, struct ast_node *left=NULL);
+    ast_node *declStruct(int storageClass, string s = "");
+    ast_node *declUnion(int storageClass, string s = "");
+    ast_node *declEnum(string s = "");
+    ast_node *functionCall();
+    ast_node *_parseBlock(int parentOp=0, ast_node *left=NULL);
     StatementParser(Scanner &scanner, Parser &parser, Generator &gen);
 };

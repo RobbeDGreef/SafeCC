@@ -5,16 +5,16 @@
 #include <token.h>
 #include <memtable.h>
 
-struct ast_node *StatementParser::parseArrayInit(struct Type   type,
-                                                 struct Symbol sym)
+ast_node *StatementParser::parseArrayInit(Type   type,
+                                                 Symbol sym)
 {
     int              i;
     int              tok;
-    struct ast_node *tree  = NULL;
-    struct ast_node *right = NULL;
+    ast_node *tree  = NULL;
+    ast_node *right = NULL;
 
     // The value (symbol id) will be set at the end of the function
-    struct ast_node *ident = mkAstLeaf(AST::Types::IDENTIFIER, 0, sym.varType,
+    ast_node *ident = mkAstLeaf(AST::Types::IDENTIFIER, 0, sym.varType,
                                        m_scanner.curLine(),
                                        m_scanner.curChar());
 
@@ -78,7 +78,7 @@ struct ast_node *StatementParser::parseArrayInit(struct Type   type,
                       to_string(arraySize) + " initializers");
 
         // Reversing the array in memory
-        struct ast_node *tmp = tree;
+        ast_node *tmp = tree;
 
         while (tmp != NULL)
         {
@@ -92,7 +92,7 @@ struct ast_node *StatementParser::parseArrayInit(struct Type   type,
     else if (m_scanner.token().token() == Token::Tokens::STRINGLIT)
     {
         right = m_parser.m_exprParser.parseBinaryOperation(0, sym.varType);
-        struct Symbol *init = g_symtable.getSymbol(right->value);
+        Symbol *init = g_symtable.getSymbol(right->value);
 
         if (sym.value == -1)
             sym.value = init->value;
@@ -112,11 +112,11 @@ struct ast_node *StatementParser::parseArrayInit(struct Type   type,
                       m_scanner.curChar());
 }
 
-struct ast_node *StatementParser::parseVarInit(struct Type   type,
-                                               struct Symbol sym)
+ast_node *StatementParser::parseVarInit(Type   type,
+                                               Symbol sym)
 {
-    struct ast_node *tree;
-    struct ast_node *right;
+    ast_node *tree;
+    ast_node *right;
     int id;
     
     // Apparently the ISO c standard has no problem with this
@@ -154,7 +154,7 @@ struct ast_node *StatementParser::parseVarInit(struct Type   type,
                      right->c);
 }
 
-struct ast_node *StatementParser::variableDecl(struct Type type, int sc)
+ast_node *StatementParser::variableDecl(Type type, int sc)
 {
     /**
      * possible declarations:
@@ -171,7 +171,7 @@ struct ast_node *StatementParser::variableDecl(struct Type type, int sc)
     type.memSpot = new MemorySpot();
     type.memSpot->setName(m_scanner.identifier());
 
-    struct Symbol s;
+    Symbol s;
     s.name         = m_scanner.identifier();
     s.varType      = type;
     s.storageClass = sc;
@@ -249,12 +249,12 @@ struct ast_node *StatementParser::variableDecl(struct Type type, int sc)
 /// @brief Generates a variable assignment ast tree
 ///
 /// @param ptrDepth the depth of the pointer
-/// @return struct ast_node* ast tree
+/// @return ast_node* ast tree
 ///
-struct ast_node *StatementParser::variableAssignment(struct ast_node *lvalue)
+ast_node *StatementParser::variableAssignment(ast_node *lvalue)
 {
-    struct ast_node *right;
-    struct ast_node *left;
+    ast_node *right;
+    ast_node *left;
     //right = mkAstUnary(AST::Types::LEFTVALIDENT, lvalue, 0, lvalue->type,
     //                   m_scanner.curLine(), m_scanner.curChar());
     
@@ -263,7 +263,7 @@ struct ast_node *StatementParser::variableAssignment(struct ast_node *lvalue)
     
     right = m_parser.m_exprParser.parseBinaryOperation(0, lvalue->type);
 
-    struct ast_node *tree = mkAstNode(AST::Types::ASSIGN, lvalue, NULL, right, 0,
+    ast_node *tree = mkAstNode(AST::Types::ASSIGN, lvalue, NULL, right, 0,
                                       lvalue->type, m_scanner.curLine(),
                                       m_scanner.curChar());
     return tree;

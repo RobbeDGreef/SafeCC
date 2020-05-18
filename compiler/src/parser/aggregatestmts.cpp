@@ -7,10 +7,10 @@
 
 int anonStructCount = 0;
 
-struct ast_node *StatementParser::structInit(struct ast_node *tree,
-                                             struct ast_node *ident,
-                                             struct ast_node *right,
-                                             struct Symbol *sym, int idx)
+ast_node *StatementParser::structInit(ast_node *tree,
+                                             ast_node *ident,
+                                             ast_node *right,
+                                             Symbol *sym, int idx)
 {
     int offset = sym->varType.size - sym->varType.contents[idx].offset -
                  sym->varType.contents[idx].itemType.size;
@@ -34,18 +34,18 @@ struct ast_node *StatementParser::structInit(struct ast_node *tree,
     return tree;
 }
 
-struct ast_node *StatementParser::parseStructInit(struct Type   structType,
-                                                  struct Symbol sym)
+ast_node *StatementParser::parseStructInit(Type   structType,
+                                                  Symbol sym)
 {
     DEBUG("struct init")
-    struct ast_node *tree    = NULL;
-    struct ast_node *left    = NULL;
-    struct ast_node *right   = NULL;
-    struct ast_node *expr    = NULL;
-    struct ast_node *offNode = NULL;
-    struct ast_node *tmp     = NULL;
-    struct Type      argtype;
-    struct ast_node *ident = mkAstLeaf(AST::Types::IDENTIFIER, 0, structType,
+    ast_node *tree    = NULL;
+    ast_node *left    = NULL;
+    ast_node *right   = NULL;
+    ast_node *expr    = NULL;
+    ast_node *offNode = NULL;
+    ast_node *tmp     = NULL;
+    Type      argtype;
+    ast_node *ident = mkAstLeaf(AST::Types::IDENTIFIER, 0, structType,
                                        m_scanner.curLine(),
                                        m_scanner.curChar());
 
@@ -131,9 +131,9 @@ struct ast_node *StatementParser::parseStructInit(struct Type   structType,
                      m_scanner.curLine(), m_scanner.curChar());
 }
 
-struct ast_node *StatementParser::declStruct(int storageClass, string _s)
+ast_node *StatementParser::declStruct(int storageClass, string _s)
 {
-    struct Type structType;
+    Type structType;
     structType.primType   = 0;
     structType.ptrDepth   = 0;
     structType.incomplete = false;
@@ -270,9 +270,9 @@ noItems:;
     return mkAstLeaf(AST::PADDING, 0, structType, 0, 0);
 }
 
-struct ast_node *StatementParser::declUnion(int sc, string _s)
+ast_node *StatementParser::declUnion(int sc, string _s)
 {
-    struct Type unionType;
+    Type unionType;
     unionType.primType   = 0;
     unionType.ptrDepth   = 0;
     unionType.incomplete = false;

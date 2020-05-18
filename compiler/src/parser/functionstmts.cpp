@@ -4,22 +4,22 @@
 #include <symbols.h>
 #include <token.h>
 
-vector<struct Type> extractTypes(vector<struct Symbol> arguments)
+vector<Type> extractTypes(vector<Symbol> arguments)
 {
-    vector<struct Type> types;
-    for (struct Symbol s : arguments)
+    vector<Type> types;
+    for (Symbol s : arguments)
     {
         types.push_back(s.varType);
     }
     return types;
 }
 
-struct ast_node *StatementParser::returnStatement()
+ast_node *StatementParser::returnStatement()
 {
-    struct Symbol *fsym = g_symtable.getSymbol(g_symtable.currentFuncIdx());
+    Symbol *fsym = g_symtable.getSymbol(g_symtable.currentFuncIdx());
 
     m_scanner.scan();
-    struct ast_node *tree = m_parser.m_exprParser.parseBinaryOperation(0,
+    ast_node *tree = m_parser.m_exprParser.parseBinaryOperation(0,
                                                                        fsym->varType);
     
     if (!tree)
@@ -38,7 +38,7 @@ struct ast_node *StatementParser::returnStatement()
                       m_scanner.curLine(), m_scanner.curChar());
 }
 
-void StatementParser::parseVariableArgParam(struct Symbol *argsym)
+void StatementParser::parseVariableArgParam(Symbol *argsym)
 {
     m_parser.match(Token::Tokens::DOT);
     m_parser.match(Token::Tokens::DOT);
@@ -50,7 +50,7 @@ void StatementParser::parseVariableArgParam(struct Symbol *argsym)
     argsym->variableArg = true;
 }
 
-struct ast_node *StatementParser::functionDecl(struct Type type, int sc)
+ast_node *StatementParser::functionDecl(Type type, int sc)
 {
     int presetFunc = true;
     int nameIdx    = g_symtable.findSymbol(m_scanner.identifier());
@@ -74,11 +74,11 @@ struct ast_node *StatementParser::functionDecl(struct Type type, int sc)
 
     m_parser.match(Token::Tokens::L_PAREN);
 
-    struct ast_node *     arg;
-    struct Type           argtype;
-    vector<struct Symbol> arguments;
-    struct Symbol         argsym;
-    struct Symbol *       function;
+    ast_node *     arg;
+    Type           argtype;
+    vector<Symbol> arguments;
+    Symbol         argsym;
+    Symbol *       function;
     argsym.symType = SymbolTable::SymTypes::ARGUMENT;
     argsym.value   = 0;
 
@@ -176,7 +176,7 @@ noargs:;
     }
     
     function->defined = true;
-    struct ast_node *body = parseBlock(arguments);
+    ast_node *body = parseBlock(arguments);
 
     /* Generate the machine code */
     m_generator.generateFromAst(mkAstUnary(AST::Types::FUNCTION, body, nameIdx,
@@ -188,15 +188,15 @@ noargs:;
 }
 
 /// @brief  Generates a ast tree for a functioncall
-struct ast_node *StatementParser::functionCall()
+ast_node *StatementParser::functionCall()
 {
     int              id;
-    struct Symbol *s;   
-    struct ast_node *tree = NULL;
-    struct ast_node *arg  = NULL;
-    struct ast_node *tmp  = NULL;
-    struct ast_node *off  = NULL;
-    struct Type      type;
+    Symbol *s;   
+    ast_node *tree = NULL;
+    ast_node *arg  = NULL;
+    ast_node *tmp  = NULL;
+    ast_node *off  = NULL;
+    Type      type;
     int              i = -1;
     vector<int> removeMem;
 
@@ -207,7 +207,7 @@ struct ast_node *StatementParser::functionCall()
     }
     
     s = g_symtable.getSymbol(id);
-    struct Type returnType = s->varType;
+    Type returnType = s->varType;
     s->used = true;
     //returnType.memSpot = new MemorySpot(*s->varType.memSpot);
     

@@ -4,6 +4,8 @@
 
 /* forward declare ast_node to keep this header standalone */
 struct ast_node;
+struct StructItem;
+struct Symbol;
 
 #define BYTE  8
 #define WORD  16
@@ -13,8 +15,6 @@ struct ast_node;
 static string typeNames[] = {"nulltype", "void", "char",
                              "short",    "int",  "long",
                              "float", "double"};
-
-struct StructItem;
 
 struct Type
 {
@@ -37,7 +37,7 @@ struct Type
 
 struct StructItem
 {
-    struct Type itemType; // The type of the item
+    Type itemType; // The type of the item
     int         offset;   // The stack offset to this variable
     string      name;
 };
@@ -61,12 +61,12 @@ extern int g_defaultSize;
 #define PTRTYPE     g_ptrType
 #define STRINGPTR   g_strType
 #define DEFAULTTYPE g_defaultType
-extern struct Type g_locationSpecifier;
-extern struct Type g_emptyType;
-extern struct Type g_intType;
-extern struct Type g_strType;
-extern struct Type g_defaultType;
-extern struct Type g_ptrType;
+extern Type g_locationSpecifier;
+extern Type g_emptyType;
+extern Type g_intType;
+extern Type g_strType;
+extern Type g_defaultType;
+extern Type g_ptrType;
 
 enum PrimitiveTypes
 {
@@ -92,27 +92,27 @@ class TypeList
 {
   private:
     // This list will hold named types like structs, unions and typedefs
-    list<struct Type> m_namedTypes;
+    list<Type> m_namedTypes;
 
   public:
-    struct Type getType(string ident);
-    void        addType(struct Type);
-    void        replace(string ident, struct Type t);
+    Type getType(string ident);
+    void        addType(Type);
+    void        replace(string ident, Type t);
 };
 
 extern TypeList g_typeList;
 
-int              equalType(struct Type l, struct Type r);
-string           typeString(struct Type *t);
-struct Type      tokenToType(vector<int> &tokens);
-struct Type      guessType(int val, bool isSigned);
-struct ast_node *typeCompatible(struct ast_node *left, struct ast_node *right,
+int              equalType(Type l, Type r);
+string           typeString(Type *t);
+Type      tokenToType(vector<int> &tokens);
+Type      guessType(int val, bool isSigned);
+ast_node *typeCompatible(ast_node *left, ast_node *right,
                                 bool onlyright);
-int              typeFits(struct Type *type, int value);
-int              truncateOverflow(struct Type type, int value);
+int              typeFits(Type *type, int value);
+int              truncateOverflow(Type type, int value);
 int              typeToSize(int type);
-void             dereference(struct Type *ptr);
-int              findStructItem(string item, struct Type t);
+void             dereference(Type *ptr);
+int              findStructItem(string item, Type t);
 
-int getArraySize(struct Symbol *s);
-int getTypeSize(struct Symbol sym);
+int getArraySize(Symbol *s);
+int getTypeSize(Symbol sym);

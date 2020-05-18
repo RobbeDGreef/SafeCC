@@ -9,11 +9,11 @@ ExpressionParser::ExpressionParser(Scanner &scanner, Parser &parser,
 {
 }
 
-struct ast_node *ExpressionParser::parseSizeof()
+ast_node *ExpressionParser::parseSizeof()
 {
     m_scanner.scan();
 
-    struct ast_node *ptr = parseLeft(&NULLTYPE);
+    ast_node *ptr = parseLeft(&NULLTYPE);
     int              size;
 
     if (ptr->operation == AST::Types::IDENTIFIER)
@@ -27,11 +27,11 @@ struct ast_node *ExpressionParser::parseSizeof()
     return mkAstLeaf(AST::Types::INTLIT, size, INTTYPE, l, c);
 }
 
-struct ast_node *ExpressionParser::parseParentheses(struct Type *ltype)
+ast_node *ExpressionParser::parseParentheses(Type *ltype)
 {
     m_parser.match(Token::Tokens::L_PAREN);
 
-    struct ast_node *ret = parseTypeCast(ltype);
+    ast_node *ret = parseTypeCast(ltype);
 
     if (!ret)
     {
@@ -42,11 +42,11 @@ struct ast_node *ExpressionParser::parseParentheses(struct Type *ltype)
     return ret;
 }
 
-struct ast_node *ExpressionParser::parseTypeCast(struct Type *ltype)
+ast_node *ExpressionParser::parseTypeCast(Type *ltype)
 {
     int              tok = m_scanner.token().token();
-    struct ast_node *ret;
-    struct Type      type;
+    ast_node *ret;
+    Type      type;
     switch (tok)
     {
     case Token::Tokens::SIGNED:
@@ -90,10 +90,10 @@ bool closingStatement(int tok)
 //
 // Takes a type parameter to check the literal against but this can be a
 // NULLTYPE
-struct ast_node *ExpressionParser::parsePrimary(struct Type *ltype)
+ast_node *ExpressionParser::parsePrimary(Type *ltype)
 {
-    struct ast_node *node;
-    struct Symbol *  s;
+    ast_node *node;
+    Symbol *  s;
     int              id;
     int              val;
     int              tok = m_scanner.token().token();
@@ -202,13 +202,13 @@ struct ast_node *ExpressionParser::parsePrimary(struct Type *ltype)
 // Parses prefix operators like * and &
 //
 // Takes one type parameter but this can be NULLTYPE
-struct ast_node *ExpressionParser::parsePrefixOperator(struct Type *ltype)
+ast_node *ExpressionParser::parsePrefixOperator(Type *ltype)
 {
-    struct ast_node *node = NULL;
+    ast_node *node = NULL;
     int              id;
-    struct Type      type;
-    struct ast_node *left = NULL;
-    struct ast_node *tmp  = NULL;
+    Type      type;
+    ast_node *left = NULL;
+    ast_node *tmp  = NULL;
 
     switch (m_scanner.token().token())
     {
@@ -352,7 +352,7 @@ struct ast_node *ExpressionParser::parsePrefixOperator(struct Type *ltype)
 // Takes two parametes, the previously parsed ast_node (the x in the expression)
 // and a bool to specify whether a ptraccess should be generated in the returned
 // tree
-struct ast_node *ExpressionParser::parseArrayAccess(struct ast_node *primary,
+ast_node *ExpressionParser::parseArrayAccess(ast_node *primary,
                                                     bool             access)
 {
     if (m_scanner.token().token() != Token::Tokens::L_BRACKET)
@@ -360,9 +360,9 @@ struct ast_node *ExpressionParser::parseArrayAccess(struct ast_node *primary,
 
     m_scanner.scan();
 
-    struct ast_node *right;
-    struct ast_node *idx;
-    struct Type      type;
+    ast_node *right;
+    ast_node *idx;
+    Type      type;
 
     if (!primary->type.ptrDepth)
     {
@@ -398,7 +398,7 @@ struct ast_node *ExpressionParser::parseArrayAccess(struct ast_node *primary,
     return primary;
 }
 
-struct ast_node *ExpressionParser::parseStructAccess(struct ast_node *prim,
+ast_node *ExpressionParser::parseStructAccess(ast_node *prim,
                                                      bool             access)
 {
     bool ptraccess = false;
@@ -428,7 +428,7 @@ struct ast_node *ExpressionParser::parseStructAccess(struct ast_node *prim,
     if (m_scanner.token().token() != Token::Tokens::IDENTIFIER)
         err.expectedToken(Token::Tokens::IDENTIFIER);
 
-    struct Type t      = prim->type;
+    Type t      = prim->type;
     int         idx    = findStructItem(m_scanner.identifier(), t);
     int         offset = t.contents[idx].offset;
     int         size   = t.contents[idx].itemType.size;
@@ -436,7 +436,7 @@ struct ast_node *ExpressionParser::parseStructAccess(struct ast_node *prim,
 
     int              l          = m_scanner.curLine();
     int              c          = m_scanner.curChar();
-    struct ast_node *offsetNode = mkAstLeaf(AST::INTLIT, offset, INTTYPE, l, c);
+    ast_node *offsetNode = mkAstLeaf(AST::INTLIT, offset, INTTYPE, l, c);
     prim = mkAstNode(AST::Types::ADD, prim, NULL, offsetNode, 0, t, l, c);
 
     if (access)
@@ -452,14 +452,14 @@ struct ast_node *ExpressionParser::parseStructAccess(struct ast_node *prim,
 //
 // Takes left and right ast nodes to check and a token that holds the arithmetic
 // instruction
-struct ast_node *ExpressionParser::checkArithmetic(struct ast_node *left,
-                                                   struct ast_node *right,
+ast_node *ExpressionParser::checkArithmetic(ast_node *left,
+                                                   ast_node *right,
                                                    int              tok)
 {
     if (tok == Token::Tokens::EQUALSIGN)
         return NULL;
 
-    struct ast_node *ret = NULL;
+    ast_node *ret = NULL;
 
     if ((left->type.typeType == TypeTypes::STRUCT && !left->type.ptrDepth) ||
         (right->type.typeType == TypeTypes::STRUCT && !right->type.ptrDepth))
@@ -485,9 +485,9 @@ struct ast_node *ExpressionParser::checkArithmetic(struct ast_node *left,
         {
             // Scaling
 
-            struct ast_node *ptr  = left->type.ptrDepth ? left : right;
-            struct ast_node *nptr = left->type.ptrDepth ? right : left;
-            struct Type      t;
+            ast_node *ptr  = left->type.ptrDepth ? left : right;
+            ast_node *nptr = left->type.ptrDepth ? right : left;
+            Type      t;
 
             t.isArray           = false;
             t.isSigned          = false;
@@ -506,11 +506,11 @@ struct ast_node *ExpressionParser::checkArithmetic(struct ast_node *left,
     return ret;
 }
 
-struct ast_node *ExpressionParser::parsePostfixOperator(struct ast_node *tree,
+ast_node *ExpressionParser::parsePostfixOperator(ast_node *tree,
                                                         bool             access)
 {
-    struct ast_node *left = NULL;
-    struct ast_node *tmp  = NULL;
+    ast_node *left = NULL;
+    ast_node *tmp  = NULL;
 
     switch (m_scanner.token().token())
     {
@@ -577,9 +577,9 @@ struct ast_node *ExpressionParser::parsePostfixOperator(struct ast_node *tree,
 // Simply parses one side of a binary operation
 //
 // Takes type parameter to parse the operators with
-struct ast_node *ExpressionParser::parseLeft(struct Type *type)
+ast_node *ExpressionParser::parseLeft(Type *type)
 {
-    struct ast_node *left = parsePrefixOperator(type);
+    ast_node *left = parsePrefixOperator(type);
     return parsePostfixOperator(left, true);
 }
 
@@ -591,10 +591,10 @@ static bool isLvalue(int op)
     return false;
 }
 
-struct ast_node *ExpressionParser::parseComplexAssign(struct ast_node *left,
+ast_node *ExpressionParser::parseComplexAssign(ast_node *left,
                                                       int              tok)
 {
-    struct ast_node *complexAssignment = NULL;
+    ast_node *complexAssignment = NULL;
 
     if (tok > Token::Tokens::T_EOF && tok < Token::Tokens::EQUAL)
     {
@@ -618,11 +618,11 @@ struct ast_node *ExpressionParser::parseComplexAssign(struct ast_node *left,
     return complexAssignment;
 }
 
-struct ast_node *ExpressionParser::parseTernaryCondition(struct Type *t)
+ast_node *ExpressionParser::parseTernaryCondition(Type *t)
 {
-    struct ast_node *left = parseBinaryOperator(0, t);
+    ast_node *left = parseBinaryOperator(0, t);
     m_parser.match(Token::Tokens::COLON);
-    struct ast_node *right = parseBinaryOperator(0, t);
+    ast_node *right = parseBinaryOperator(0, t);
     
     int l = m_scanner.curLine();
     int c = m_scanner.curChar();
@@ -634,13 +634,13 @@ struct ast_node *ExpressionParser::parseTernaryCondition(struct Type *t)
 //
 // Takes the previous operator precedence and a type parameter to typecheck the
 // previous operation against
-struct ast_node *ExpressionParser::parseBinaryOperator(int          prevPrec,
-                                                       struct Type *type,
+ast_node *ExpressionParser::parseBinaryOperator(int          prevPrec,
+                                                       Type *type,
                                                        int prevTok)
 {
-    struct ast_node *left;
-    struct ast_node *right;
-    struct ast_node *complexAssignment = NULL;
+    ast_node *left;
+    ast_node *right;
+    ast_node *complexAssignment = NULL;
 
     left = parseLeft(type);
 
@@ -681,7 +681,7 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prevPrec,
             }
         }
 
-        struct ast_node *tmp = checkArithmetic(left, right, tok);
+        ast_node *tmp = checkArithmetic(left, right, tok);
         if (tmp)
         {
             if (left->type.ptrDepth)
@@ -744,10 +744,10 @@ struct ast_node *ExpressionParser::parseBinaryOperator(int          prevPrec,
 // typecheck its result
 //
 // takes the previous precedence and a type for parseBinaryOperator
-struct ast_node *ExpressionParser::parseBinaryOperation(int         prev_prec,
-                                                        struct Type type)
+ast_node *ExpressionParser::parseBinaryOperation(int         prev_prec,
+                                                        Type type)
 {
-    struct Type inttypes = type;
+    Type inttypes = type;
 
     if (type.typeType != 0 && type.typeType != TypeTypes::STRUCT)
     {
@@ -759,17 +759,17 @@ struct ast_node *ExpressionParser::parseBinaryOperation(int         prev_prec,
         }
     }
 
-    struct ast_node *node = parseBinaryOperator(prev_prec, &inttypes);
+    ast_node *node = parseBinaryOperator(prev_prec, &inttypes);
 
     if (!node || node->operation == AST::Types::PADDING)
         return node;
 
-    struct ast_node *tmp;
+    ast_node *tmp;
     if (type.typeType != 0)
     {
         // This is just a padding instruction to hold the type specifier and
         // test it agains the actual binary operation
-        struct ast_node *pad = mkAstLeaf(AST::Types::PADDING, 0, type,
+        ast_node *pad = mkAstLeaf(AST::Types::PADDING, 0, type,
                                          m_scanner.curLine(),
                                          m_scanner.curChar());
 

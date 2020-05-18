@@ -36,7 +36,7 @@ int SymbolTable::popScope(bool semantics, bool functionEnd)
     Scope *scope = m_scopeList.back();
     if (semantics)
     {
-        for (struct Symbol s : *scope)
+        for (Symbol s : *scope)
             if (s.varType.memSpot)
                 s.varType.memSpot->setName(s.name);
         
@@ -71,7 +71,7 @@ int SymbolTable::findSymbol(string sym)
     {
         int i = 0;
         /* @todo: is this even remotely efficient? */
-        for (struct Symbol s : *m_scopeList[table])
+        for (Symbol s : *m_scopeList[table])
         {
             if (s.name[0] == sym[0] && !s.name.compare(sym))
                 return (i << 8) | (char)table;
@@ -86,7 +86,7 @@ int SymbolTable::findInCurrentScope(string sym)
 {
     int i = 0;
     /* @todo: is this even remotely efficient? */
-    for (struct Symbol s : *m_scopeList.back())
+    for (Symbol s : *m_scopeList.back())
     {
         if (s.name[0] == sym[0] && !s.name.compare(sym))
             return (i << 8) | (char)(m_scopeList.size() - 1);
@@ -96,13 +96,13 @@ int SymbolTable::findInCurrentScope(string sym)
     return -1;
 }
 
-struct Symbol *SymbolTable::getSymbol(int sym)
+Symbol *SymbolTable::getSymbol(int sym)
 {
     /* @todo: this really can't be good */
     return &(*m_scopeList[sym & 0xFF])[sym >> 8];
 }
 
-int SymbolTable::_addVariable(struct Symbol sym)
+int SymbolTable::_addVariable(Symbol sym)
 {
     if (isCurrentScopeGlobal())
     {
@@ -121,7 +121,7 @@ int SymbolTable::_addVariable(struct Symbol sym)
         m_staticVariableOffset += varSize;
     }
 
-    struct Symbol *func = getSymbol(m_currentFunctionIndex);
+    Symbol *func = getSymbol(m_currentFunctionIndex);
 
     if (sym.symType == SymTypes::IMPLICIT)
     {
@@ -159,7 +159,7 @@ int SymbolTable::_addVariable(struct Symbol sym)
     return ((m_scopeList.back()->size() - 1) << 8) | (m_scopeList.size() - 1);
 }
 
-int SymbolTable::addToFunction(struct Symbol s)
+int SymbolTable::addToFunction(Symbol s)
 {
     if (m_currentFunctionIndex != -1)
     {
@@ -170,11 +170,11 @@ int SymbolTable::addToFunction(struct Symbol s)
     return -1;
 }
 
-struct Symbol SymbolTable::createSymbol(string sym, int val, int symType,
-                                        struct Type varType, int storageClass)
+Symbol SymbolTable::createSymbol(string sym, int val, int symType,
+                                        Type varType, int storageClass)
 {
-    struct Symbol newsym;
-    memset(&newsym, 0, sizeof(struct Symbol));
+    Symbol newsym;
+    memset(&newsym, 0, sizeof(Symbol));
 
     newsym.name           = sym;
     newsym.value          = val;
@@ -192,7 +192,7 @@ struct Symbol SymbolTable::createSymbol(string sym, int val, int symType,
 }
 
 int SymbolTable::addSymbol(string sym, int val, int symType,
-                           struct Type varType, int storageClass)
+                           Type varType, int storageClass)
 {
     return _addVariable(createSymbol(sym, val, symType, varType, storageClass));
 }
@@ -205,17 +205,17 @@ int SymbolTable::addSymbol(string sym, int val, int symType, int varType)
 int SymbolTable::addSymbol(string sym, int val, int symType, int varType,
                            int sc)
 {
-    struct Type t;
-    memset(&t, 0, sizeof(struct Type));
+    Type t;
+    memset(&t, 0, sizeof(Type));
     return addSymbol(sym, val, symType, t, sc);
 }
 
-vector<struct Symbol> SymbolTable::getGlobalTable()
+vector<Symbol> SymbolTable::getGlobalTable()
 {
     return *m_scopeList[0];
 }
 
-int SymbolTable::pushSymbol(struct Symbol s)
+int SymbolTable::pushSymbol(Symbol s)
 {
     return _addVariable(s);
 }
@@ -240,8 +240,8 @@ int SymbolTable::currentFuncIdx()
 
 int SymbolTable::addString(string str)
 {
-    struct Symbol s;
-    memset(&s, 0, sizeof(struct Symbol));
+    Symbol s;
+    memset(&s, 0, sizeof(Symbol));
     s.name         = "S" + to_string(m_stringCount++);
     s.varType      = STRINGPTR;
     s.symType      = SymTypes::VARIABLE;

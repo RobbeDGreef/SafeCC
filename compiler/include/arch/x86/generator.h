@@ -64,8 +64,8 @@ private:
     int genXor(int reg1, int reg2);
     
 
-    int genLoadVariable(int symbolidx, struct Type t);
-    int genStoreValue(int reg, int memloc, struct Type t);
+    int genLoadVariable(int symbolidx, Type t);
+    int genStoreValue(int reg, int memloc, Type t);
 
     int genCompare(int reg1, int reg2, bool clear=true);
     int genCompareSet(int op, int reg1, int reg2);

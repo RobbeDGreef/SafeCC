@@ -48,11 +48,11 @@ namespace AST
 struct ast_node
 {
     int              operation;
-    struct ast_node *left;
-    struct ast_node *mid;
-    struct ast_node *right;
+    ast_node *left;
+    ast_node *mid;
+    ast_node *right;
     int              value;
-    struct Type      type;  /* size from types.h */
+    Type      type;  /* size from types.h */
 
     /* These are to display line and char numbers of generator errors etc */
     int              line;
@@ -60,18 +60,18 @@ struct ast_node
 };
 
 int tokenToAst(int token, Scanner &scanner);
-struct ast_node *mkAstUnary(int operation, struct ast_node *left, int value, struct Type type, int l, int c);
-struct ast_node *mkAstLeaf(int operation, int value, struct Type type, int l, int c);
-struct ast_node *mkAstNode(int operation, struct ast_node *left, 
-                            struct ast_node *mid, struct ast_node *right,
-                            int value, struct Type type, int line, int c);
+ast_node *mkAstUnary(int operation, ast_node *left, int value, Type type, int l, int c);
+ast_node *mkAstLeaf(int operation, int value, Type type, int l, int c);
+ast_node *mkAstNode(int operation, ast_node *left, 
+                            ast_node *mid, ast_node *right,
+                            int value, Type type, int line, int c);
 
 /* Some good 'ol overloaded functions (no type) */
-struct ast_node *mkAstUnary(int operation, struct ast_node *left, int value,
+ast_node *mkAstUnary(int operation, ast_node *left, int value,
                             int line, int c);
-struct ast_node *mkAstLeaf(int operation, int value, int line, int c);
-struct ast_node *mkAstNode(int operation, struct ast_node *left, 
-                            struct ast_node *mid, struct ast_node *right,
+ast_node *mkAstLeaf(int operation, int value, int line, int c);
+ast_node *mkAstNode(int operation, ast_node *left, 
+                            ast_node *mid, ast_node *right,
                             int value, int line, int c);
 
-struct ast_node *getRightLeaf(struct ast_node *tree);
+ast_node *getRightLeaf(ast_node *tree);

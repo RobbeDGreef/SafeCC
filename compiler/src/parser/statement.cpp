@@ -9,7 +9,7 @@ StatementParser::StatementParser(Scanner &scanner, Parser &parser,
 {
 }
 
-struct ast_node *StatementParser::parseDeclaration(struct Type type, int sc)
+ast_node *StatementParser::parseDeclaration(Type type, int sc)
 {
     m_parser.match(Token::Tokens::IDENTIFIER);
 
@@ -27,11 +27,11 @@ struct ast_node *StatementParser::parseDeclaration(struct Type type, int sc)
     }
 }
 
-struct ast_node *StatementParser::parseTypedef()
+ast_node *StatementParser::parseTypedef()
 {
     m_scanner.scan();
     int tok = m_scanner.token().token();
-    struct Type t = m_parser.parseType();
+    Type t = m_parser.parseType();
     string ident = m_scanner.identifier();
     if (t.typeType == 0)
     {
@@ -61,16 +61,16 @@ struct ast_node *StatementParser::parseTypedef()
     return mkAstLeaf(AST::PADDING, 0, 0, 0);
 }
 
-struct ast_node *StatementParser::parseStatement(int parentTok)
+ast_node *StatementParser::parseStatement(int parentTok)
 {
     int              ptrOcc       = 0;
     int              storageClass = -1;
-    struct ErrorInfo errinfo;
-    struct ast_node *node = NULL;
+    ErrorInfo errinfo;
+    ast_node *node = NULL;
 
 loop:;
     int         tok = m_scanner.token().token();
-    struct Type type = NULLTYPE;
+    Type type = NULLTYPE;
     string      ident;
 
     switch (tok)
@@ -248,9 +248,9 @@ bool isStatement(int op)
 }
 
 /// @brief  The actual parseblock function
-struct ast_node *StatementParser::_parseBlock(int parentOp, struct ast_node *left)
+ast_node *StatementParser::_parseBlock(int parentOp, ast_node *left)
 {
-    struct ast_node *tree = NULL;
+    ast_node *tree = NULL;
     
     while (1)
     {
@@ -287,26 +287,26 @@ struct ast_node *StatementParser::_parseBlock(int parentOp, struct ast_node *lef
     }
 }
 
-struct ast_node *StatementParser::parseBlock(vector<struct Symbol> arguments)
+ast_node *StatementParser::parseBlock(vector<Symbol> arguments)
 {
     /* Each block should start with a { */
     m_parser.match(Token::Tokens::L_BRACE);
 
     g_symtable.newScope();
 
-    for (struct Symbol s : arguments)
+    for (Symbol s : arguments)
     {
         g_symtable.pushSymbol(s);
     }
 
-    struct ast_node *tree = _parseBlock();
+    ast_node *tree = _parseBlock();
     m_parser.match(Token::Tokens::R_BRACE);
     return tree;
 }
 
-struct ast_node *StatementParser::parseBlock(int parentOp, bool newScope)
+ast_node *StatementParser::parseBlock(int parentOp, bool newScope)
 {
-    struct ast_node *tree = NULL;
+    ast_node *tree = NULL;
     int id = -1;
     
     if (m_scanner.token().token() != Token::Tokens::L_BRACE)
@@ -336,7 +336,7 @@ struct ast_node *StatementParser::parseBlock(int parentOp, bool newScope)
     if (newScope)
     {
         g_symtable.popScope();
-        struct ast_node *pop = mkAstLeaf(AST::Types::POPSCOPE, 0, 0, 0);
+        ast_node *pop = mkAstLeaf(AST::Types::POPSCOPE, 0, 0, 0);
         tree = mkAstNode(AST::Types::GLUE, tree, NULL, pop, 0, 0, 0);
     }
     

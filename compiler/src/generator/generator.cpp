@@ -7,7 +7,7 @@ int Generator::label()
     return m_labelCount++;
 }
 
-int Generator::generateIf(struct ast_node *tree, int condLabel, int parentEndLabel)
+int Generator::generateIf(ast_node *tree, int condLabel, int parentEndLabel)
 {
     int falseLabel = -1;
     int endLabel = -1;
@@ -36,7 +36,7 @@ int Generator::generateIf(struct ast_node *tree, int condLabel, int parentEndLab
     return -1;
 }
 
-int Generator::generateWhile(struct ast_node *tree)
+int Generator::generateWhile(ast_node *tree)
 {
     int startLabel = label();
     int endLabel   = label();
@@ -64,7 +64,7 @@ int Generator::generateWhile(struct ast_node *tree)
     return -1;
 }
 
-int Generator::generateDoWhile(struct ast_node *tree)
+int Generator::generateDoWhile(ast_node *tree)
 {
     int startLabel = label();
     int condLabel = label();
@@ -84,7 +84,7 @@ int Generator::generateDoWhile(struct ast_node *tree)
     return -1;
 }
 
-int Generator::generateArgumentPush(struct ast_node *tree)
+int Generator::generateArgumentPush(ast_node *tree)
 {
     if (tree->right->type.typeType == TypeTypes::STRUCT && !tree->right->type.ptrDepth)
     {
@@ -109,7 +109,7 @@ int Generator::generateArgumentPush(struct ast_node *tree)
     return -1;
 }
 
-static int countDepth(struct ast_node *tree)
+static int countDepth(ast_node *tree)
 {
     int i = 0;
     while ((tree = tree->left) != NULL)
@@ -118,9 +118,9 @@ static int countDepth(struct ast_node *tree)
     return i;
 }
 
-int Generator::generateAssignment(struct ast_node *tree)
+int Generator::generateAssignment(ast_node *tree)
 {
-    struct ast_node *left;
+    ast_node *left;
     int l = tree->left->line;
     int c = tree->left->c;
     
@@ -137,9 +137,9 @@ int Generator::generateAssignment(struct ast_node *tree)
     return genStoreValue(rreg, lreg, tree->type);
 }
 
-int Generator::generateSwitch(struct ast_node *tree, int condLabel)
+int Generator::generateSwitch(ast_node *tree, int condLabel)
 {
-    struct ast_node *caseIter = tree->right;
+    ast_node *caseIter = tree->right;
     
     // Generate the pushscope instruction
     generateFromAst(tree->left->right, -1, 0);
@@ -198,9 +198,9 @@ int Generator::generateSwitch(struct ast_node *tree, int condLabel)
     return -1;
 }
 
-int Generator::generateGoto(struct ast_node *tree)
+int Generator::generateGoto(ast_node *tree)
 {
-    struct Symbol *s = g_symtable.getSymbol(tree->value);
+    Symbol *s = g_symtable.getSymbol(tree->value);
     
     if (!s->defined)
         err.fatal("Label " + HL(s->name) + " undefined", tree->line, tree->c);
@@ -208,7 +208,7 @@ int Generator::generateGoto(struct ast_node *tree)
     genGoto(s->name);
 }
 
-int Generator::generateTernary(struct ast_node *tree)
+int Generator::generateTernary(ast_node *tree)
 {
     int falseLabel = label();
     int endLabel = label();
@@ -241,7 +241,7 @@ static bool isFlowStatement(int op)
     return false;
 }
 
-int Generator::generateFromAst(struct ast_node *tree, int reg, int parentOp, 
+int Generator::generateFromAst(ast_node *tree, int reg, int parentOp, 
                                int condLabel, int endLabel)
 {
     int leftreg = 0;

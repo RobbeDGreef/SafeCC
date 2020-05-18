@@ -38,7 +38,7 @@ static bool isCompareOp(int op)
     return false;
 }
 
-int Generator::generateComparison(struct ast_node *tree, 
+int Generator::generateComparison(ast_node *tree, 
                                   int endLabel, int parentOp)
 {
     int condEndLabel = label();
@@ -49,9 +49,9 @@ int Generator::generateComparison(struct ast_node *tree,
     genLabel(condEndLabel);
 }
 
-static struct ast_node *getRightCompLeaf(struct ast_node *tree)
+static ast_node *getRightCompLeaf(ast_node *tree)
 {
-    struct ast_node *tmp = tree;
+    ast_node *tmp = tree;
     if (!tmp->right)
         return 0;
         
@@ -61,7 +61,7 @@ static struct ast_node *getRightCompLeaf(struct ast_node *tree)
     return tmp;
 }
 
-static void morgansLawNegation(struct ast_node *tree)
+static void morgansLawNegation(ast_node *tree)
 {
     // Here we use De Morgans law of boolean negation
     // in a recursive manner, ei
@@ -93,7 +93,7 @@ static void morgansLawNegation(struct ast_node *tree)
 
 }
 
-int Generator::generateCondition(struct ast_node *tree, int condEndLabel,
+int Generator::generateCondition(ast_node *tree, int condEndLabel,
                                  int endLabel, int parentOp, int condOp)
 {
     int leftreg = 0, rightreg = 0;
@@ -165,7 +165,7 @@ int Generator::generateCondition(struct ast_node *tree, int condEndLabel,
     return -1;
 }
 
-int Generator::generateBinaryComparison(struct ast_node *tree, int parentOp)
+int Generator::generateBinaryComparison(ast_node *tree, int parentOp)
 {
     int condEndLabel = label();
     int reg = generateBinaryCondition(tree, condEndLabel, parentOp);
@@ -177,7 +177,7 @@ int Generator::generateBinaryComparison(struct ast_node *tree, int parentOp)
     return reg;
 }
 
-int Generator::generateBinaryCondition(struct ast_node *tree, int endLabel,
+int Generator::generateBinaryCondition(ast_node *tree, int endLabel,
                                  int parentOp, int condOp)
 {
     int leftreg = 0, rightreg = 0;

@@ -2,6 +2,7 @@
 
 #include <core.h>
 #include <scanner.h>
+struct Type;
 
 #define ESCAPE_RED     "\u001b[31;1m"
 #define ESCAPE_PURPLE  "\u001b[35;1m"
@@ -30,7 +31,7 @@ class ErrorHandler
 {
   private:
     Scanner *m_scanner;
-    struct ErrorInfo m_errInfo;
+    ErrorInfo m_errInfo;
     int m_justLoadedInfo = false;
 
   public:
@@ -46,12 +47,12 @@ class ErrorHandler
   public:
     ErrorHandler();
     void setupLinehandler(Scanner &scan);
-    void loadErrorInfo(struct ErrorInfo ei);
+    void loadErrorInfo(ErrorInfo ei);
     void unloadErrorInfo();
     void loadedErrorInfo();
-    struct ErrorInfo getLoadedErrorInfo();
-    struct ErrorInfo createErrorInfo();
-    struct ErrorInfo createErrorInfo(int line, int c);
+    ErrorInfo getLoadedErrorInfo();
+    ErrorInfo createErrorInfo();
+    ErrorInfo createErrorInfo(int line, int c);
 
     void fatal(string str);
     void fatal(string str, int line, int c);
@@ -60,29 +61,29 @@ class ErrorHandler
     void warningNL(string str);
     void notice(string str);
     void noticeNL(string str);
-    void lineError(struct ErrorInfo errInfo, string hl_color);
+    void lineError(ErrorInfo errInfo, string hl_color);
     void lineError(string color);
     void lineError(int l, int c, string color);
 
     void syntaxError(string str);
-    void expectedType(struct Type *l, struct Type *r);
+    void expectedType(Type *l, Type *r);
     void unexpectedToken(int token);
     void expectedToken(int token);
     void expectedToken(int token, int got);
     void expectedToken(int token, int token2, int got);
-    void unexpectedParamToFunc(string func, struct Type *t);
+    void unexpectedParamToFunc(string func, Type *t);
 
-    void conversionError(struct Type *l, struct Type *r);
-    void conversionWarning(struct Type *l, struct Type *r);
-    void ptrConversionWarning(struct Type *l, struct Type *r);
+    void conversionError(Type *l, Type *r);
+    void conversionWarning(Type *l, Type *r);
+    void ptrConversionWarning(Type *l, Type *r);
 
-    void typeConversionError(struct Type *l, struct Type *r);
-    void unknownType(struct Type *l);
+    void typeConversionError(Type *l, Type *r);
+    void unknownType(Type *l);
     void unknownType(string s);
     void unknownSymbol(string s);
     void tip(string s);
     void tipNL(string s);
-    void unknownStructItem(string s, struct Type t);
+    void unknownStructItem(string s, Type t);
     void incorrectAccessor(bool ptr);
     void pedanticWarning(string warn);
     

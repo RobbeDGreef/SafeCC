@@ -7,21 +7,21 @@
 
 TypeList g_typeList = TypeList();
 
-struct Type g_emptyType = {.primType = 0,
+Type g_emptyType = {.primType = 0,
                            .isSigned = false,
                            .size     = 0,
                            .ptrDepth = 0,
                            .name     = NULL,
                            .typeType = 0,
                            .isArray  = false};
-struct Type g_intType   = {.primType = PrimitiveTypes::INT,
+Type g_intType   = {.primType = PrimitiveTypes::INT,
                          .isSigned = true,
                          .size     = INT_SIZE,
                          .ptrDepth = 0,
                          .name     = NULL,
                          .typeType = TypeTypes::VARIABLE,
                          .isArray  = false};
-struct Type g_strType   = {.primType = PrimitiveTypes::CHAR,
+Type g_strType   = {.primType = PrimitiveTypes::CHAR,
                          .isSigned = true,
                          .size     = PTR_SIZE,
                          .ptrDepth = 1,
@@ -29,7 +29,7 @@ struct Type g_strType   = {.primType = PrimitiveTypes::CHAR,
                          .typeType = TypeTypes::VARIABLE,
                          .isArray  = true};
 
-struct Type g_defaultType = {.primType = PrimitiveTypes::INT,
+Type g_defaultType = {.primType = PrimitiveTypes::INT,
                              .isSigned = true,
                              .size     = INT_SIZE,
                              .ptrDepth = 0,
@@ -37,7 +37,7 @@ struct Type g_defaultType = {.primType = PrimitiveTypes::INT,
                              .typeType = TypeTypes::VARIABLE,
                              .isArray  = false};
 
-struct Type g_ptrType = {.primType = PrimitiveTypes::INT,
+Type g_ptrType = {.primType = PrimitiveTypes::INT,
                          .isSigned = true,
                          .size     = PTR_SIZE,
                          .ptrDepth = 0,
@@ -49,7 +49,7 @@ int g_regSize     = PTR_SIZE;
 int g_defaultSize = INT_SIZE;
 int g_ptrSize     = PTR_SIZE;
 
-string typeString(struct Type *t)
+string typeString(Type *t)
 {
     string ret = "";
     if (t->typeType == TypeTypes::STRUCT)
@@ -125,7 +125,7 @@ int findType(vector<int> &tokens)
     }
 }
 
-struct Type tokenToType(vector<int> &tokens)
+Type tokenToType(vector<int> &tokens)
 {
     if (tokens.size() == 0)
         err.fatal("No type was specified");
@@ -141,7 +141,7 @@ struct Type tokenToType(vector<int> &tokens)
     /* Since the last token must be the variable type itself */
     // (for now)
 
-    struct Type t;
+    Type t;
     t.ptrDepth = count(tokens.begin(), tokens.end(), Token::Tokens::STAR);
     t.primType = _tokenToType(tokens[(tokens.size() - 1) - t.ptrDepth]);
     t.isSigned = sign;
@@ -155,7 +155,7 @@ struct Type tokenToType(vector<int> &tokens)
     return t;
 }
 
-static int sameType(struct Type l, struct Type r)
+static int sameType(Type l, Type r)
 {
     if (l.primType == r.primType)
     {
@@ -168,7 +168,7 @@ static int sameType(struct Type l, struct Type r)
 }
 
 /* @todo: Throw warnings here maybe ? */
-struct ast_node *typeCompatible(struct ast_node *left, struct ast_node *right,
+ast_node *typeCompatible(ast_node *left, ast_node *right,
                                 bool onlyright)
 {
     if (!left || !right)
@@ -253,7 +253,7 @@ struct ast_node *typeCompatible(struct ast_node *left, struct ast_node *right,
     return 0;
 }
 
-int typeFits(struct Type *type, int value)
+int typeFits(Type *type, int value)
 {
     bool sign = type->isSigned;
 
@@ -288,14 +288,14 @@ int typeFits(struct Type *type, int value)
     }
 }
 
-int truncateOverflow(struct Type type, int value)
+int truncateOverflow(Type type, int value)
 {
     return ((unsigned int)value) & getFullbits(type.size * 8);
 }
 
-struct Type guessType(int val, bool issigned)
+Type guessType(int val, bool issigned)
 {
-    struct Type ret;
+    Type ret;
     ret.isSigned = issigned;
     ret.ptrDepth = 0;
     /**
@@ -349,7 +349,7 @@ struct Type guessType(int val, bool issigned)
     return ret;
 }
 
-void dereference(struct Type *ptr)
+void dereference(Type *ptr)
 {
     if (ptr->ptrDepth)
     {
@@ -368,7 +368,7 @@ void dereference(struct Type *ptr)
     }
 }
 
-int equalType(struct Type l, struct Type r)
+int equalType(Type l, Type r)
 {
     if (l.primType == r.primType && l.isSigned == r.isSigned &&
         l.size == r.size && l.ptrDepth == r.ptrDepth &&
@@ -384,9 +384,9 @@ int equalType(struct Type l, struct Type r)
     return 0;
 }
 
-struct Type TypeList::getType(string ident)
+Type TypeList::getType(string ident)
 {
-    for (struct Type t : m_namedTypes)
+    for (Type t : m_namedTypes)
     {
         if ((*t.name)[0] == ident[0] && !ident.compare(*t.name))
             return t;
@@ -395,16 +395,16 @@ struct Type TypeList::getType(string ident)
     return NULLTYPE;
 }
 
-void TypeList::addType(struct Type t)
+void TypeList::addType(Type t)
 {
     m_namedTypes.push_back(t);
 }
 
-void TypeList::replace(string ident, struct Type t)
+void TypeList::replace(string ident, Type t)
 {
     for (auto i = m_namedTypes.begin(); i != m_namedTypes.end(); i++)
     {
-        struct Type &ref(*i);
+        Type &ref(*i);
 
         if ((*ref.name)[0] == ident[0] && !ident.compare(*ref.name))
         {
@@ -414,7 +414,7 @@ void TypeList::replace(string ident, struct Type t)
     }
 }
 
-int findStructItem(string item, struct Type t)
+int findStructItem(string item, Type t)
 {
     int j = 0;
     for (struct StructItem s : t.contents)
@@ -428,14 +428,14 @@ int findStructItem(string item, struct Type t)
     err.unknownStructItem(item, t);
 }
 
-int getArraySize(struct Symbol *arr)
+int getArraySize(Symbol *arr)
 {
-    struct Type t = arr->varType;
+    Type t = arr->varType;
     dereference(&t);
     return t.size;
 }
 
-int getTypeSize(struct Symbol sym)
+int getTypeSize(Symbol sym)
 {
     int size = sym.varType.size;
     

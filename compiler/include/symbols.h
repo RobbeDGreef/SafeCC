@@ -20,7 +20,7 @@ struct Symbol
 
     vector<string> inits; // Initializers for arrays and structs (used if
                           // global)
-    struct Type varType;  // Function return type or variable type
+    Type varType;  // Function return type or variable type
     int         stackLoc; // The stack location to the start of the variable
                           // (used to calc loc on the stack)
 
@@ -29,7 +29,7 @@ struct Symbol
                         // whether the function already has a label at the
                         // return statement
 
-    vector<struct Type> arguments; // If this symbol is a function
+    vector<Type> arguments; // If this symbol is a function
                                    // it needs argument types
     int variableArg;
 
@@ -37,7 +37,7 @@ struct Symbol
     vector<Attribute> attributes;
 };
 
-class Scope : public vector<struct Symbol>
+class Scope : public vector<Symbol>
 {
   private:
     int m_index;
@@ -79,7 +79,7 @@ class SymbolTable
 
   private:
     int newSymbol();
-    int _addVariable(struct Symbol sym);
+    int _addVariable(Symbol sym);
 
   public:
     SymbolTable();
@@ -95,24 +95,24 @@ class SymbolTable
     bool isCurrentScopeGlobal();
     int  popScope(bool semantics=true, bool functionEnd=false);
 
-    vector<struct Symbol> getGlobalTable();
-    vector<struct Symbol> getStaticTable();
+    vector<Symbol> getGlobalTable();
+    vector<Symbol> getStaticTable();
 
     int            findSymbol(string);
     int            pushScopeById(int id);
     int            findInCurrentScope(string s);
-    struct Symbol *getSymbol(int index);
-    int addSymbol(string symbol, int val, int symType, struct Type varType,
+    Symbol *getSymbol(int index);
+    int addSymbol(string symbol, int val, int symType, Type varType,
                   int storageClass);
     /* To be able to pass NULL as vartype */
     int           addSymbol(string sym, int val, int symType, int varType);
     int           addSymbol(string sym, int val, int symType, int varType,
                             int storageClass);
-    int           pushSymbol(struct Symbol);
+    int           pushSymbol(Symbol);
     int           addString(string val);
-    struct Symbol createSymbol(string sym, int val, int symType,
-                               struct Type varType, int storageClass);
-    int           addToFunction(struct Symbol s);
+    Symbol createSymbol(string sym, int val, int symType,
+                               Type varType, int storageClass);
+    int           addToFunction(Symbol s);
 };
 
 /* Global symtable variable */

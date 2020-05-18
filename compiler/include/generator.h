@@ -18,23 +18,23 @@ protected:
     void write(string instruction, string destination);
     void move(string instruction, string source, string destination);
     
-    int generateIf(struct ast_node *tree, int condLabel, int endLabel);
-    int generateWhile(struct ast_node *tree);
-    int generateDoWhile(struct ast_node *tree);
-    int generateSwitch(struct ast_node *tree, int condLabel);
-    int generateArgumentPush(struct ast_node *tree);
-    int generateAssignment(struct ast_node *tree);
-    int generateTernary(struct ast_node *tree);
+    int generateIf(ast_node *tree, int condLabel, int endLabel);
+    int generateWhile(ast_node *tree);
+    int generateDoWhile(ast_node *tree);
+    int generateSwitch(ast_node *tree, int condLabel);
+    int generateArgumentPush(ast_node *tree);
+    int generateAssignment(ast_node *tree);
+    int generateTernary(ast_node *tree);
     int label();
-    int generateCondition(struct ast_node *tree, int condEndLabel, int endLabel, int parentOp,
+    int generateCondition(ast_node *tree, int condEndLabel, int endLabel, int parentOp,
                           int condOp=0);
-    int generateComparison(struct ast_node *tree, 
+    int generateComparison(ast_node *tree, 
                                   int endLabel, int parentOp);
-    int generateBinaryComparison(struct ast_node *tree, int parentOp);
-    int generateBinaryCondition(struct ast_node *tree, int condEndLabel, int parentOp,
+    int generateBinaryComparison(ast_node *tree, int parentOp);
+    int generateBinaryCondition(ast_node *tree, int condEndLabel, int parentOp,
                           int condOp=0);
     
-    int generateGoto(struct ast_node *tree);
+    int generateGoto(ast_node *tree);
 
     /* Arch dependant functions, get overwritten in arch/ARCH folder */
     virtual void freeReg(int reg) {}
@@ -44,8 +44,8 @@ protected:
     virtual int genSub(int reg1, int reg2) {}
     virtual int genMul(int reg1, int reg2) {}
     virtual int genDiv(int reg1, int reg2) {}
-    virtual int genLoadVariable(int symbol, struct Type t) {}
-    virtual int genStoreValue(int reg, int memloc, struct Type t) {}
+    virtual int genLoadVariable(int symbol, Type t) {}
+    virtual int genStoreValue(int reg, int memloc, Type t) {}
     
     virtual int genCompare(int reg1, int reg2, bool clear=true) {}
     virtual int genCompareSet(int op, int reg1, int reg2) {}
@@ -93,7 +93,7 @@ public:
 
     Generator(string &outfile);
     void close();
-    int generateFromAst(struct ast_node *tree, int reg, int parentOp, 
+    int generateFromAst(ast_node *tree, int reg, int parentOp, 
                         int condLabel=-1, int endLabel=-1);
     void setupInfileHandler(Scanner &scanner);
 };

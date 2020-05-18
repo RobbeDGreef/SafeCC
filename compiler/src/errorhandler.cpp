@@ -20,7 +20,7 @@ void ErrorHandler::write(string str)
     std::cerr << str << "\n";
 }
 
-void ErrorHandler::lineError(struct ErrorInfo errInfo, string hl_color)
+void ErrorHandler::lineError(ErrorInfo errInfo, string hl_color)
 {
     if (errInfo.func == "")
         write("in the global scope of " + HL("'" + errInfo.file + "'"));
@@ -143,38 +143,38 @@ void ErrorHandler::expectedToken(int token, int token2, int got)
           tokToStr(token2) + "' but instead got: '" + tokToStr(got) + "'");
 }
 
-void ErrorHandler::conversionWarning(struct Type *l, struct Type *r)
+void ErrorHandler::conversionWarning(Type *l, Type *r)
 {
     if (f_conversionWarn)
         warning("Converting " + typeString(l) + " to " + typeString(r));
 }
 
-void ErrorHandler::ptrConversionWarning(struct Type *l, struct Type *r)
+void ErrorHandler::ptrConversionWarning(Type *l, Type *r)
 {
     if (f_ptrConversionWarn)
         warning("Converting " + typeString(l) + " to " + typeString(r));
 }
 
-void ErrorHandler::expectedType(struct Type *l, struct Type *r)
+void ErrorHandler::expectedType(Type *l, Type *r)
 {
     // @wth: why do we need to string() this highlight ???
     fatal("Expected type: " + HL("'" + typeString(l) + "'") +
           " but instead got " + HL("'" + typeString(r) + "'"));
 }
 
-void ErrorHandler::unexpectedParamToFunc(string func, struct Type *t)
+void ErrorHandler::unexpectedParamToFunc(string func, Type *t)
 {
     fatal("Unexpected parameter to function: " + HL("'" + func + "'") +
           " of type: " + HL(typeString(t)));
 }
 
-void ErrorHandler::typeConversionError(struct Type *l, struct Type *r)
+void ErrorHandler::typeConversionError(Type *l, Type *r)
 {
     fatal("Cannot convert " + HL(typeString(l)) + " to " + HL(typeString(r)) +
           " without a cast");
 }
 
-void ErrorHandler::unknownType(struct Type *l)
+void ErrorHandler::unknownType(Type *l)
 {
     fatal("Unknown type: " + HL(typeString(l)));
 }
@@ -200,7 +200,7 @@ void ErrorHandler::tip(string s)
     lineError(ESCAPE_GREEN);
 }
 
-void ErrorHandler::unknownStructItem(string s, struct Type t)
+void ErrorHandler::unknownStructItem(string s, Type t)
 {
     fatal("Unknown struct item: " + HL("'" + s + "'") + " in struct " +
           HL("'" + *t.name + "'"));
@@ -218,15 +218,15 @@ void ErrorHandler::pedanticWarning(string s)
     err.warning(s);
 }
 
-struct ErrorInfo ErrorHandler::createErrorInfo()
+ErrorInfo ErrorHandler::createErrorInfo()
 {
     return createErrorInfo(m_scanner->token().endLine(),
                             m_scanner->token().endCol());
 }
 
-struct ErrorInfo ErrorHandler::createErrorInfo(int line, int c)
+ErrorInfo ErrorHandler::createErrorInfo(int line, int c)
 {
-    struct ErrorInfo ret;
+    ErrorInfo ret;
     ret.tok     = m_scanner->token();
     ret.line    = m_scanner->curStrLine(m_scanner->curOffset() - c);
     ret.lineNum = line;
@@ -237,7 +237,7 @@ struct ErrorInfo ErrorHandler::createErrorInfo(int line, int c)
     return ret;
 }
 
-void ErrorHandler::loadErrorInfo(struct ErrorInfo ei)
+void ErrorHandler::loadErrorInfo(ErrorInfo ei)
 {
     m_errInfo        = ei;
     m_justLoadedInfo = true;
@@ -253,7 +253,7 @@ void ErrorHandler::loadedErrorInfo()
     m_justLoadedInfo = true;
 }
 
-struct ErrorInfo ErrorHandler::getLoadedErrorInfo()
+ErrorInfo ErrorHandler::getLoadedErrorInfo()
 {
     return m_errInfo;
 }
