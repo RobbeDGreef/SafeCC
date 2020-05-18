@@ -26,7 +26,6 @@ namespace AST
         LOADLOCATION, PTRACCESS, DIRECTMEMLOAD,
         INITIALIZER,
         
-        STRUCTDEREFERENCE,
         // PADDING has no machine code, the generator will skip over it 
         PADDING, 
         WIDEN,
