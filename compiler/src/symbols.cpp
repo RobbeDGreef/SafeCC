@@ -31,7 +31,7 @@ int SymbolTable::newScope()
     return scope->index();
 }
 
-int SymbolTable::popScope(bool semantics)
+int SymbolTable::popScope(bool semantics, bool functionEnd)
 {
     Scope *scope = m_scopeList.back();
     if (semantics)
@@ -40,14 +40,23 @@ int SymbolTable::popScope(bool semantics)
             if (s.varType.memSpot)
                 s.varType.memSpot->setName(s.name);
         
-        for (struct Symbol s : *scope)
+        bool warn = false;
+        // Iterate backwards to remove the last allocated memory first
+        for (auto i = scope->rbegin(); i != scope->rend(); ++i)
         {
-            if (s.varType.memSpot)
+            if ((*i).varType.memSpot)
             {
-                s.varType.memSpot->destroy(s.name);
+                if ((*i).varType.memSpot->destroy((*i).name, functionEnd))
+                    warn = true;
             }
-            delete s.varType.memSpot;
-            s.varType.memSpot = NULL;
+            //delete s.varType.memSpot;
+            (*i).varType.memSpot = NULL;
+        }
+        
+        if (warn && functionEnd)
+        {
+            string fname = getSymbol(m_currentFunctionIndex)->name;
+            err.notice("At the end of function '" + HL(fname) + "'");
         }
     }
 
