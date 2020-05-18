@@ -2,6 +2,7 @@
 
 #include <core.h>
 #include <types.h>
+#include <attributes.h>
 
 int tokenToSize(int tok);
 
@@ -33,6 +34,7 @@ struct Symbol
     int variableArg;
 
     int storageClass;
+    vector<Attribute> attributes;
 };
 
 class Scope : public vector<struct Symbol>
@@ -91,7 +93,7 @@ class SymbolTable
     /* These will be called everytime a new scope is entered of left */
     int  newScope();
     bool isCurrentScopeGlobal();
-    int  popScope(bool semantics=true);
+    int  popScope(bool semantics=true, bool functionEnd=false);
 
     vector<struct Symbol> getGlobalTable();
     vector<struct Symbol> getStaticTable();
