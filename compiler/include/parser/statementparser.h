@@ -31,6 +31,7 @@ class StatementParser
     struct ast_node *variableAssignment(struct ast_node *lvalue);
     struct ast_node *functionDecl(struct Type type, int storageClass);
     struct ast_node *returnStatement();
+    void parseFuncAttrs(struct Type *t);
 
     struct ast_node *ifStatement();
     struct ast_node *whileStatement();
@@ -54,9 +55,9 @@ class StatementParser
                                 int idx);
 
   public:
-    struct ast_node *declStruct(int storageClass);
-    struct ast_node *declUnion(int storageClass);
-    struct ast_node *declEnum();
+    struct ast_node *declStruct(int storageClass, string s = "");
+    struct ast_node *declUnion(int storageClass, string s = "");
+    struct ast_node *declEnum(string s = "");
     struct ast_node *functionCall();
     struct ast_node *_parseBlock(int parentOp=0, struct ast_node *left=NULL);
     StatementParser(Scanner &scanner, Parser &parser, Generator &gen);

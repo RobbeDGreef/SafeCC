@@ -12,9 +12,22 @@ Parser::Parser(Scanner &scanner, Generator &gen)
     m_scanner = scanner;
 }
 
+struct ast_node *Parser::_declAggregateType(int tok, string s)
+{
+    if (tok == Token::Tokens::UNION)
+        return m_statementParser.declUnion(0, s);
+    else if (tok == Token::Tokens::ENUM)
+        return m_statementParser.declEnum(s);
+    else
+        return m_statementParser.declStruct(0, s);
+}
+
 struct Type Parser::parseType()
 {
     struct Type t;
+    t.memSpot = NULL;
+    string ident = "";
+    int token;
     int tok = m_scanner.token().token();
     switch (tok)
     {
@@ -26,21 +39,15 @@ struct Type Parser::parseType()
     case Token::Tokens::UNION:
     case Token::Tokens::ENUM:
         m_scanner.scan();
+                
         if (m_scanner.token().token() == Token::Tokens::L_BRACE)
-        {
-            if (tok == Token::Tokens::UNION)
-                return m_statementParser.declUnion(0)->type;
-            else if (tok == Token::Tokens::ENUM)
-                return m_statementParser.declEnum()->type;
-            else
-                return m_statementParser.declStruct(0)->type;
-        }
+            return _declAggregateType(tok)->type;
         
     case Token::Tokens::IDENTIFIER:
         t = g_typeList.getType(m_scanner.identifier());
         if (t.typeType == 0)
             return t;
-        
+
         m_scanner.scan();
 
         // Check for pointer depth
@@ -57,6 +64,12 @@ struct Type Parser::parseType()
         vector<int> tokens = m_scanner.scanUntil(Token::Tokens::IDENTIFIER,
                                                  Token::Tokens::COMMA,
                                                  Token::Tokens::R_PAREN);
+        if (m_scanner.token().token() == Token::Tokens::L_PAREN)
+        {
+            vector <int> tmp = m_scanner.scanUntil(Token::Tokens::R_PAREN);
+            for (int t : tmp)
+                tokens.push_back(t);
+        }
         return tokenToType(tokens);
     }
 }

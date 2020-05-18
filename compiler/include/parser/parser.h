@@ -1,5 +1,6 @@
 #pragma once
 
+#include <attributes.h>
 #include <core.h>
 #include <scanner.h>
 #include <ast.h>
@@ -37,6 +38,7 @@ private:
     void match(int t1, int t2, string error);
     void matchNoScan(int t);
     struct Type parseType();
+    struct ast_node *_declAggregateType(int tok, string s = "");
     vector<Attribute> parseAttr();
     vector<Attribute> _parseAttr();
     vector<Attribute> _parseParen(vector <Attribute> attributes);
