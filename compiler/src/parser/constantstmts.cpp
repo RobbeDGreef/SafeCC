@@ -5,7 +5,9 @@
 #include <errorhandler.h>
 #include <symbols.h>
 
-struct ast_node *StatementParser::declEnum()
+int anonEnumCount = 0;
+
+struct ast_node *StatementParser::declEnum(string _s)
 {
     struct Type enumType = INTTYPE;
     struct Symbol enumItem;
@@ -13,10 +15,18 @@ struct ast_node *StatementParser::declEnum()
     enumItem.varType.typeType = TypeTypes::CONSTANT;
     bool redecl = false;
     int lastnum = 0;
+    string s = "anonymousEnum" + to_string(anonEnumCount++);
+    if (_s.size())
+        s = _s;
     
-    m_parser.match(Token::Tokens::IDENTIFIER);
-    
-    enumType.name = new string(m_scanner.identifier());
+    if (m_scanner.token().token() == Token::Tokens::IDENTIFIER)
+    {
+        enumType.name = new string(m_scanner.identifier());
+        m_scanner.scan();
+    }
+    else
+        enumType.name = new string(s);
+        
     enumType.typeType = TypeTypes::ENUM;
     
     if (m_scanner.token().token() == Token::Tokens::SEMICOLON)

@@ -131,7 +131,7 @@ struct ast_node *StatementParser::parseStructInit(struct Type   structType,
                      m_scanner.curLine(), m_scanner.curChar());
 }
 
-struct ast_node *StatementParser::declStruct(int storageClass)
+struct ast_node *StatementParser::declStruct(int storageClass, string _s)
 {
     struct Type structType;
     structType.primType   = 0;
@@ -141,16 +141,21 @@ struct ast_node *StatementParser::declStruct(int storageClass)
     structType.isArray    = false;
     bool   redecl         = false;
     string s              = "anonymous" + to_string(anonStructCount++);
+    bool stringChanged = false;
+    
+    if (_s.size())
+        s = _s;
 
     if (m_scanner.token().token() == Token::Tokens::IDENTIFIER)
     {
         s = m_scanner.identifier();
         m_scanner.scan();
+        stringChanged = true;
     }
 
     structType.name = new string(s);
 
-    if (s.compare("anonymous" + to_string(anonStructCount-1)) &&
+    if (!stringChanged &&
         g_typeList.getType(*structType.name).typeType != 0)
     {
         DEBUG("redecl of: " << s)
@@ -169,8 +174,12 @@ struct ast_node *StatementParser::declStruct(int storageClass)
         if (!redecl)
             g_typeList.addType(structType);
 
-        return mkAstLeaf(AST::Types::PADDING, 0, 0, 0);
+        return mkAstLeaf(AST::Types::PADDING, 0, structType, 0, 0);
     }
+    
+    if (m_scanner.token().token() == Token::Tokens::IDENTIFIER || 
+        m_scanner.token().token() == Token::Tokens::STAR)
+        return mkAstLeaf(AST::Types::PADDING, 0, structType, 0, 0);
     
     if (!redecl)
         g_typeList.addType(structType);
@@ -190,6 +199,12 @@ struct ast_node *StatementParser::declStruct(int storageClass)
         sItem.itemType = m_parser.parseType();
         if (sItem.itemType.typeType == 0)
             err.unknownType(&sItem.itemType);
+        
+        while (m_scanner.token().token() == Token::Tokens::STAR)
+        {
+            sItem.itemType.ptrDepth++;
+            m_scanner.scan();
+        }
 
         m_parser.match(Token::Tokens::IDENTIFIER);
         sItem.name = m_scanner.identifier();
@@ -255,7 +270,7 @@ noItems:;
     return mkAstLeaf(AST::PADDING, 0, structType, 0, 0);
 }
 
-struct ast_node *StatementParser::declUnion(int sc)
+struct ast_node *StatementParser::declUnion(int sc, string _s)
 {
     struct Type unionType;
     unionType.primType   = 0;
@@ -264,7 +279,10 @@ struct ast_node *StatementParser::declUnion(int sc)
     unionType.typeType   = TypeTypes::UNION;
     unionType.isArray    = false;
     bool redecl          = false;
+    
     string s = "anonymous" + to_string(anonStructCount++);
+    if (_s.size())
+        s = _s;
     
     if (m_scanner.token().token() == Token::Tokens::IDENTIFIER)
     {
@@ -306,9 +324,17 @@ struct ast_node *StatementParser::declUnion(int sc)
     int i;
     for (i = 0; i < UNION_MAX_ITEMS; i++)
     {
+        int tok = m_scanner.token().token();
         sItem.itemType = m_parser.parseType();
         if (sItem.itemType.typeType == 0)
-            err.unknownType(&sItem.itemType);
+        {
+            string ident = m_scanner.identifier();
+            m_scanner.scan();
+            if (m_scanner.token().token() == Token::Tokens::L_BRACE)
+                sItem.itemType = m_parser._declAggregateType(tok, ident)->type;
+            else
+                err.unknownType(&sItem.itemType);
+        }
 
         m_parser.match(Token::Tokens::IDENTIFIER);
         sItem.name = m_scanner.identifier();
