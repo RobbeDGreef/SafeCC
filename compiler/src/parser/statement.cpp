@@ -30,9 +30,17 @@ struct ast_node *StatementParser::parseDeclaration(struct Type type, int sc)
 struct ast_node *StatementParser::parseTypedef()
 {
     m_scanner.scan();
+    int tok = m_scanner.token().token();
     struct Type t = m_parser.parseType();
+    string ident = m_scanner.identifier();
     if (t.typeType == 0)
-        err.unknownType(m_scanner.identifier());
+    {
+        m_scanner.scan();
+        if (m_scanner.token().token() == Token::Tokens::L_BRACE)
+            t = m_parser._declAggregateType(tok, ident)->type;
+        else
+            err.unknownType(ident);
+    }
 
     t.name = new string(m_scanner.identifier());
     g_typeList.addType(t);
@@ -43,9 +51,10 @@ struct ast_node *StatementParser::parseTypedef()
     // have like these kinds of things in them
     // typedef __ssize_t __io_write_fn (void *__cookie, const char *__buf,
     // size_t __n); and i have no clue what they are
-    if (m_scanner.token().token() == Token::Tokens::L_PAREN)
+    if (m_scanner.token().token() == Token::Tokens::L_PAREN || 
+        m_scanner.token().token() == Token::Tokens::ATTRIBUTE)
     {
-        err.warning("functionpointer typedefs are unimplemented");
+        err.warning("Sorry unimplemented");
         m_scanner.scanUntil(Token::Tokens::SEMICOLON);
     }
 
@@ -146,6 +155,8 @@ loop:;
     case Token::Tokens::VOID:
     case Token::Tokens::CHAR:
     case Token::Tokens::SHORT:
+    case Token::Tokens::FLOAT:
+    case Token::Tokens::DOUBLE:
     case Token::Tokens::INT:
     case Token::Tokens::LONG:
     case Token::Tokens::STRUCT:
@@ -175,10 +186,13 @@ loop:;
 
             err.unknownType(m_scanner.identifier());
         }
+        
 
         if (type.typeType == TypeTypes::ENUM)
             type.typeType = TypeTypes::VARIABLE;
 
+        if (m_scanner.token().token() == Token::Tokens::SEMICOLON)
+            break;
         node = parseDeclaration(type, storageClass);
         break;
 
@@ -237,7 +251,7 @@ bool isStatement(int op)
 struct ast_node *StatementParser::_parseBlock(int parentOp, struct ast_node *left)
 {
     struct ast_node *tree = NULL;
-
+    
     while (1)
     {
         tree = parseStatement(parentOp);
@@ -286,7 +300,6 @@ struct ast_node *StatementParser::parseBlock(vector<struct Symbol> arguments)
     }
 
     struct ast_node *tree = _parseBlock();
-
     m_parser.match(Token::Tokens::R_BRACE);
     return tree;
 }
