@@ -87,6 +87,8 @@ class ErrorHandler
     void pedanticWarning(string warn);
     
     void memWarn(string s);
+    void memNotice(string s);
+    
 };
 
 extern ErrorHandler err;

@@ -262,3 +262,8 @@ void ErrorHandler::memWarn(string s)
 {
     err.warning("Memory warnign: " + s);
 }
+
+void ErrorHandler::memNotice(string s)
+{
+    err.notice("Memory notice: " + s);
+}
