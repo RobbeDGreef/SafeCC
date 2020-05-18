@@ -14,7 +14,7 @@ ast_node *ExpressionParser::parseSizeof()
     m_scanner.scan();
 
     ast_node *ptr = parseLeft(&NULLTYPE);
-    int              size;
+    int       size;
 
     if (ptr->operation == AST::Types::IDENTIFIER)
         size = getTypeSize(*g_symtable.getSymbol(ptr->value));
@@ -44,7 +44,7 @@ ast_node *ExpressionParser::parseParentheses(Type *ltype)
 
 ast_node *ExpressionParser::parseTypeCast(Type *ltype)
 {
-    int              tok = m_scanner.token().token();
+    int       tok = m_scanner.token().token();
     ast_node *ret;
     Type      type;
     switch (tok)
@@ -94,9 +94,9 @@ ast_node *ExpressionParser::parsePrimary(Type *ltype)
 {
     ast_node *node;
     Symbol *  s;
-    int              id;
-    int              val;
-    int              tok = m_scanner.token().token();
+    int       id;
+    int       val;
+    int       tok = m_scanner.token().token();
 
     switch (tok)
     {
@@ -134,7 +134,7 @@ ast_node *ExpressionParser::parsePrimary(Type *ltype)
         if (id == -1 ||
             g_symtable.getSymbol(id)->symType == SymbolTable::SymTypes::LABEL)
             return NULL;
-        
+
         s = g_symtable.getSymbol(id);
 
         if (s->varType.typeType == TypeTypes::CONSTANT)
@@ -165,8 +165,7 @@ ast_node *ExpressionParser::parsePrimary(Type *ltype)
 
         node = mkAstLeaf(AST::Types::IDENTIFIER, id, s->varType,
                          m_scanner.curLine(), m_scanner.curChar());
-        
-        
+
         break;
 
     case Token::Tokens::STRINGLIT:
@@ -205,7 +204,7 @@ ast_node *ExpressionParser::parsePrimary(Type *ltype)
 ast_node *ExpressionParser::parsePrefixOperator(Type *ltype)
 {
     ast_node *node = NULL;
-    int              id;
+    int       id;
     Type      type;
     ast_node *left = NULL;
     ast_node *tmp  = NULL;
@@ -249,14 +248,14 @@ ast_node *ExpressionParser::parsePrefixOperator(Type *ltype)
         type = node->type;
         if (type.memSpot)
             type.memSpot->tryToUse(AST::Types::PTRACCESS);
-        
+
         dereference(&type);
 
         if (type.typeType == TypeTypes::STRUCT && !type.ptrDepth)
             node->type = type;
-        //else
-            node = mkAstUnary(AST::Types::PTRACCESS, node, 0, type, node->line,
-                              node->c);
+        // else
+        node = mkAstUnary(AST::Types::PTRACCESS, node, 0, type, node->line,
+                          node->c);
 
         break;
 
@@ -352,8 +351,7 @@ ast_node *ExpressionParser::parsePrefixOperator(Type *ltype)
 // Takes two parametes, the previously parsed ast_node (the x in the expression)
 // and a bool to specify whether a ptraccess should be generated in the returned
 // tree
-ast_node *ExpressionParser::parseArrayAccess(ast_node *primary,
-                                                    bool             access)
+ast_node *ExpressionParser::parseArrayAccess(ast_node *primary, bool access)
 {
     if (m_scanner.token().token() != Token::Tokens::L_BRACKET)
         return primary;
@@ -398,8 +396,7 @@ ast_node *ExpressionParser::parseArrayAccess(ast_node *primary,
     return primary;
 }
 
-ast_node *ExpressionParser::parseStructAccess(ast_node *prim,
-                                                     bool             access)
+ast_node *ExpressionParser::parseStructAccess(ast_node *prim, bool access)
 {
     bool ptraccess = false;
 
@@ -429,13 +426,13 @@ ast_node *ExpressionParser::parseStructAccess(ast_node *prim,
         err.expectedToken(Token::Tokens::IDENTIFIER);
 
     Type t      = prim->type;
-    int         idx    = findStructItem(m_scanner.identifier(), t);
-    int         offset = t.contents[idx].offset;
-    int         size   = t.contents[idx].itemType.size;
-    t                  = t.contents[idx].itemType;
+    int  idx    = findStructItem(m_scanner.identifier(), t);
+    int  offset = t.contents[idx].offset;
+    int  size   = t.contents[idx].itemType.size;
+    t           = t.contents[idx].itemType;
 
-    int              l          = m_scanner.curLine();
-    int              c          = m_scanner.curChar();
+    int       l          = m_scanner.curLine();
+    int       c          = m_scanner.curChar();
     ast_node *offsetNode = mkAstLeaf(AST::INTLIT, offset, INTTYPE, l, c);
     prim = mkAstNode(AST::Types::ADD, prim, NULL, offsetNode, 0, t, l, c);
 
@@ -452,9 +449,8 @@ ast_node *ExpressionParser::parseStructAccess(ast_node *prim,
 //
 // Takes left and right ast nodes to check and a token that holds the arithmetic
 // instruction
-ast_node *ExpressionParser::checkArithmetic(ast_node *left,
-                                                   ast_node *right,
-                                                   int              tok)
+ast_node *ExpressionParser::checkArithmetic(ast_node *left, ast_node *right,
+                                            int tok)
 {
     if (tok == Token::Tokens::EQUALSIGN)
         return NULL;
@@ -506,8 +502,7 @@ ast_node *ExpressionParser::checkArithmetic(ast_node *left,
     return ret;
 }
 
-ast_node *ExpressionParser::parsePostfixOperator(ast_node *tree,
-                                                        bool             access)
+ast_node *ExpressionParser::parsePostfixOperator(ast_node *tree, bool access)
 {
     ast_node *left = NULL;
     ast_node *tmp  = NULL;
@@ -520,9 +515,9 @@ ast_node *ExpressionParser::parsePostfixOperator(ast_node *tree,
         return parseArrayAccess(tree, access);
 
     case Token::Tokens::MINUS:
-    case Token::Tokens::DOT:
         if (tree->type.memSpot)
             tree->type.memSpot->tryToUse(AST::Types::PTRACCESS);
+    case Token::Tokens::DOT:
         return parseStructAccess(tree, access);
 
     case Token::Tokens::INC:
@@ -585,14 +580,13 @@ ast_node *ExpressionParser::parseLeft(Type *type)
 
 static bool isLvalue(int op)
 {
-    if (op == AST::Types::IDENTIFIER || op == AST::Types::ASSIGN || 
+    if (op == AST::Types::IDENTIFIER || op == AST::Types::ASSIGN ||
         op == AST::Types::PTRACCESS)
         return true;
     return false;
 }
 
-ast_node *ExpressionParser::parseComplexAssign(ast_node *left,
-                                                      int              tok)
+ast_node *ExpressionParser::parseComplexAssign(ast_node *left, int tok)
 {
     ast_node *complexAssignment = NULL;
 
@@ -623,7 +617,7 @@ ast_node *ExpressionParser::parseTernaryCondition(Type *t)
     ast_node *left = parseBinaryOperator(0, t);
     m_parser.match(Token::Tokens::COLON);
     ast_node *right = parseBinaryOperator(0, t);
-    
+
     int l = m_scanner.curLine();
     int c = m_scanner.curChar();
     return mkAstNode(AST::Types::COLONSEP, left, NULL, right, 0, *t, l, c);
@@ -634,9 +628,8 @@ ast_node *ExpressionParser::parseTernaryCondition(Type *t)
 //
 // Takes the previous operator precedence and a type parameter to typecheck the
 // previous operation against
-ast_node *ExpressionParser::parseBinaryOperator(int          prevPrec,
-                                                       Type *type,
-                                                       int prevTok)
+ast_node *ExpressionParser::parseBinaryOperator(int prevPrec, Type *type,
+                                                int prevTok)
 {
     ast_node *left;
     ast_node *right;
@@ -658,12 +651,12 @@ ast_node *ExpressionParser::parseBinaryOperator(int          prevPrec,
         type = &left->type;
         if (!isLvalue(left->operation))
             err.fatal("lvalue expected to the left of the assignment");
-    }    
+    }
 
     while (getOperatorPrecedence(tok) > prevPrec)
     {
         m_scanner.scan();
-        
+
         if (tok == Token::Tokens::QUESTIONMARK)
             right = parseTernaryCondition(&left->type);
         else
@@ -671,13 +664,14 @@ ast_node *ExpressionParser::parseBinaryOperator(int          prevPrec,
 
         if (!right)
             err.unknownSymbol(m_scanner.identifier());
-        
+
         if (tok == Token::Tokens::EQUALSIGN)
         {
             if (right->type.memSpot)
             {
                 type->memSpot->setIsInit(true);
-                type->memSpot->addReferencingTo(right->type.memSpot, right->operation);
+                type->memSpot->addReferencingTo(right->type.memSpot,
+                                                right->operation);
             }
         }
 
@@ -711,7 +705,8 @@ ast_node *ExpressionParser::parseBinaryOperator(int          prevPrec,
         // Join the trees
         int l = m_scanner.curLine();
         int c = m_scanner.curChar();
-        if (left->operation == AST::Types::ASSIGN && prevTok != Token::Tokens::QUESTIONMARK)
+        if (left->operation == AST::Types::ASSIGN &&
+            prevTok != Token::Tokens::QUESTIONMARK)
         {
             // Type: x = y = 4;
             tmp         = left->right;
@@ -744,8 +739,7 @@ ast_node *ExpressionParser::parseBinaryOperator(int          prevPrec,
 // typecheck its result
 //
 // takes the previous precedence and a type for parseBinaryOperator
-ast_node *ExpressionParser::parseBinaryOperation(int         prev_prec,
-                                                        Type type)
+ast_node *ExpressionParser::parseBinaryOperation(int prev_prec, Type type)
 {
     Type inttypes = type;
 
@@ -770,8 +764,7 @@ ast_node *ExpressionParser::parseBinaryOperation(int         prev_prec,
         // This is just a padding instruction to hold the type specifier and
         // test it agains the actual binary operation
         ast_node *pad = mkAstLeaf(AST::Types::PADDING, 0, type,
-                                         m_scanner.curLine(),
-                                         m_scanner.curChar());
+                                  m_scanner.curLine(), m_scanner.curChar());
 
         tmp = typeCompatible(pad, node, true);
         if (tmp)
