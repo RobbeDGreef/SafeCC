@@ -33,6 +33,8 @@ int Scanner::identifyKeyword(string keyword)
             return Token::Tokens::DEFAULT;
         else if (!keyword.compare("do"))
             return Token::Tokens::DO;
+        else if (!keyword.compare("double"))
+            return Token::Tokens::DOUBLE;
         break;
         
     case 'e':
@@ -47,6 +49,8 @@ int Scanner::identifyKeyword(string keyword)
     case 'f':
         if (!keyword.compare("for"))
             return Token::Tokens::FOR;
+        else if (!keyword.compare("float"))
+            return Token::Tokens::FLOAT;
         break;
 
     case 'g':
@@ -103,6 +107,8 @@ int Scanner::identifyKeyword(string keyword)
     case 'v':
         if (!keyword.compare("void"))
             return Token::Tokens::VOID;
+        else if (!keyword.compare("volatile"))
+            return Token::Tokens::VOLATILE;
         break;
 
     case 'w':

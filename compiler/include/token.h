@@ -25,12 +25,13 @@ static const string toknames[]
     "( (left parenthesis)", ") (right parenthesis)", ", (comma)",
     "[ (left bracket)", "] (right bracket)", ". (dot)",
     
-    "void", "char", "short", "int", "long", "unsigned", "signed", "const",
+    "void", "char", "short", "int", "long", "double", "float",
+    "unsigned", "signed", "const",
     "if", "else", "while", "for", "do", "return", 
     "sizeof",
     "typedef", "struct", "union", "enum",
     "auto", "static", "register", "extern",
-    "restrict", "attribute", "asm",
+    "restrict", "attribute", "asm", "volatile",
     "goto", "switch", "case", "default",
     "break", "continue"
 };
@@ -78,15 +79,15 @@ public:
         L_BRACKET, R_BRACKET, DOT,
 
         /* Keywords */
-        VOID, CHAR, SHORT, INT, LONG, UNSIGNED, SIGNED, CONST,
+        VOID, CHAR, SHORT, INT, LONG, DOUBLE, FLOAT, UNSIGNED, SIGNED, CONST,
         IF, ELSE, WHILE, FOR, DO,
         RETURN, 
         SIZEOF,
         TYPEDEF, STRUCT, UNION, ENUM,
         AUTO, STATIC, REGISTER, EXTERN,
-        RESTRICT, ATTRIBUTE, ASM,
+        RESTRICT, ATTRIBUTE, ASM, VOLATILE,
         GOTO, SWITCH, CASE, DEFAULT,
-        BREAK, CONTINUE
+        BREAK, CONTINUE,
     };
 
     Token() {}
