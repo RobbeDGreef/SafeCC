@@ -37,6 +37,9 @@ private:
     void match(int t1, int t2, string error);
     void matchNoScan(int t);
     struct Type parseType();
+    vector<Attribute> parseAttr();
+    vector<Attribute> _parseAttr();
+    vector<Attribute> _parseParen(vector <Attribute> attributes);
 
 public:
     Parser(Scanner &scanner, Generator &generator);

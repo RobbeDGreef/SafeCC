@@ -100,3 +100,91 @@ void Parser::matchNoScan(int tok)
     if (m_scanner.token().token() != tok)
         err.expectedToken(tok, m_scanner.token().token());
 }
+
+vector<Attribute> Parser::_parseParen(vector <Attribute> attributes)
+{
+    match(Token::Tokens::L_PAREN);
+    for (Attribute i : _parseAttr())
+    {
+        if (i.attribute == Attributes::META && attributes.size())
+        {
+            attributes.back().values = i.values;
+        }
+        else
+            attributes.push_back(i);
+        }
+    match(Token::Tokens::R_PAREN);
+    
+    return attributes;
+} 
+
+vector<Attribute> Parser::_parseAttr()
+{
+    vector<Attribute> attributes;
+    
+    for (int i = 0; i < MAX_SCAN_UNTIL_TOKENS; i++)
+    {
+        if (m_scanner.token().token() == Token::Tokens::R_PAREN)
+            break;
+            
+        if (m_scanner.token().token() == Token::Tokens::L_PAREN)
+            attributes = _parseParen(attributes);
+        
+        if (m_scanner.token().token() == Token::Tokens::INTLIT)
+        {
+            if (!attributes.size())
+                attributes.push_back(Attributes::META);
+            attributes.back().values.push_back(m_scanner.token().intValue());
+        }
+        else
+        {
+            string ident = m_scanner.identifier();
+            switch(ident[0])
+            {
+            case 'c':
+                if (!ident.compare("clears_heapval"))
+                    attributes.push_back(Attribute(Attributes::CLEARS_HEAPVAL));
+                break;
+            case 'r':
+                if (!ident.compare("returns_heapval"))
+                    attributes.push_back(Attribute(Attributes::RETURNS_HEAPVAL));
+                break;
+            }    
+        }
+        
+        m_scanner.scan();
+        
+        if (m_scanner.token().token() == Token::Tokens::L_PAREN)
+            attributes = _parseParen(attributes);
+        
+        if (m_scanner.token().token() == Token::Tokens::R_PAREN)
+            break;
+            
+                   
+        match(Token::Tokens::COMMA);
+    }
+    return attributes;
+}
+
+vector<Attribute> Parser::parseAttr()
+{
+    vector<Attribute> attributes;
+    
+    match(Token::Tokens::ATTRIBUTE);
+    match(Token::Tokens::L_PAREN);
+    match(Token::Tokens::L_PAREN);
+    
+    attributes = _parseAttr();
+    
+    match(Token::Tokens::R_PAREN);
+    match(Token::Tokens::R_PAREN);
+    
+    if (m_scanner.token().token() == Token::Tokens::ATTRIBUTE)
+    {
+        for (Attribute a : parseAttr())
+            attributes.push_back(a);
+    }
+    
+    return attributes;
+}
+
