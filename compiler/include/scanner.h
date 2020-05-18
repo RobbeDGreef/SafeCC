@@ -23,7 +23,6 @@ private:
 
     Token       m_token;
     Token       m_putbackToken;
-    Token       m_nextToken;
 
     int         m_putback = 0;
     

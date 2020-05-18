@@ -50,14 +50,10 @@ void Scanner::putback(int c)
 
 int Scanner::peek()
 {
-    if (m_putbackToken.intValue() != -1)
-    {
-        return m_nextToken.intValue();
-    }
     Token tok = m_token;
     scan();
     int peek = m_token.token();
-    putbackToken(tok);
+    putbackToken(m_token.token());
     m_token = tok;
     return peek;
 }
@@ -146,13 +142,20 @@ vector<int> Scanner::scanUntil(int tok)
 vector<int> Scanner::scanUntil(int tok1, int tok2, int tok3)
 {
     vector<int> tokens;
-
+    int parenDepth = 0;
+    
     for (int i = 0; i < MAX_SCAN_UNTIL_TOKENS; i++)
     {
+        if (m_token.token() == Token::Tokens::L_PAREN)
+            parenDepth++;
+        
+        else if (m_token.token() == Token::Tokens::R_PAREN)
+            parenDepth--;
+            
         tokens.push_back(m_token.token());
         scan();
         if (m_token.token() == tok1 || m_token.token() == tok2 ||
-            m_token.token() == tok3)
+            m_token.token() == tok3 && parenDepth == 0)
             return tokens;
     }
 
@@ -179,7 +182,6 @@ int Scanner::charParser(int c)
 
 void Scanner::putbackToken(Token t)
 {
-    m_nextToken = m_token;
     m_putbackToken = t;
 }
 
