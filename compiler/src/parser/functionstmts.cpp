@@ -27,9 +27,8 @@ ast_node *StatementParser::returnStatement()
     
     if (tree->type.memSpot)
     {
-        DEBUGR("return statement")
         if (!fsym->varType.memSpot)
-            fsym->varType.memSpot = new MemorySpot(tree->type.memSpot);
+            fsym->varType.memSpot = new MemorySpot(tree->type.memSpot, true);
         
         fsym->varType.memSpot->setName("the return value of " + fsym->name);
     }
@@ -177,12 +176,16 @@ noargs:;
     
     function->defined = true;
     ast_node *body = parseBlock(arguments);
+    ErrorInfo errInfo = err.createErrorInfo();
+    m_parser.match(Token::Tokens::R_BRACE);
 
     /* Generate the machine code */
     m_generator.generateFromAst(mkAstUnary(AST::Types::FUNCTION, body, nameIdx,
                                            m_scanner.curLine(),
                                            m_scanner.curChar()),
                                 -1, 0);
+    
+    err.loadErrorInfo(errInfo);
     g_symtable.popScope(true, true);
     return NULL;
 }
@@ -209,16 +212,19 @@ ast_node *StatementParser::functionCall()
     s = g_symtable.getSymbol(id);
     Type returnType = s->varType;
     s->used = true;
-    //returnType.memSpot = new MemorySpot(*s->varType.memSpot);
+    if (returnType.ptrDepth)
+    {
+        returnType.memSpot = new MemorySpot(s->varType.memSpot, true);
+    }
     
     if (s->attributes.size())
     {
         if (hasAttr(s->attributes, Attributes::RETURNS_HEAPVAL))
         {
             MemorySpot *ms = new MemorySpot();
-            ms->copy(s->varType.memSpot);
+            ms->goodValues();
             ms->setMemLoc(MemorySpot::MemLoc::HEAP);
-            returnType.memSpot = new MemorySpot(ms);
+            returnType.memSpot->addReferencingTo(ms, 0);
         }
         
         if (hasAttr(s->attributes, Attributes::CLEARS_HEAPVAL))
@@ -240,13 +246,19 @@ ast_node *StatementParser::functionCall()
         
         if (count(removeMem.begin(), removeMem.end(), i))
         {
-            if (arg->type.memSpot)
+            if (arg->type.memSpot && arg->type.memSpot->references() != -1)
             {
                 int id = arg->type.memSpot->references();
                 g_memTable.findMemorySpot(id)->destroy("");
             }
+            else if (arg->type.memSpot)
+            {
+                arg->type.memSpot->setAccessGarbage(true);
+            }
             else
+            {
                 err.memWarn("Trying to remove non-heap allocated object from heap?");
+            }
         }
 #if 0
         if (arg->type.typeType == TypeTypes::STRUCT && !arg->type.ptrDepth)

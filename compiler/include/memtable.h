@@ -29,7 +29,7 @@ private:
 public:
     MemorySpot();
     MemorySpot(int memId);
-    MemorySpot(MemorySpot *ms);
+    MemorySpot(MemorySpot *ms, bool deepCopy=false);
     MemorySpot(string s);
     void setName(string name);
     void addReferencingTo(MemorySpot *ms);
@@ -42,16 +42,20 @@ public:
     void stopReferencing();
     void copy(MemorySpot *ms);
     bool tryToUse(int op);
+    void goodValues();
     
+    int references();
+    int checkDestroy();
     string name() { return m_lastName; }
-    int references() { return m_referencing; }
     int accessingGarbage() { return m_accessGarbage; }
     int setAccessGarbage(bool ag) { m_accessGarbage = ag; }
     int memId() { return m_memId; }
     int isInit() { return m_isInit; }
+    int isNullInit() { return m_isNullInit; }
     int setMemId(int memId) { m_memId = memId; }
     int setIsInit(bool isInit) { m_isInit = isInit; }
     int setMemLoc(int loc) { m_memLoc = loc; }
+    int setNullInit(bool nullinit) { m_isNullInit = nullinit; }
 };
 
 class MemoryTable

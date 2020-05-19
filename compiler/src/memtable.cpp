@@ -21,11 +21,16 @@ MemorySpot::MemorySpot(string s)
     m_lastName = s;
 }
 
-MemorySpot::MemorySpot(MemorySpot *ms)
+MemorySpot::MemorySpot(MemorySpot *ms, bool deepCopy)
 {
+    if (ms && deepCopy)
+        *this = *ms;
+    
     g_memTable.addMemorySpot(this);
-    addReferencingTo(ms, 0);
+    if (ms)
+        addReferencingTo(ms, 0);
 }
+
 
 void MemorySpot::addReferencingTo(MemorySpot *ms)
 {
@@ -44,7 +49,7 @@ void MemorySpot::addReferencingTo(MemorySpot *ms)
     #endif
     
     m_referencing = ms->memId();
-    ms->addReferencedBy(m_memId);    
+    ms->addReferencedBy(m_memId);
 }
 
 void MemorySpot::addReferencingTo(MemorySpot *ms, int op)
@@ -59,14 +64,16 @@ void MemorySpot::addReferencingTo(MemorySpot *ms, int op)
         ref = -1;
         break;
     default:
-        if (ms->m_memLoc == MemLoc::HEAP)
-            ref = ms->memId();
-        else
+        if (ms->m_memLoc != MemLoc::HEAP && !ms->accessingGarbage())
             ref = ms->references();
+        else
+            ref = ms->memId();
     }
     
     if (ref != -1)
         addReferencingTo(g_memTable.findMemorySpot(ref));
+    
+    ms->checkDestroy();
 }
 
 void MemorySpot::setName(string name)
@@ -116,24 +123,37 @@ bool MemorySpot::_destroyHeap(string s)
 
 void MemorySpot::destroyedMessage()
 {
-    err.loadErrorInfo(m_destroyedErrInfo);
-    err.memNotice(m_destroyedMessage);
+    if (m_referencing != -1)
+        g_memTable.findMemorySpot(m_referencing)->destroyedMessage();
+    else
+    {
+        err.loadErrorInfo(m_destroyedErrInfo);
+        err.memNotice(m_destroyedMessage);    
+    }
 }
 
 bool MemorySpot::tryToUse(int op)
 {
+    MemorySpot *ms = NULL;
+    if (m_referencing != -1)
+    {
+        ms = g_memTable.findMemorySpot(m_referencing);
+        DEBUGR("refencing: " << m_referencing << " name: " << ms->name())
+    }
+    
     switch (op)
     {
     case AST::Types::PTRACCESS:
-        if (!m_isInit)
+    
+        if (!m_isInit || (ms && !ms->isInit()))
             err.memWarn("Trying to access memory that is not initialised");
-        if (m_accessGarbage)
+        if (m_isNullInit || (ms && ms->isNullInit()))
+            err.memWarn("Trying to access null-initialised memory");
+        if (m_accessGarbage || (ms && ms->accessingGarbage()))
         {
-            if (m_referencing != -1)
-            {
-                MemorySpot *ms = g_memTable.findMemorySpot(m_referencing);
+            if (ms)
                 ms->destroyedMessage();
-            }
+            
             err.memWarn("Trying to access memory that points to garbage");
         }
         break;
@@ -219,4 +239,22 @@ MemorySpot *MemoryTable::findMemorySpot(int memId)
     }
 
     err.fatal("Could not find memory spot in table " + to_string(memId));
+}
+
+void MemorySpot::goodValues()
+{
+    m_isInit = true;
+    m_isNullInit = false;
+    m_accessGarbage = false;
+}
+
+int MemorySpot::checkDestroy()
+{
+    if (!m_referencedBy.size())
+        destroy("");
+}
+
+int MemorySpot::references()
+{
+    return m_referencing;
 }

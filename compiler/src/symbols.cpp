@@ -37,10 +37,13 @@ int SymbolTable::popScope(bool semantics, bool functionEnd)
     if (semantics)
     {
         for (Symbol s : *scope)
+        {
             if (s.varType.memSpot)
                 s.varType.memSpot->setName(s.name);
+        }
         
         bool warn = false;
+        #if 0
         // Iterate backwards to remove the last allocated memory first
         for (auto i = scope->rbegin(); i != scope->rend(); ++i)
         {
@@ -51,6 +54,13 @@ int SymbolTable::popScope(bool semantics, bool functionEnd)
             }
             //delete s.varType.memSpot;
             (*i).varType.memSpot = NULL;
+        }
+        #endif
+        for (Symbol s : *scope)
+        {
+            if (s.varType.memSpot)
+                s.varType.memSpot->destroy(s.varType.memSpot->name(), functionEnd);
+                
         }
         
         if (warn && functionEnd)

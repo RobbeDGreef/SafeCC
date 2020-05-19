@@ -131,8 +131,13 @@ ast_node *StatementParser::parseVarInit(Type   type,
     
     right = m_parser.m_exprParser.parseBinaryOperation(0, type);
 
+    if (!right)
+        err.unknownSymbol(m_scanner.identifier());
+        
     if (right->operation == AST::Types::INTLIT)
     {
+        if (right->value == 0)
+            right->type.memSpot->setNullInit(true);
         if (g_symtable.isCurrentScopeGlobal())
         {
             // Simply set it as a initializer value in the symbol table
@@ -143,9 +148,7 @@ ast_node *StatementParser::parseVarInit(Type   type,
     }
 
     if (right->type.memSpot)
-    {
         sym.varType.memSpot->addReferencingTo(right->type.memSpot, right->operation);   
-    }
 
     id   = g_symtable.pushSymbol(sym);
     tree = mkAstLeaf(AST::Types::IDENTIFIER, id, type, right->line, right->c);
@@ -219,6 +222,7 @@ ast_node *StatementParser::variableDecl(Type type, int sc)
     {
         m_parser.match(Token::Tokens::EQUALSIGN);
         type.memSpot->setIsInit(true);
+        type.memSpot->setNullInit(false);
         s.defined = true;
 
         if (sc == SymbolTable::StorageClass::EXTERN &&

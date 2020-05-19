@@ -296,11 +296,13 @@ ast_node *StatementParser::parseBlock(vector<Symbol> arguments)
 
     for (Symbol s : arguments)
     {
+        if (!s.varType.memSpot)
+            s.varType.memSpot = new MemorySpot();
+        s.varType.memSpot->goodValues();
         g_symtable.pushSymbol(s);
     }
 
     ast_node *tree = _parseBlock();
-    m_parser.match(Token::Tokens::R_BRACE);
     return tree;
 }
 

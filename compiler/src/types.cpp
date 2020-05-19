@@ -191,6 +191,11 @@ ast_node *typeCompatible(ast_node *left, ast_node *right,
          (right->type.primType == PrimitiveTypes::VOID)) &&
         left->type.typeType == TypeTypes::VARIABLE && !left->type.ptrDepth)
         err.fatal("Typeerror: void type is not ignored as it ought to be");
+    
+    // NULL can easily fit every type and should never throw a warning
+    if (right->operation == AST::Types::INTLIT && right->value == 0)
+        return 0;
+    
 
     /* Same type is always compatible */
     if (left->type.size == right->type.size)

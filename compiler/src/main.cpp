@@ -54,7 +54,7 @@ int main(int argc, char *const *argv)
     string preprocessor = "gcc";
     string arch = "i386";
     
-    string ppFlags = " -E -I/home/robbe/Projects/Compiler/includes -include /home/robbe/Projects/Compiler/includes/gnucompat.h";
+    string ppFlags = " -E -I/home/robbe/Projects/SafeCC/includes -include /home/robbe/Projects/SafeCC/includes/gnucompat.h";
     string linkFlags =
         "-m elf_i386 -dynamic-linker /lib/ld-linux.so.2 "
         "/usr/lib/gcc/x86_64-linux-gnu/6/32/crtbeginS.o "

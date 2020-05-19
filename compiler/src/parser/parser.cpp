@@ -41,7 +41,11 @@ Type Parser::parseType()
         m_scanner.scan();
                 
         if (m_scanner.token().token() == Token::Tokens::L_BRACE)
-            return _declAggregateType(tok)->type;
+        {
+            t = _declAggregateType(tok)->type;
+            t.memSpot = NULL;
+            return t;
+        }
         
     case Token::Tokens::IDENTIFIER:
         t = g_typeList.getType(m_scanner.identifier());

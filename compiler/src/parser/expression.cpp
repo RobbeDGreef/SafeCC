@@ -506,19 +506,22 @@ ast_node *ExpressionParser::parsePostfixOperator(ast_node *tree, bool access)
 {
     ast_node *left = NULL;
     ast_node *tmp  = NULL;
-
+    ast_node *saved = tree;
+    
     switch (m_scanner.token().token())
     {
     case Token::Tokens::L_BRACKET:
         if (tree->type.memSpot)
             tree->type.memSpot->tryToUse(AST::Types::PTRACCESS);
-        return parseArrayAccess(tree, access);
+        tree = parseArrayAccess(tree, access);
+        break;
 
     case Token::Tokens::MINUS:
         if (tree->type.memSpot)
             tree->type.memSpot->tryToUse(AST::Types::PTRACCESS);
     case Token::Tokens::DOT:
-        return parseStructAccess(tree, access);
+        tree = parseStructAccess(tree, access);
+        break;
 
     case Token::Tokens::INC:
         m_scanner.scan();
@@ -529,18 +532,15 @@ ast_node *ExpressionParser::parsePostfixOperator(ast_node *tree, bool access)
         left = mkAstLeaf(AST::Types::INTLIT, 1, INTTYPE, tree->line, tree->c);
 
         tmp = checkArithmetic(tree, left, Token::Tokens::PLUS);
-        if (tmp)
-        {
-            if (tree->type.ptrDepth)
-                left = tmp;
-        }
+        if (tmp && tree->type.ptrDepth)
+            left = tmp;
 
         // If value is 1 it means increment after value return
         // if it is 0 it means increment before value return
         tree = mkAstNode(AST::Types::INCREMENT, tree, NULL, left, 1, tree->type,
                          tree->line, tree->c);
 
-        return tree;
+        break;
 
     case Token::Tokens::DEC:
         m_scanner.scan();
@@ -562,11 +562,13 @@ ast_node *ExpressionParser::parsePostfixOperator(ast_node *tree, bool access)
         tree = mkAstNode(AST::Types::DECREMENT, tree, NULL, left, 1, tree->type,
                          tree->line, tree->c);
 
-        return tree;
-
-    default:
-        return tree;
+        break;
     }
+
+    if (tree == saved)
+        return tree;
+    
+    return parsePostfixOperator(tree, access);
 }
 
 // Simply parses one side of a binary operation
@@ -667,9 +669,14 @@ ast_node *ExpressionParser::parseBinaryOperator(int prevPrec, Type *type,
 
         if (tok == Token::Tokens::EQUALSIGN)
         {
-            if (right->type.memSpot)
+            if (right->operation == AST::Types::INTLIT && !right->value)
+                if (type->memSpot)
+                    type->memSpot->setNullInit(true);
+            
+            if (right->type.memSpot && type->memSpot)
             {
                 type->memSpot->setIsInit(true);
+                type->memSpot->setNullInit(false);
                 type->memSpot->addReferencingTo(right->type.memSpot,
                                                 right->operation);
             }
