@@ -1,11 +1,11 @@
-if [ ! -f ../Compiler ]; then
+if [ ! -f ../safecc ]; then
 echo "[ERROR] Compiler not built"
 exit 1
 fi
 
-for f in test*.c
+for f in files/test*.c
 do
-    if ! ../Compiler -o "$f-bin" "$f" > /tmp/outp; then
+    if ! ../safecc -o "$f-bin" "$f" > /tmp/outp; then
         cat /tmp/outp
         echo "Compile of $f [FAILED]"
         exit 1

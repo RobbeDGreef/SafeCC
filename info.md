@@ -28,6 +28,11 @@ it should crash and say it can't store x in c
 - [x] for some reason we don't have to put the last }
 - [ ] Major problem, if variables go over 0xFFFF FFFF they overwrite our internal value int, we could fix this by using longs but we need to change our whole damn system to long's
 
+- [x] For loop iterator statement is skipped over by continue;
+- [x] For loop initialiser code is not ran in seperate scope
+- [x] HUGE scope bug where they would overwrite each other
+  
+  
 # Todos
 - [x] return statement parsing
 - [ ] return statement enforcing
@@ -106,9 +111,9 @@ Started 16/4/2020
   - [x] whitespace implemented
   - [ ] actually makes a difference
 - [ ] Unions
-  - [ ] Declaration
-    - [ ] with tag
-    - [ ] anonymous
+  - [x] Declaration
+    - [x] with tag
+    - [-] anonymous
   - [ ] assignment 
   - [ ] initialising
     - [ ] . operator initialising
@@ -116,8 +121,8 @@ Started 16/4/2020
 - [ ] static keyword
 - [x] sizeof keyword
   - [x] currently working but we need to port the whole compiler to bytes and not bits
-  - [ ] needs to accept variables too
-  - [ ] perfectly working 
+  - [x] needs to accept variables too
+  - [x] perfectly working 
 - [x] enums 
   - [x] header implemented but not currently usable
   - [x] perfectly working
@@ -134,23 +139,30 @@ Started 16/4/2020
 - [ ] include files
   - [x] stdarg
   - [x] stddef
-- [ ] Scalair initializers are allowed to be inclosed in braces for some reason
+- [ ] Scalar initializers are allowed to be inclosed in braces for some reason
 - [x][3/5/2020 1:52 AM] SECOND GOAL REACHED printf("hello world") with #include <stdio.h>  
 - [ ] major cleanup and refractor
-- [ ] ++ --
-- [ ] ~ ! ^ & | << >>
-- [ ] single statement control flow parsing eg. if (x) print(x); (no brackets))
+- [x] ++ --
+- [x] Register spilling
+- [x] ~ ^ & | << >>
+- [x] lazy evaluation
+  - [x] flowstatements
+  - [x] binary comparisons
+- [x] && ||
+- [x] !
+- [x] single statement control flow parsing eg. if (x) print(x); (no brackets))
+- [x] [14/5/2020 11:40] Complex assignment statements +=, *= etc
 - [ ] bit fields
 - [ ] Character constants like '\x41' are not being parsed properly
-- [ ] enums
 - [ ] floats
 - [ ] doubles
 - [ ] preprocessor should support stuff like __file__ __function__ __line__ etc
-- [ ] goto and labels
-- [ ] switch flow 
-- [ ] do while flow
-- [ ] control flow keywords (break, continue, case, default, ...)
-- [ ] asm("asmcode")
+- [x] goto and labels
+- [x] switch flow 
+  - [x] branch table
+  - [x] just everything
+- [x] do while flow
+- [x] control flow keywords (break, continue, case, default, ...)
 - [ ] const volatile
 - [ ] auto, register, restrict
 - [ ] we're getting like, reaalyyy close now
@@ -165,3 +177,13 @@ whenever you use g_symtable to get a symbol remember
 that it is based around vectors and that if you use m_scanner.scan()
 it could move the table and trash your pointers, so basically
 don't use pointers to vectors
+
+
+
+# goals for today [Fri May 15 2020]
+- [x] ternary statements
+- [x] lvalue checking in assignments
+- [x] exp return values like a = b = 0;
+- [x] check what goes wrong in nested if test
+- [x] off schedule - for(;;) doesn't work 
+- [ ] 

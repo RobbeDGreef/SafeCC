@@ -59,7 +59,10 @@ void ErrorHandler::lineError(string hl_color)
     lineError(m_errInfo, hl_color);
 }
 
+#ifdef MODE_DEBUG
 void debughandler(int sig);
+#endif
+
 void ErrorHandler::fatal(string str)
 {
     write(FATAL_PREFIX + str);

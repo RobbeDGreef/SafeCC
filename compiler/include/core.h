@@ -25,9 +25,9 @@ using namespace std;
 #define SIZE(x) sizeof(x) / sizeof(x[0])
 
 int getFullbits(int x);
-void debughandler(int sig);
 
 #ifdef MODE_DEBUG
+void debughandler(int sig);
 #define DEBUG(x)  std::cout << "\u001b[33;1mDEBUG\u001b[0m: " << x << "\n";
 #define DEBUGB(x) std::cout << "\u001b[36;1mDEBUG\u001b[0m: " << x << "\n";
 #define DEBUGR(x) std::cout << "\u001b[31;1mDEBUG\u001b[0m: " << x << "\n";
@@ -49,6 +49,7 @@ inline void __attribute__((always_inline)) print_caller()
 #define DEBUGR(x)
 #define DEBUGW(x)
 #define PRINT_CALLER()
+#define debughandler(x)
 #endif
 
 #define RELEASE_PRINT(x) std::cout << x << "\n";

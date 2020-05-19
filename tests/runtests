@@ -1,4 +1,4 @@
-for f in test*.c
+for f in files/test*.c
 do
     echo "[RUN] File: $f"
     ./"$f-bin"
