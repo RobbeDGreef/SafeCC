@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd build
-cmake ..
+cmake .. 
 make
-mv ./Compiler ..
+mv ./safecc ..
 
