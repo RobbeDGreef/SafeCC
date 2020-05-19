@@ -13,6 +13,7 @@ if (uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
     add_definitions(-DMODE_DEBUG)
 endif ()
 
+add_definitions(-DSOURCE_DIR="\\"${CMAKE_CURRENT_SOURCE_DIR}\\"")
 include_directories(compiler/include)
 file(GLOB_RECURSE SOURCES "compiler/src/*.cpp")
 

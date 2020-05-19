@@ -60,3 +60,10 @@ template <class T> int hasItem(vector<T> &items, T item)
         return 1;
     return 0;
 }
+
+#ifndef SOURCE_DIR
+#error No source directory was specified when building
+
+// This is just to make vscode happy
+#define SOURCE_DIR
+#endif
