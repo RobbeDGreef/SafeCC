@@ -19,7 +19,7 @@ For the assembling step the compiler will try to use nasm so, nasm should
 also be in your PATH variable.
 
 ### Installing
-Just `cd` into the main directory and run `./build.sh` to start the build process.
+Just `cd` into the compiler directory and run `./build.sh` to start the build process.
 
 ## Running the tests
 The tests folder includes a large amount of test files, to test them all at
