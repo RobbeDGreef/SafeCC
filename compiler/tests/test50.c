@@ -1,5 +1,5 @@
-//#include <stdio.h>
-int printf(char *, ...);
+#include <stdio.h>
+//int printf(char *, ...);
 
 int *test()
 {
@@ -22,12 +22,12 @@ int main()
     printf("Dangling pointer holds: %i\n", *p);
     
     int *p3 = test();
-    
+        
     printf("Dangling pointer holds: %i\n", *p3);
     
-    int *noinit;
-    
-    printf("Dangerous stuff: %x\n", noinit);
+    int *noinit = NULL;
+        
+    printf("Dangerous stuff: %x\n", *noinit);
     
     int a = 5;
     {

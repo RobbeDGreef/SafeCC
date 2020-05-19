@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//void *alloc(size_t size)
-//{
-//    return malloc(size);
-//}
+void *alloc(size_t size)
+{
+    return malloc(size);
+}
 
 int main()
 {
@@ -23,7 +23,9 @@ int main()
     
     free(p3);
     
-    printf("loc of p3: %x\n", p3);
+    printf("loc of p3: %x\n", *p3);
     
-    //int *p4 = alloc(50);
+    malloc(5);
+    
+    int *p4 = alloc(50);
 }
