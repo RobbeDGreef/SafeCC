@@ -54,7 +54,7 @@ run `./tests/test.sh tests/files/<testName.c>`, where <testName.c> is obviously 
 to the test name you want to try. 
 
 ## Features
-Currently SafeCC checks for:
+Currently working on checks for:
 - Out-of-scope references
 - Use after free bugs
 - Wild pointer (use before initialization)
